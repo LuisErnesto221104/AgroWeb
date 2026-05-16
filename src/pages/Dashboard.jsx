@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
   BarChart3,
@@ -138,6 +138,7 @@ function Sidebar({ isOpen, onClose }) {
 
 function Dashboard() {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const { logout, user } = useAuth()
   const { stats, animals, tasks, costs, healthSummary, status, error } = useDashboard()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -224,7 +225,14 @@ function Dashboard() {
               <h2 className="text-xl font-bold text-[#07612d]">Acciones rápidas</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {quickActions.map(({ title, description, icon: Icon }) => (
-                  <button className="group flex min-h-28 w-full items-center gap-4 rounded-2xl border border-[#98a287]/18 bg-white p-4 text-left shadow-[0_8px_24px_rgba(29,29,27,0.06)] transition hover:border-[#07612d]/35" key={title} type="button">
+                  <button
+                    className="group flex min-h-28 w-full items-center gap-4 rounded-2xl border border-[#98a287]/18 bg-white p-4 text-left shadow-[0_8px_24px_rgba(29,29,27,0.06)] transition hover:border-[#07612d]/35"
+                    key={title}
+                    onClick={() => {
+                      if (title === 'Registrar animal') navigate('/animales/nuevo')
+                    }}
+                    type="button"
+                  >
                     <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#07612d]/10 text-[#07612d] transition group-hover:bg-[#07612d] group-hover:text-white">
                       <Icon size={24} />
                     </span>

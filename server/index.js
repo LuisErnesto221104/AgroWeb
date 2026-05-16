@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
@@ -8,7 +9,26 @@ const app = express()
 const port = process.env.PORT ?? 4000
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '8mb' }))
+
+function createSalt() {
+  return crypto.randomBytes(16).toString('hex')
+}
+
+function hashPin(pin, salt) {
+  return crypto.pbkdf2Sync(String(pin), salt, 1000, 32, 'sha256').toString('hex')
+}
+
+function sanitizeUser(user) {
+  return {
+    id: user.id,
+    nombre: user.nombre,
+    fecha_creacion: user.fecha_creacion,
+    ultimo_acceso: user.ultimo_acceso,
+  }
+}
+
+const adminSalt = 'agroweb_admin_salt'
 
 const db = {
   animales: [
@@ -97,9 +117,9 @@ const db = {
   usuarios: [
     {
       id: 1,
-      pin_hash: 'demo_hash',
-      salt: 'demo_salt',
-      nombre: 'Encargado AgroWeb',
+      pin_hash: hashPin('1234', adminSalt),
+      salt: adminSalt,
+      nombre: 'admin',
       fecha_creacion: '2026-05-13T14:00:00.000Z',
       ultimo_acceso: '2026-05-16T08:00:00.000Z',
     },
@@ -319,6 +339,89 @@ app.get('/api/db', (_request, response) => {
   response.json(db)
 })
 
+app.post('/api/auth/login', (request, response) => {
+  const { nombre, pin } = request.body
+  if (!nombre || !pin) {
+    response.status(400).json({ message: 'Ingresa usuario y PIN.' })
+    return
+  }
+
+  const user = db.usuarios.find((usuario) => usuario.nombre.toLowerCase() === String(nombre).trim().toLowerCase())
+  if (!user || user.pin_hash !== hashPin(pin, user.salt)) {
+    response.status(401).json({ message: 'Credenciales incorrectas.' })
+    return
+  }
+
+  const now = new Date().toISOString()
+  user.ultimo_acceso = now
+
+  const session = {
+    id: nextId(db.session_manager),
+    usuario_id: user.id,
+    inicio_sesion: now,
+    ultimo_ping: now,
+    activa: 1,
+  }
+  db.session_manager.push(session)
+
+  response.json({ user: sanitizeUser(user), session })
+})
+
+app.post('/api/auth/register', (request, response) => {
+  const { nombre, pin } = request.body
+  if (!nombre || !pin) {
+    response.status(400).json({ message: 'Ingresa nombre de usuario y PIN.' })
+    return
+  }
+
+  if (String(pin).length < 4) {
+    response.status(400).json({ message: 'El PIN debe tener al menos 4 caracteres.' })
+    return
+  }
+
+  const normalizedName = String(nombre).trim()
+  const exists = db.usuarios.some((usuario) => usuario.nombre.toLowerCase() === normalizedName.toLowerCase())
+  if (exists) {
+    response.status(409).json({ message: 'Ese usuario ya existe.' })
+    return
+  }
+
+  const salt = createSalt()
+  const now = new Date().toISOString()
+  const user = {
+    id: nextId(db.usuarios),
+    pin_hash: hashPin(pin, salt),
+    salt,
+    nombre: normalizedName,
+    fecha_creacion: now,
+    ultimo_acceso: now,
+  }
+
+  db.usuarios.push(user)
+
+  const session = {
+    id: nextId(db.session_manager),
+    usuario_id: user.id,
+    inicio_sesion: now,
+    ultimo_ping: now,
+    activa: 1,
+  }
+  db.session_manager.push(session)
+
+  response.status(201).json({ user: sanitizeUser(user), session })
+})
+
+app.post('/api/auth/logout', (request, response) => {
+  const { sessionId } = request.body
+  const session = findById(db.session_manager, sessionId)
+  if (session) {
+    session.activa = 0
+    session.ultimo_ping = new Date().toISOString()
+  }
+
+  response.json({ ok: true })
+})
+
 app.post('/api/animales', (request, response) => {
   const error = validateAnimal(request.body)
   if (error) {
@@ -335,6 +438,19 @@ app.post('/api/animales', (request, response) => {
     ...request.body,
   }
   db.animales.push(animal)
+
+  const precioCompra = Number(request.body.precio_compra ?? 0)
+  if (precioCompra > 0) {
+    db.gastos.push({
+      id: nextId(db.gastos),
+      animal_id: animal.id,
+      categoria: 'Compra',
+      monto: precioCompra,
+      fecha: request.body.fecha,
+      descripcion: `Compra de animal ${animal.arete}`,
+    })
+  }
+
   response.status(201).json(animal)
 })
 
