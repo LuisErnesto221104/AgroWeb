@@ -85,3 +85,22 @@ npm run dev
 Usuario: admin
 PIN: 1234
 ```
+
+
+
+## Iniciar el proyecto 
+cd "/run/media/ernesto/OS/Users/ernes/Documents/University/8.-𝓢𝓮𝓶𝓮𝓼𝓽𝓻𝓮 8/Desarrollo de Aplicaciones Web Modernas/AgroWeb" && \
+(npm run dev:api & npm run dev & wait)
+
+## Cerrar proyecto 
+cd "/run/media/ernesto/OS/Users/ernes/Documents/University/8.-𝓢𝓮𝓶𝓮𝓼𝓽𝓻𝓮 8/Desarrollo de Aplicaciones Web Modernas/AgroWeb" && \
+bash -c 'trap "kill 0" EXIT; npm run dev:api & npm run dev & wait'
+
+
+## Para que lo corran en su terminal 
+npm run dev:api
+
+Entonces serían dos terminales:
+
+npm run dev:api
+npm run dev

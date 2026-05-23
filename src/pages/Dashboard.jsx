@@ -64,8 +64,8 @@ const healthIcons = {
 const navItems = [
   { label: 'Inicio', to: '/', icon: Home },
   { label: 'Animales', to: '/animales', icon: PackageCheck },
-  { label: 'Sanitario', to: '/sanitario', icon: HeartPulse },
-  { label: 'Costos', to: '/costos', icon: WalletCards },
+  { label: 'Sanidad', to: '/sanidad', icon: HeartPulse },
+  { label: 'Gastos', to: '/gastos', icon: WalletCards },
   { label: 'Reportes', to: '/reportes', icon: FileBarChart },
   { label: 'Notificaciones', to: '/', icon: Bell },
   { label: 'Configuración', to: '/', icon: Settings },
