@@ -11,6 +11,7 @@ import SanitaryCalendar from '../components/health/SanitaryCalendar'
 import UpcomingHealthEvents from '../components/health/UpcomingHealthEvents'
 import { animals as mockAnimals } from '../data/animals'
 import { healthEvents as mockHealthEvents } from '../data/healthEvents'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const today = '2026-05-23'
 
@@ -220,8 +221,8 @@ function HealthPage({ calendarOnly = false }) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAnimals(mockAnimals)
-      setEvents(mockHealthEvents.map(sanitizeStatus))
+      setAnimals(readStorage('agroweb.animals', mockAnimals))
+      setEvents(readStorage('agroweb.healthEvents', mockHealthEvents).map(sanitizeStatus))
       setIsLoading(false)
     }, 350)
 
@@ -229,11 +230,19 @@ function HealthPage({ calendarOnly = false }) {
   }, [])
 
   function createEvent(event) {
-    setEvents((current) => [sanitizeStatus(event), ...current])
+    setEvents((current) => {
+      const nextEvents = [sanitizeStatus(event), ...current]
+      writeStorage('agroweb.healthEvents', nextEvents)
+      return nextEvents
+    })
   }
 
   function updateEventStatus(eventId, estado) {
-    setEvents((current) => current.map((event) => (event.id === eventId ? { ...event, estado } : event)))
+    setEvents((current) => {
+      const nextEvents = current.map((event) => (event.id === eventId ? { ...event, estado } : event))
+      writeStorage('agroweb.healthEvents', nextEvents)
+      return nextEvents
+    })
   }
 
   return (

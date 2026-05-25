@@ -77,10 +77,12 @@ function Home() {
   const stats = useMemo(() => {
     const currentAnimals = readStorage('agroweb.animals', animals)
     const currentExpenses = readStorage('agroweb.expenses', expenses)
+    const currentFeeding = readStorage('agroweb.feeding', feeding)
+    const currentHealthEvents = readStorage('agroweb.healthEvents', healthEvents)
     const animalesActivos = currentAnimals.filter((animal) => animal.estado === 'Activo')
     const totalGastos = currentExpenses.reduce((acc, gasto) => acc + gasto.precio, 0)
-    const totalAlimentacion = feeding.reduce((acc, registro) => acc + registro.costo, 0)
-    const proximosEventos = healthEvents.filter((event) => event.estado === 'Pendiente' || event.estado === 'Programado')
+    const totalAlimentacion = currentFeeding.reduce((acc, registro) => acc + Number(registro.costo ?? registro.costoAproximado ?? 0), 0)
+    const proximosEventos = currentHealthEvents.filter((event) => event.estado === 'Pendiente' || event.estado === 'Programado')
     const balanceGeneral = 125000 - totalGastos - totalAlimentacion
 
     return [
@@ -147,7 +149,7 @@ function Home() {
               </div>
               <div className="rounded-2xl bg-[#F4F4F4] p-5">
                 <p className="text-sm font-semibold text-[#98a287]">Alimentación registrada</p>
-                <strong className="mt-2 block text-4xl font-bold text-[#1d1d1b]">{feeding.length}</strong>
+                <strong className="mt-2 block text-4xl font-bold text-[#1d1d1b]">{readStorage('agroweb.feeding', feeding).length}</strong>
                 <p className="mt-3 text-sm leading-6 text-[#1d1d1b]/70">Registros mock usados para calcular costos del rancho.</p>
               </div>
             </div>

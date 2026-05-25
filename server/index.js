@@ -30,6 +30,8 @@ function sanitizeUser(user) {
 
 const adminSalt = 'agroweb_admin_salt'
 
+const systemPermissions = ['animales', 'sanidad', 'gastos', 'reportes', 'alimentacion', 'configuracion']
+
 const db = {
   animales: [
     {
@@ -122,6 +124,38 @@ const db = {
       nombre: 'admin',
       fecha_creacion: '2026-05-13T14:00:00.000Z',
       ultimo_acceso: '2026-05-16T08:00:00.000Z',
+    },
+  ],
+  configuracion_usuarios: [
+    {
+      id: 1,
+      usuario_id: 1,
+      nombre: 'Administrador AgroWeb',
+      correo: 'admin@agroweb.mx',
+      rol: 'Administrador',
+      activo: true,
+      permisos: systemPermissions,
+      protegido: true,
+    },
+    {
+      id: 2,
+      usuario_id: null,
+      nombre: 'Encargado del Rancho',
+      correo: 'rancho@agroweb.mx',
+      rol: 'Ganadero',
+      activo: true,
+      permisos: ['animales', 'sanidad', 'alimentacion'],
+      protegido: false,
+    },
+    {
+      id: 3,
+      usuario_id: null,
+      nombre: 'Contabilidad',
+      correo: 'finanzas@agroweb.mx',
+      rol: 'Finanzas',
+      activo: true,
+      permisos: ['gastos', 'reportes'],
+      protegido: false,
     },
   ],
   session_manager: [
@@ -275,6 +309,30 @@ function getDashboard() {
     costs,
     healthSummary: dashboardHealthSummary(),
   }
+}
+
+function sanitizeConfigUser(user) {
+  return {
+    id: user.id,
+    usuario_id: user.usuario_id,
+    nombre: user.nombre,
+    correo: user.correo,
+    rol: user.rol,
+    activo: user.activo,
+    permisos: user.permisos,
+    protegido: user.protegido,
+  }
+}
+
+function getConfigUser(id) {
+  return db.configuracion_usuarios.find((user) => user.id === Number(id))
+}
+
+function validatePermissions(permisos) {
+  if (!Array.isArray(permisos)) return 'Los permisos deben enviarse como arreglo.'
+  const invalidPermission = permisos.find((permission) => !systemPermissions.includes(permission))
+  if (invalidPermission) return `Permiso inválido: ${invalidPermission}.`
+  return null
 }
 
 function registerCrudRoutes(path, collectionName, requiredFields = []) {
@@ -494,6 +552,73 @@ app.get('/api/animales/:id', (request, response) => {
 
 registerCrudRoutes('usuarios', 'usuarios', ['pin_hash', 'salt', 'nombre'])
 registerCrudRoutes('session-manager', 'session_manager', ['usuario_id', 'inicio_sesion', 'ultimo_ping'])
+
+app.get('/api/configuracion/usuarios', (_request, response) => {
+  response.json(db.configuracion_usuarios.map(sanitizeConfigUser))
+})
+
+app.put('/api/configuracion/usuarios/:id/rol', (request, response) => {
+  const user = getConfigUser(request.params.id)
+  if (!user) {
+    notFound(response, 'Usuario de configuración')
+    return
+  }
+
+  const { rol } = request.body
+  if (!rol) {
+    response.status(400).json({ message: 'El rol es obligatorio.' })
+    return
+  }
+
+  if (user.protegido && rol !== 'Administrador') {
+    response.status(403).json({ message: 'El administrador principal no puede dejar de ser Administrador.' })
+    return
+  }
+
+  user.rol = rol
+  response.json(sanitizeConfigUser(user))
+})
+
+app.patch('/api/configuracion/usuarios/:id/estado', (request, response) => {
+  const user = getConfigUser(request.params.id)
+  if (!user) {
+    notFound(response, 'Usuario de configuración')
+    return
+  }
+
+  if (user.protegido) {
+    response.status(403).json({ message: 'El administrador principal no puede bloquearse.' })
+    return
+  }
+
+  user.activo = Boolean(request.body?.activo)
+  response.json(sanitizeConfigUser(user))
+})
+
+app.put('/api/configuracion/usuarios/:id/permisos', (request, response) => {
+  const user = getConfigUser(request.params.id)
+  if (!user) {
+    notFound(response, 'Usuario de configuración')
+    return
+  }
+
+  const error = validatePermissions(request.body?.permisos)
+  if (error) {
+    response.status(400).json({ message: error })
+    return
+  }
+
+  if (user.protegido) {
+    const removedPermission = systemPermissions.find((permission) => !request.body.permisos.includes(permission))
+    if (removedPermission) {
+      response.status(403).json({ message: 'El administrador principal no puede quitarse permisos.' })
+      return
+    }
+  }
+
+  user.permisos = [...new Set(request.body.permisos)]
+  response.json(sanitizeConfigUser(user))
+})
 
 app.post('/api/eventos-sanitarios', (request, response) => {
   if (!animalExists(request.body?.animal_id)) {

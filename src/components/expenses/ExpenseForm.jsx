@@ -1,17 +1,23 @@
 import { useMemo, useState } from 'react'
 import { FileText, Save, Upload } from 'lucide-react'
+import FilePreview from '../FilePreview'
 import { expenseCategories } from './expenseUtils'
 
-const initialForm = {
-  movimiento: 'gasto',
-  tipoCompra: '',
-  precio: '',
-  fecha: '',
-  animalId: 'general',
-  categoria: 'Alimentación',
-  descripcion: '',
-  comprobante: '',
+function getInitialForm(defaultMovement = 'gasto') {
+  const isSale = defaultMovement === 'venta'
+  return {
+    movimiento: defaultMovement,
+    tipoCompra: isSale ? 'Venta de animal' : '',
+    precio: '',
+    fecha: '',
+    animalId: 'general',
+    categoria: isSale ? 'Venta de animal' : 'Alimentación',
+    descripcion: '',
+    comprobante: '',
+  }
 }
+
+const today = new Date().toISOString().slice(0, 10)
 
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -22,15 +28,16 @@ function fileToDataUrl(file) {
   })
 }
 
-function ExpenseForm({ animals, onSubmit }) {
-  const [form, setForm] = useState(initialForm)
+function ExpenseForm({ animals, onSubmit, defaultMovement = 'gasto', lockMovement = false }) {
+  const [form, setForm] = useState(() => getInitialForm(defaultMovement))
   const [receiptName, setReceiptName] = useState('')
   const isSale = form.movimiento === 'venta'
 
   const canSubmit = useMemo(() => {
     const hasAnimal = !isSale || form.animalId !== 'general'
     const hasType = isSale || form.tipoCompra.trim()
-    return Boolean(hasAnimal && hasType && Number(form.precio) > 0 && form.fecha && form.categoria && form.descripcion.trim())
+    const validDate = form.fecha && form.fecha <= today
+    return Boolean(hasAnimal && hasType && Number(form.precio) > 0 && validDate && form.categoria && form.descripcion.trim().length >= 5)
   }, [form, isSale])
 
   function updateField(event) {
@@ -83,13 +90,15 @@ function ExpenseForm({ animals, onSubmit }) {
   return (
     <form className="grid gap-5" onSubmit={handleSubmit}>
       <section className="grid gap-5 rounded-2xl border border-[#98a287]/18 bg-white p-5 shadow-[0_12px_28px_rgba(29,29,27,0.07)] lg:grid-cols-2">
-        <label className="block lg:col-span-2">
-          <span className="text-sm font-bold text-[#1d1d1b]">Tipo de movimiento</span>
-          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="movimiento" onChange={updateField} value={form.movimiento}>
-            <option value="gasto">Registrar gasto</option>
-            <option value="venta">Registrar venta de animal</option>
-          </select>
-        </label>
+        {!lockMovement ? (
+          <label className="block lg:col-span-2">
+            <span className="text-sm font-bold text-[#1d1d1b]">Tipo de movimiento</span>
+            <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="movimiento" onChange={updateField} value={form.movimiento}>
+              <option value="gasto">Registrar gasto</option>
+              <option value="venta">Registrar venta de animal</option>
+            </select>
+          </label>
+        ) : null}
 
         <label className="block">
           <span className="text-sm font-bold text-[#1d1d1b]">{isSale ? 'Tipo de ingreso' : 'Tipo de compra'}</span>
@@ -103,7 +112,8 @@ function ExpenseForm({ animals, onSubmit }) {
 
         <label className="block">
           <span className="text-sm font-bold text-[#1d1d1b]">Fecha del gasto</span>
-          <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="fecha" onChange={updateField} type="date" value={form.fecha} />
+          <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" max={today} name="fecha" onChange={updateField} type="date" value={form.fecha} />
+          {form.fecha > today ? <p className="mt-2 text-xs font-semibold text-[#D32F2F]">La fecha no puede ser futura.</p> : null}
         </label>
 
         <label className="block">
@@ -134,6 +144,7 @@ function ExpenseForm({ animals, onSubmit }) {
         <label className="block">
           <span className="text-sm font-bold text-[#1d1d1b]">Descripción</span>
           <textarea className="mt-2 min-h-28 w-full resize-y rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] p-4 text-sm outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="descripcion" onChange={updateField} value={form.descripcion} />
+          {form.descripcion && form.descripcion.trim().length < 5 ? <p className="mt-2 text-xs font-semibold text-[#D32F2F]">Agrega una descripción de al menos 5 caracteres.</p> : null}
         </label>
 
         <div className="mt-5 rounded-2xl border border-dashed border-[#07612d]/25 bg-[#F4F4F4] p-4">
@@ -148,6 +159,7 @@ function ExpenseForm({ animals, onSubmit }) {
               <input accept="image/*,application/pdf,.pdf" className="sr-only" onChange={handleReceipt} type="file" />
             </label>
           </div>
+          <FilePreview file={form.comprobante} title="Previsualización del comprobante" />
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FileText, ImagePlus, Save, Upload } from 'lucide-react'
+import FilePreview from '../FilePreview'
 
 const identificationDocuments = ['INE', 'Pasaporte', 'Licencia de conducir', 'Cédula profesional', 'Cartilla militar', 'Documento interno']
 
@@ -124,6 +125,8 @@ const emptyAnimal = {
   observaciones: '',
 }
 
+const today = new Date().toISOString().slice(0, 10)
+
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -159,14 +162,15 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
   const hasValidSinidaId = /^MX\d{4}(\d{6}|\d{8})$/.test(form.identificador)
 
   const canSubmit = useMemo(() => {
-    return Boolean(hasValidSinidaId && form.especie.trim() && form.sexo && form.raza.trim() && Number(form.peso) > 0 && form.fechaIngreso && form.estado && form.ubicacion.trim())
+    return Boolean(hasValidSinidaId && form.especie.trim() && form.sexo && form.raza.trim() && Number(form.peso) > 0 && form.fechaIngreso && form.fechaIngreso <= today && form.estado && form.ubicacion.trim())
   }, [form, hasValidSinidaId])
 
   function updateField(event) {
     const { name, value } = event.target
     if (name === 'estado' && isNewAnimal) return
     setForm((current) => {
-      const next = { ...current, [name]: value }
+      const cleanValue = name === 'raza' ? value.replace(/[0-9]/g, '') : value
+      const next = { ...current, [name]: cleanValue }
       if (['especie', 'entidadFederativa', 'identificacionUnica'].includes(name)) {
         const cleanUniqueId = name === 'identificacionUnica' ? value.replace(/\D/g, '').slice(0, 8) : next.identificacionUnica
         next.identificacionUnica = cleanUniqueId
@@ -301,6 +305,7 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
               type={name === 'peso' ? 'number' : 'text'}
               value={form[name]}
             />
+            {name === 'raza' ? <p className="mt-2 text-xs font-semibold text-[#98a287]">La raza es el tipo genético, por ejemplo Angus, Holstein o Brahman. El género se selecciona aparte.</p> : null}
           </label>
         ))}
 
@@ -333,7 +338,8 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
 
         <label className="block">
           <span className="text-sm font-bold text-[#1d1d1b]">Fecha de ingreso <span className="text-[#D32F2F]">*</span></span>
-          <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="fechaIngreso" onChange={updateField} type="date" value={form.fechaIngreso} />
+          <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" max={today} name="fechaIngreso" onChange={updateField} type="date" value={form.fechaIngreso} />
+          {form.fechaIngreso > today ? <p className="mt-2 text-xs font-semibold text-[#D32F2F]">La fecha de ingreso no puede ser futura.</p> : null}
         </label>
       </section>
 
@@ -386,28 +392,18 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
         </div>
 
         <div className="mt-5 rounded-2xl border border-dashed border-[#07612d]/25 bg-[#F4F4F4] p-4">
-          <span className="text-sm font-bold text-[#1d1d1b]">Documento del dueño anterior en PDF</span>
+          <span className="text-sm font-bold text-[#1d1d1b]">Documento del dueño anterior</span>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-[#1d1d1b]/70">
               <FileText size={18} className="shrink-0 text-[#07612d]" />
               <span className="min-w-0 break-words">{pdfName || 'Sin PDF cargado'}</span>
             </div>
             <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#07612d] px-4 text-sm font-bold text-white">
-              <Upload size={18} /> Subir PDF
-              <input accept="application/pdf,.pdf" className="sr-only" onChange={handleOwnerPdf} type="file" />
+              <Upload size={18} /> Subir archivo
+              <input accept="image/*,application/pdf,.pdf" className="sr-only" onChange={handleOwnerPdf} type="file" />
             </label>
           </div>
-          {form.duenosAnteriores.documentoPdf?.dataUrl ? (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-[#98a287]/18 bg-white">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#98a287]/18 px-4 py-3">
-                <span className="text-sm font-bold text-[#07612d]">Previsualización del documento</span>
-                <a className="text-sm font-bold text-[#07612d]" href={form.duenosAnteriores.documentoPdf.dataUrl} rel="noreferrer" target="_blank">
-                  Abrir en pestaña
-                </a>
-              </div>
-              <iframe className="h-80 w-full bg-white" src={form.duenosAnteriores.documentoPdf.dataUrl} title="Previsualización del documento del dueño anterior" />
-            </div>
-          ) : null}
+          <FilePreview file={form.duenosAnteriores.documentoPdf} title="Previsualización del documento" />
         </div>
       </section>
 

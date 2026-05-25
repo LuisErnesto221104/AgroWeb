@@ -12,6 +12,7 @@ import { normalizeFeedingStatus } from '../components/feeding/feedingUtils'
 import { mxn } from '../components/expenses/expenseUtils'
 import { animals as mockAnimals } from '../data/animals'
 import { feeding as mockFeeding } from '../data/feeding'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const initialFilters = {
   query: '',
@@ -224,8 +225,8 @@ function FeedingPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAnimals(mockAnimals)
-      setRecords(mockFeeding.map((record) => normalizeFeedingStatus(record)))
+      setAnimals(readStorage('agroweb.animals', mockAnimals))
+      setRecords(readStorage('agroweb.feeding', mockFeeding).map((record) => normalizeFeedingStatus(record)))
       setIsLoading(false)
     }, 350)
 
@@ -233,11 +234,19 @@ function FeedingPage() {
   }, [])
 
   function createRecord(record) {
-    setRecords((current) => [normalizeFeedingStatus(record), ...current])
+    setRecords((current) => {
+      const nextRecords = [normalizeFeedingStatus(record), ...current]
+      writeStorage('agroweb.feeding', nextRecords)
+      return nextRecords
+    })
   }
 
   function updateRecordStatus(recordId, estado) {
-    setRecords((current) => current.map((record) => (record.id === recordId ? { ...record, estado } : record)))
+    setRecords((current) => {
+      const nextRecords = current.map((record) => (record.id === recordId ? { ...record, estado } : record))
+      writeStorage('agroweb.feeding', nextRecords)
+      return nextRecords
+    })
   }
 
   return (

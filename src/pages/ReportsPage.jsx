@@ -85,7 +85,7 @@ function buildMonthlyRows(expenses, feeding, income) {
   })
 
   feeding.forEach((item) => {
-    ensure('2026-05').alimentacion += Number(item.costo)
+    ensure(monthKey(item.fecha)).alimentacion += Number(item.costo ?? item.costoAproximado ?? 0)
   })
 
   income.forEach((item) => {
@@ -100,7 +100,7 @@ function buildMonthlyRows(expenses, feeding, income) {
 function buildAnimalRows(animals, expenses, feeding, income) {
   return animals.map((animal) => {
     const gastos = expenses.filter((expense) => expense.animalId === animal.id).reduce((sum, expense) => sum + Number(expense.precio), 0)
-    const alimentacion = feeding.filter((item) => item.animalId === animal.id).reduce((sum, item) => sum + Number(item.costo), 0)
+    const alimentacion = feeding.filter((item) => item.animalId === animal.id).reduce((sum, item) => sum + Number(item.costo ?? item.costoAproximado ?? 0), 0)
     const ingresos = income.filter((item) => item.animalId === animal.id).reduce((sum, item) => sum + Number(item.monto), 0)
 
     return {
@@ -203,8 +203,8 @@ function ReportsPage() {
     const timer = window.setTimeout(() => {
       setAnimals(readStorage('agroweb.animals', mockAnimals))
       setExpenses(readStorage('agroweb.expenses', mockExpenses))
-      setFeeding(mockFeeding)
-      setHealthEvents(mockHealthEvents)
+      setFeeding(readStorage('agroweb.feeding', mockFeeding))
+      setHealthEvents(readStorage('agroweb.healthEvents', mockHealthEvents))
       setIncome(readStorage('agroweb.income', mockIncome))
       setIsLoading(false)
     }, 350)
@@ -213,7 +213,7 @@ function ReportsPage() {
   }, [])
 
   const filteredData = useMemo(() => {
-    const filteredExpenses = expenses.filter((expense) => inDateRange(expense.fecha, filters) && matchesAnimal(expense, filters))
+    const filteredExpenses = expenses.filter((expense) => !expense.esVenta && inDateRange(expense.fecha, filters) && matchesAnimal(expense, filters))
     const filteredIncome = income.filter((item) => inDateRange(item.fecha, filters) && matchesAnimal(item, filters))
     const filteredFeeding = feeding.filter((item) => matchesAnimal(item, filters))
     const filteredAnimals =
@@ -226,7 +226,7 @@ function ReportsPage() {
 
   const analytics = useMemo(() => {
     const totalGastos = filteredData.filteredExpenses.reduce((acc, item) => acc + Number(item.precio), 0)
-    const totalAlimentacion = filteredData.filteredFeeding.reduce((acc, item) => acc + Number(item.costo), 0)
+    const totalAlimentacion = filteredData.filteredFeeding.reduce((acc, item) => acc + Number(item.costo ?? item.costoAproximado ?? 0), 0)
     const totalIngresos = filteredData.filteredIncome.reduce((acc, item) => acc + Number(item.monto), 0)
     const perdidas = totalGastos + totalAlimentacion
     const ganancias = Math.max(totalIngresos - perdidas, 0)
