@@ -113,6 +113,7 @@ const emptyAnimal = {
   identificacionUnica: '',
   nombre: '',
   especie: 'Bovino',
+  sexo: 'Macho',
   raza: '',
   peso: '',
   duenosAnteriores: emptyPreviousOwner,
@@ -158,7 +159,7 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
   const hasValidSinidaId = /^MX\d{4}(\d{6}|\d{8})$/.test(form.identificador)
 
   const canSubmit = useMemo(() => {
-    return Boolean(hasValidSinidaId && form.especie.trim() && form.raza.trim() && Number(form.peso) > 0 && form.fechaIngreso && form.estado && form.ubicacion.trim())
+    return Boolean(hasValidSinidaId && form.especie.trim() && form.sexo && form.raza.trim() && Number(form.peso) > 0 && form.fechaIngreso && form.estado && form.ubicacion.trim())
   }, [form, hasValidSinidaId])
 
   function updateField(event) {
@@ -221,6 +222,10 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
 
   return (
     <form className="grid gap-5" onSubmit={handleSubmit}>
+      <div className="rounded-2xl border border-[#07612d]/18 bg-white p-4 text-sm font-semibold leading-6 text-[#1d1d1b]/70 shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
+        Los campos marcados con <span className="font-bold text-[#D32F2F]">*</span> son obligatorios. En el arete SINIIGA/SINIDA solo escribe números en la identificación única.
+      </div>
+
       <section className="grid gap-5 rounded-2xl border border-[#98a287]/18 bg-white p-5 shadow-[0_12px_28px_rgba(29,29,27,0.07)] lg:grid-cols-2">
         <div className="lg:col-span-2">
           <div className="rounded-2xl border border-[#07612d]/20 bg-[#07612d]/5 p-4">
@@ -228,12 +233,12 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
             <p className="mt-1 text-sm leading-6 text-[#1d1d1b]/65">Estructura: MX + especie + entidad federativa INEGI + identificación única de 6 u 8 dígitos.</p>
             <div className="mt-4 grid gap-4 md:grid-cols-[0.5fr_1fr_1fr_1fr]">
               <label className="block">
-                <span className="text-sm font-bold text-[#1d1d1b]">País</span>
+                <span className="text-sm font-bold text-[#1d1d1b]">País <span className="text-[#D32F2F]">*</span></span>
                 <div className="mt-2 flex h-12 items-center rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-bold text-[#07612d]">MX</div>
               </label>
 
               <label className="block">
-                <span className="text-sm font-bold text-[#1d1d1b]">Especie</span>
+                <span className="text-sm font-bold text-[#1d1d1b]">Especie <span className="text-[#D32F2F]">*</span></span>
                 <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:ring-4 focus:ring-[#07612d]/10" name="especie" onChange={updateField} value={form.especie}>
                   {speciesOptions.map((option) => (
                     <option key={option.code} value={option.label}>
@@ -244,7 +249,7 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
               </label>
 
               <label className="block">
-                <span className="text-sm font-bold text-[#1d1d1b]">Entidad federativa</span>
+                <span className="text-sm font-bold text-[#1d1d1b]">Entidad federativa <span className="text-[#D32F2F]">*</span></span>
                 <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:ring-4 focus:ring-[#07612d]/10" name="entidadFederativa" onChange={updateField} value={form.entidadFederativa}>
                   {mexicanStates.map((state) => (
                     <option key={state.code} value={state.name}>
@@ -255,15 +260,18 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
               </label>
 
               <label className="block">
-                <span className="text-sm font-bold text-[#1d1d1b]">Identificación única</span>
+                <span className="text-sm font-bold text-[#1d1d1b]">Identificación única <span className="text-[#D32F2F]">*</span></span>
                 <input
                   className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-semibold outline-none transition focus:border-[#07612d] focus:ring-4 focus:ring-[#07612d]/10"
                   inputMode="numeric"
+                  maxLength={8}
                   name="identificacionUnica"
                   onChange={updateField}
+                  pattern="[0-9]*"
                   placeholder="03359239"
                   value={form.identificacionUnica}
                 />
+                <p className="mt-2 text-xs font-semibold text-[#98a287]">Solo números, 6 u 8 dígitos.</p>
               </label>
             </div>
 
@@ -282,7 +290,7 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
           ['ubicacion', 'Ubicación', 'Corral 1'],
         ].map(([name, label, placeholder]) => (
           <label className="block" key={name}>
-            <span className="text-sm font-bold text-[#1d1d1b]">{label}</span>
+            <span className="text-sm font-bold text-[#1d1d1b]">{label} {name !== 'nombre' ? <span className="text-[#D32F2F]">*</span> : null}</span>
             <input
               className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10"
               inputMode={name === 'peso' ? 'decimal' : undefined}
@@ -297,7 +305,15 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
         ))}
 
         <label className="block">
-          <span className="text-sm font-bold text-[#1d1d1b]">Estado</span>
+          <span className="text-sm font-bold text-[#1d1d1b]">Género <span className="text-[#D32F2F]">*</span></span>
+          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="sexo" onChange={updateField} value={form.sexo}>
+            <option value="Macho">Macho</option>
+            <option value="Hembra">Hembra</option>
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-[#1d1d1b]">Estado <span className="text-[#D32F2F]">*</span></span>
           {isNewAnimal ? (
             <div className="mt-2 flex h-12 w-full items-center rounded-2xl border border-[#4CAF50]/25 bg-[#4CAF50]/10 px-4 text-sm font-bold text-[#2f8f36]">
               Activo
@@ -316,7 +332,7 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
         </label>
 
         <label className="block">
-          <span className="text-sm font-bold text-[#1d1d1b]">Fecha de ingreso</span>
+          <span className="text-sm font-bold text-[#1d1d1b]">Fecha de ingreso <span className="text-[#D32F2F]">*</span></span>
           <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="fechaIngreso" onChange={updateField} type="date" value={form.fechaIngreso} />
         </label>
       </section>

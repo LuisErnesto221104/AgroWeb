@@ -14,12 +14,45 @@ import { expenses as mockExpenses } from '../data/expenses'
 import { feeding as mockFeeding } from '../data/feeding'
 import { healthEvents as mockHealthEvents } from '../data/healthEvents'
 import { income as mockIncome } from '../data/income'
+import { readStorage } from '../utils/storage'
 
 const initialFilters = {
   tipoReporte: 'general',
   animalId: 'Todos',
   desde: '',
   hasta: '',
+}
+
+const today = new Date().toISOString().slice(0, 10)
+
+function validateReportFilters(filters) {
+  const errors = {}
+
+  if (filters.tipoReporte !== 'animal' && filters.animalId !== 'Todos') {
+    errors.animal = 'Solo se puede seleccionar un animal cuando el reporte es “Por animal”.'
+  }
+
+  if (filters.tipoReporte === 'animal' && filters.animalId === 'Todos') {
+    errors.animal = 'Selecciona un animal para generar el reporte por animal.'
+  }
+
+  if (filters.desde && filters.desde > today) {
+    errors.desde = 'La fecha inicial no puede ser futura.'
+  }
+
+  if (filters.hasta && filters.hasta > today) {
+    errors.hasta = 'La fecha final no puede ser futura.'
+  }
+
+  if (filters.hasta && !filters.desde) {
+    errors.hasta = 'Selecciona primero una fecha inicial.'
+  }
+
+  if (filters.desde && filters.hasta && filters.hasta < filters.desde) {
+    errors.rango = 'La fecha final no puede ser menor que la fecha inicial.'
+  }
+
+  return errors
 }
 
 function inDateRange(date, filters) {
@@ -29,6 +62,7 @@ function inDateRange(date, filters) {
 }
 
 function matchesAnimal(item, filters) {
+  if (filters.tipoReporte !== 'animal') return true
   if (filters.animalId === 'Todos') return true
   if (filters.animalId === 'general') return item.animalId === null
   return item.animalId === Number(filters.animalId)
@@ -162,14 +196,16 @@ function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [generatedReport, setGeneratedReport] = useState(null)
+  const filterErrors = useMemo(() => validateReportFilters(filters), [filters])
+  const hasFilterErrors = Object.keys(filterErrors).length > 0
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAnimals(mockAnimals)
-      setExpenses(mockExpenses)
+      setAnimals(readStorage('agroweb.animals', mockAnimals))
+      setExpenses(readStorage('agroweb.expenses', mockExpenses))
       setFeeding(mockFeeding)
       setHealthEvents(mockHealthEvents)
-      setIncome(mockIncome)
+      setIncome(readStorage('agroweb.income', mockIncome))
       setIsLoading(false)
     }, 350)
 
@@ -181,7 +217,7 @@ function ReportsPage() {
     const filteredIncome = income.filter((item) => inDateRange(item.fecha, filters) && matchesAnimal(item, filters))
     const filteredFeeding = feeding.filter((item) => matchesAnimal(item, filters))
     const filteredAnimals =
-      filters.animalId === 'Todos' || filters.animalId === 'general'
+      filters.tipoReporte !== 'animal' || filters.animalId === 'Todos'
         ? animals
         : animals.filter((animal) => animal.id === Number(filters.animalId))
 
@@ -227,6 +263,12 @@ function ReportsPage() {
   )
 
   function exportReport() {
+    if (hasFilterErrors) {
+      setMessage('Corrige las validaciones de filtros antes de exportar.')
+      window.setTimeout(() => setMessage(''), 3500)
+      return
+    }
+
     const popup = window.open('', '_blank')
     if (!popup) {
       setMessage('No se pudo abrir la ventana de exportación. Revisa si el navegador bloqueó ventanas emergentes.')
@@ -242,6 +284,12 @@ function ReportsPage() {
   }
 
   function generateReport() {
+    if (hasFilterErrors) {
+      setMessage('Corrige las validaciones de filtros antes de generar el reporte.')
+      window.setTimeout(() => setMessage(''), 3500)
+      return
+    }
+
     const selectedAnimal =
       filters.animalId === 'Todos'
         ? 'Todos los animales'
@@ -281,16 +329,16 @@ function ReportsPage() {
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#07612d] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(7,97,45,0.2)] sm:w-auto" onClick={generateReport} type="button">
+              <button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#07612d] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(7,97,45,0.2)] disabled:cursor-not-allowed disabled:bg-[#98a287] sm:w-auto" disabled={hasFilterErrors} onClick={generateReport} type="button">
                 <RefreshCw size={18} /> Generar Reporte
               </button>
-              <ExportReportButton onExport={exportReport} />
+              <ExportReportButton disabled={hasFilterErrors} onExport={exportReport} />
             </div>
           </div>
 
           {message ? <div className="rounded-2xl border border-[#4CAF50]/20 bg-[#4CAF50]/10 p-4 text-sm font-bold text-[#2f8f36]">{message}</div> : null}
 
-          <ReportFilters animals={animals} filters={filters} onChange={setFilters} />
+          <ReportFilters animals={animals} errors={filterErrors} filters={filters} onChange={setFilters} />
 
           {generatedReport ? (
             <ReportCard title="Reporte generado" subtitle={`Generado el ${generatedReport.generatedAt}`}>

@@ -7,6 +7,7 @@ import { animals } from '../data/animals'
 import { expenses } from '../data/expenses'
 import { feeding } from '../data/feeding'
 import { healthEvents } from '../data/healthEvents'
+import { readStorage } from '../utils/storage'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 })
 
@@ -74,14 +75,16 @@ function Home() {
   }, [])
 
   const stats = useMemo(() => {
-    const animalesActivos = animals.filter((animal) => animal.estado === 'Activo')
-    const totalGastos = expenses.reduce((acc, gasto) => acc + gasto.precio, 0)
+    const currentAnimals = readStorage('agroweb.animals', animals)
+    const currentExpenses = readStorage('agroweb.expenses', expenses)
+    const animalesActivos = currentAnimals.filter((animal) => animal.estado === 'Activo')
+    const totalGastos = currentExpenses.reduce((acc, gasto) => acc + gasto.precio, 0)
     const totalAlimentacion = feeding.reduce((acc, registro) => acc + registro.costo, 0)
     const proximosEventos = healthEvents.filter((event) => event.estado === 'Pendiente' || event.estado === 'Programado')
     const balanceGeneral = 125000 - totalGastos - totalAlimentacion
 
     return [
-      { title: 'Total de animales', value: animals.length, detail: 'Cabezas registradas en inventario', icon: PackageCheck, tone: 'primary' },
+      { title: 'Total de animales', value: currentAnimals.length, detail: 'Cabezas registradas en inventario', icon: PackageCheck, tone: 'primary' },
       { title: 'Animales activos', value: animalesActivos.length, detail: 'Listos para producción o seguimiento', icon: ShieldCheck, tone: 'success' },
       { title: 'Gastos totales', value: currency.format(totalGastos + totalAlimentacion), detail: 'Gastos operativos y alimentación', icon: WalletCards, tone: 'warning' },
       { title: 'Próximos eventos sanitarios', value: proximosEventos.length, detail: 'Vacunas, revisiones y tratamientos', icon: CalendarClock, tone: 'danger' },

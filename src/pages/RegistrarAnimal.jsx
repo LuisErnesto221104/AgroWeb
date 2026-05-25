@@ -51,7 +51,8 @@ function RegistrarAnimal() {
 
   function updateField(event) {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
+    const nextValue = name === 'arete' ? value.replace(/\D/g, '') : value
+    setForm((current) => ({ ...current, [name]: nextValue }))
   }
 
   function selectOrigin(origen) {
@@ -113,14 +114,21 @@ function RegistrarAnimal() {
       </header>
 
       <form className="mx-auto max-w-4xl space-y-8 px-4 py-8" onSubmit={handleSubmit}>
+        <div className="rounded-2xl bg-white p-4 text-sm font-semibold leading-6 text-[#1d1d1b]/70 shadow-[0_10px_30px_rgba(29,29,27,0.07)]">
+          Los campos marcados con <span className="font-bold text-[#D32F2F]">*</span> son obligatorios. En el número SINIIGA escribe solo dígitos.
+        </div>
+
         <label className="block rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(29,29,27,0.07)]">
           <span className="text-base font-bold">Numero de Arete SINIIGA *</span>
           <input
             className="mt-3 h-14 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-base font-semibold outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10"
+            inputMode="numeric"
             name="arete"
             onChange={updateField}
+            pattern="[0-9]*"
             value={form.arete}
           />
+          <p className="mt-2 text-sm font-semibold text-[#98a287]">Solo números. No se aceptan letras en este campo.</p>
         </label>
 
         <section className="rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(29,29,27,0.07)]">
@@ -143,30 +151,16 @@ function RegistrarAnimal() {
         </section>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <section className="rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(29,29,27,0.07)]">
-          <h2 className="text-base font-bold text-[#07612d]">Sexo</h2>
-          <div className="mt-5 flex flex-wrap gap-4">
-            {[
-              { label: 'M (Macho)', value: 'Macho' },
-              { label: 'H (Hembra)', value: 'Hembra' },
-            ].map((option) => {
-              const active = form.sexo === option.value
-              return (
-                <button
-                  className={`min-h-12 rounded-2xl border px-5 text-sm font-bold transition ${active ? 'border-[#07612d] bg-[#07612d] text-white shadow-[0_8px_18px_rgba(7,97,45,0.18)]' : 'border-[#98a287]/25 bg-white text-[#1d1d1b] hover:bg-[#F4F4F4]'}`}
-                  key={option.value}
-                  onClick={() => setForm((current) => ({ ...current, sexo: option.value }))}
-                  type="button"
-                >
-                  {option.label}
-                </button>
-              )
-            })}
-          </div>
-          </section>
+          <label className="block rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(29,29,27,0.07)]">
+            <span className="text-base font-bold text-[#07612d]">Género *</span>
+            <select className="mt-3 h-14 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-base font-semibold outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="sexo" onChange={updateField} value={form.sexo}>
+              <option value="Macho">Macho</option>
+              <option value="Hembra">Hembra</option>
+            </select>
+          </label>
 
           <label className="block rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(29,29,27,0.07)]">
-          <span className="text-base font-bold">Fecha de ingreso</span>
+          <span className="text-base font-bold">Fecha de ingreso *</span>
           <input
             className="mt-3 h-14 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-base text-[#1d1d1b] outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10"
             name="fecha"
@@ -179,7 +173,7 @@ function RegistrarAnimal() {
 
         <div className="grid gap-8 lg:grid-cols-2">
           <label className="block rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(29,29,27,0.07)]">
-          <span className="text-base font-bold">Peso (kg)</span>
+          <span className="text-base font-bold">Peso (kg) *</span>
           <input
             className="mt-3 h-14 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-base font-semibold outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10"
             inputMode="decimal"

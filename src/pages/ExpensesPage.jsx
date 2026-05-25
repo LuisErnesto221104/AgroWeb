@@ -12,6 +12,8 @@ import RecentExpenses from '../components/expenses/RecentExpenses'
 import { getCategoryTotals, getTopEntry, mxn } from '../components/expenses/expenseUtils'
 import { animals as mockAnimals } from '../data/animals'
 import { expenses as mockExpenses } from '../data/expenses'
+import { income as mockIncome } from '../data/income'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const initialFilters = {
   query: '',
@@ -139,8 +141,8 @@ function NewExpense({ animals, onCreate }) {
   const navigate = useNavigate()
 
   function handleSubmit(expense) {
-    onCreate(expense)
-    navigate(`/gastos/${expense.id}`, { replace: true })
+    const result = onCreate(expense)
+    navigate(result?.to ?? `/gastos/${expense.id}`, { replace: true })
   }
 
   return (
@@ -210,13 +212,16 @@ function ExpenseDetail({ expenses }) {
 function ExpensesPage() {
   const [animals, setAnimals] = useState([])
   const [expenses, setExpenses] = useState([])
+  const [income, setIncome] = useState([])
   const [filters, setFilters] = useState(initialFilters)
   const [isLoading, setIsLoading] = useState(true)
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAnimals(mockAnimals)
-      setExpenses(mockExpenses)
+      setAnimals(readStorage('agroweb.animals', mockAnimals))
+      setExpenses(readStorage('agroweb.expenses', mockExpenses))
+      setIncome(readStorage('agroweb.income', mockIncome))
       setIsLoading(false)
     }, 350)
 
@@ -224,11 +229,35 @@ function ExpensesPage() {
   }, [])
 
   function createExpense(expense) {
-    setExpenses((current) => [expense, ...current])
+    if (expense.esVenta) {
+      const incomeRecord = {
+        id: Date.now(),
+        tipo: 'Venta de animal',
+        animalId: expense.animalId,
+        animalIdentificador: expense.animalIdentificador,
+        monto: expense.precio,
+        fecha: expense.fecha,
+        descripcion: expense.descripcion,
+      }
+      const nextIncome = [incomeRecord, ...income]
+      const nextAnimals = animals.map((animal) => (animal.id === expense.animalId ? { ...animal, estado: 'Vendido', ubicacion: 'Historial de ventas' } : animal))
+      setIncome(nextIncome)
+      setAnimals(nextAnimals)
+      writeStorage('agroweb.income', nextIncome)
+      writeStorage('agroweb.animals', nextAnimals)
+      setMessage(`Venta registrada. ${expense.animalIdentificador} cambió a estado Vendido y el ingreso se reflejará en Reportes.`)
+      return { to: '/gastos' }
+    }
+
+    const nextExpenses = [expense, ...expenses]
+    setExpenses(nextExpenses)
+    writeStorage('agroweb.expenses', nextExpenses)
+    return { to: `/gastos/${expense.id}` }
   }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+        {message ? <div className="mb-5 rounded-2xl border border-[#4CAF50]/20 bg-[#4CAF50]/10 p-4 text-sm font-bold text-[#2f8f36]">{message}</div> : null}
         <Routes>
           <Route index element={<ExpensesDashboard animals={animals} expenses={expenses} filters={filters} isLoading={isLoading} onFiltersChange={setFilters} />} />
           <Route path="nuevo" element={<NewExpense animals={animals} onCreate={createExpense} />} />

@@ -8,6 +8,7 @@ import AnimalForm from '../components/animals/AnimalForm'
 import AnimalTable from '../components/animals/AnimalTable'
 import ConfirmDeleteModal from '../components/animals/ConfirmDeleteModal'
 import { animals as mockAnimals } from '../data/animals'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const initialFilters = {
   query: '',
@@ -175,7 +176,7 @@ function AnimalsPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAnimals(mockAnimals)
+      setAnimals(readStorage('agroweb.animals', mockAnimals))
       setIsLoading(false)
     }, 350)
 
@@ -183,11 +184,19 @@ function AnimalsPage() {
   }, [])
 
   function createAnimal(animal) {
-    setAnimals((current) => [animal, ...current])
+    setAnimals((current) => {
+      const nextAnimals = [animal, ...current]
+      writeStorage('agroweb.animals', nextAnimals)
+      return nextAnimals
+    })
   }
 
   function updateAnimal(updatedAnimal) {
-    setAnimals((current) => current.map((animal) => (animal.id === updatedAnimal.id ? { ...animal, ...updatedAnimal } : animal)))
+    setAnimals((current) => {
+      const nextAnimals = current.map((animal) => (animal.id === updatedAnimal.id ? { ...animal, ...updatedAnimal } : animal))
+      writeStorage('agroweb.animals', nextAnimals)
+      return nextAnimals
+    })
   }
 
   function changeAnimalStatus(estado) {
@@ -196,7 +205,11 @@ function AnimalsPage() {
       setAnimalToDelete(null)
       return
     }
-    setAnimals((current) => current.map((animal) => (animal.id === animalToDelete.id ? { ...animal, estado } : animal)))
+    setAnimals((current) => {
+      const nextAnimals = current.map((animal) => (animal.id === animalToDelete.id ? { ...animal, estado } : animal))
+      writeStorage('agroweb.animals', nextAnimals)
+      return nextAnimals
+    })
     setAnimalToDelete(null)
   }
 

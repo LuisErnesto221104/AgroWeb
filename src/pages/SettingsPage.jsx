@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ShieldCheck, UserCog, UsersRound } from 'lucide-react'
 import StatCard from '../components/StatCard'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const permissions = [
   { key: 'animales', label: 'Gestión Ganadera' },
@@ -39,9 +40,17 @@ const initialUsers = [
 ]
 
 function SettingsPage() {
-  const [users, setUsers] = useState(initialUsers)
+  const [users, setUsers] = useState(() => readStorage('agroweb.settings.users', initialUsers))
   const [selectedUserId, setSelectedUserId] = useState(initialUsers[0].id)
   const selectedUser = users.find((user) => user.id === selectedUserId) ?? users[0]
+
+  function updateUsers(updater) {
+    setUsers((current) => {
+      const nextUsers = typeof updater === 'function' ? updater(current) : updater
+      writeStorage('agroweb.settings.users', nextUsers)
+      return nextUsers
+    })
+  }
 
   const stats = useMemo(
     () => [
@@ -53,7 +62,7 @@ function SettingsPage() {
   )
 
   function togglePermission(permissionKey) {
-    setUsers((current) =>
+    updateUsers((current) =>
       current.map((user) => {
         if (user.id !== selectedUser.id) return user
         const hasPermission = user.permisos.includes(permissionKey)
@@ -66,11 +75,11 @@ function SettingsPage() {
   }
 
   function updateRole(event) {
-    setUsers((current) => current.map((user) => (user.id === selectedUser.id ? { ...user, rol: event.target.value } : user)))
+    updateUsers((current) => current.map((user) => (user.id === selectedUser.id ? { ...user, rol: event.target.value } : user)))
   }
 
   function toggleUserStatus() {
-    setUsers((current) => current.map((user) => (user.id === selectedUser.id ? { ...user, activo: !user.activo } : user)))
+    updateUsers((current) => current.map((user) => (user.id === selectedUser.id ? { ...user, activo: !user.activo } : user)))
   }
 
   return (

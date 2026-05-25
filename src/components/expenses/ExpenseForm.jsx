@@ -3,6 +3,7 @@ import { FileText, Save, Upload } from 'lucide-react'
 import { expenseCategories } from './expenseUtils'
 
 const initialForm = {
+  movimiento: 'gasto',
   tipoCompra: '',
   precio: '',
   fecha: '',
@@ -24,14 +25,28 @@ function fileToDataUrl(file) {
 function ExpenseForm({ animals, onSubmit }) {
   const [form, setForm] = useState(initialForm)
   const [receiptName, setReceiptName] = useState('')
+  const isSale = form.movimiento === 'venta'
 
   const canSubmit = useMemo(() => {
-    return Boolean(form.tipoCompra.trim() && Number(form.precio) > 0 && form.fecha && form.categoria && form.descripcion.trim())
-  }, [form])
+    const hasAnimal = !isSale || form.animalId !== 'general'
+    const hasType = isSale || form.tipoCompra.trim()
+    return Boolean(hasAnimal && hasType && Number(form.precio) > 0 && form.fecha && form.categoria && form.descripcion.trim())
+  }, [form, isSale])
 
   function updateField(event) {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
+    setForm((current) => {
+      const next = { ...current, [name]: value }
+      if (name === 'movimiento' && value === 'venta') {
+        next.tipoCompra = 'Venta de animal'
+        next.categoria = 'Venta de animal'
+      }
+      if (name === 'movimiento' && value === 'gasto') {
+        next.tipoCompra = ''
+        next.categoria = 'Alimentación'
+      }
+      return next
+    })
   }
 
   async function handleReceipt(event) {
@@ -57,6 +72,9 @@ function ExpenseForm({ animals, onSubmit }) {
       ...form,
       id: Date.now(),
       precio: Number(form.precio),
+      esVenta: isSale,
+      tipoCompra: isSale ? 'Venta de animal' : form.tipoCompra,
+      categoria: isSale ? 'Venta de animal' : form.categoria,
       animalId: form.animalId === 'general' ? null : Number(form.animalId),
       animalIdentificador: animal?.identificador ?? 'Rancho general',
     })
@@ -65,13 +83,21 @@ function ExpenseForm({ animals, onSubmit }) {
   return (
     <form className="grid gap-5" onSubmit={handleSubmit}>
       <section className="grid gap-5 rounded-2xl border border-[#98a287]/18 bg-white p-5 shadow-[0_12px_28px_rgba(29,29,27,0.07)] lg:grid-cols-2">
-        <label className="block">
-          <span className="text-sm font-bold text-[#1d1d1b]">Tipo de compra</span>
-          <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="tipoCompra" onChange={updateField} placeholder="Vacuna, Forraje, Traslado..." value={form.tipoCompra} />
+        <label className="block lg:col-span-2">
+          <span className="text-sm font-bold text-[#1d1d1b]">Tipo de movimiento</span>
+          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="movimiento" onChange={updateField} value={form.movimiento}>
+            <option value="gasto">Registrar gasto</option>
+            <option value="venta">Registrar venta de animal</option>
+          </select>
         </label>
 
         <label className="block">
-          <span className="text-sm font-bold text-[#1d1d1b]">Precio de compra</span>
+          <span className="text-sm font-bold text-[#1d1d1b]">{isSale ? 'Tipo de ingreso' : 'Tipo de compra'}</span>
+          <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" disabled={isSale} name="tipoCompra" onChange={updateField} placeholder="Vacuna, Forraje, Traslado..." value={isSale ? 'Venta de animal' : form.tipoCompra} />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-[#1d1d1b]">{isSale ? 'Monto de venta' : 'Precio de compra'}</span>
           <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" inputMode="decimal" min="0" name="precio" onChange={updateField} placeholder="1250" type="number" value={form.precio} />
         </label>
 
@@ -83,8 +109,8 @@ function ExpenseForm({ animals, onSubmit }) {
         <label className="block">
           <span className="text-sm font-bold text-[#1d1d1b]">Animal relacionado</span>
           <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="animalId" onChange={updateField} value={form.animalId}>
-            <option value="general">Rancho general</option>
-            {animals.map((animal) => (
+            <option value="general">{isSale ? 'Selecciona animal vendido' : 'Rancho general'}</option>
+            {animals.filter((animal) => !isSale || animal.estado === 'Activo').map((animal) => (
               <option key={animal.id} value={animal.id}>
                 {animal.identificador} - {animal.nombre}
               </option>
@@ -93,9 +119,9 @@ function ExpenseForm({ animals, onSubmit }) {
         </label>
 
         <label className="block lg:col-span-2">
-          <span className="text-sm font-bold text-[#1d1d1b]">Categoría del gasto</span>
-          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="categoria" onChange={updateField} value={form.categoria}>
-            {expenseCategories.map((category) => (
+          <span className="text-sm font-bold text-[#1d1d1b]">{isSale ? 'Categoría del ingreso' : 'Categoría del gasto'}</span>
+          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" disabled={isSale} name="categoria" onChange={updateField} value={form.categoria}>
+            {(isSale ? ['Venta de animal'] : expenseCategories).map((category) => (
               <option key={category} value={category}>
                 {category}
               </option>
@@ -126,7 +152,7 @@ function ExpenseForm({ animals, onSubmit }) {
       </section>
 
       <button className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-[#07612d] px-5 text-base font-bold text-white shadow-[0_10px_22px_rgba(7,97,45,0.2)] disabled:cursor-not-allowed disabled:bg-[#98a287]" disabled={!canSubmit} type="submit">
-        <Save size={19} /> Registrar Gasto
+        <Save size={19} /> {isSale ? 'Registrar Venta' : 'Registrar Gasto'}
       </button>
     </form>
   )
