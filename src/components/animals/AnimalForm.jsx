@@ -1,13 +1,65 @@
 import { useMemo, useState } from 'react'
 import { Camera, FileText, ImagePlus, Save, Upload } from 'lucide-react'
 
+const identificationDocuments = ['INE', 'Pasaporte', 'Licencia de conducir', 'Cédula profesional', 'Cartilla militar', 'Documento interno']
+
+const mexicanStates = [
+  'Aguascalientes',
+  'Baja California',
+  'Baja California Sur',
+  'Campeche',
+  'Chiapas',
+  'Chihuahua',
+  'Ciudad de México',
+  'Coahuila',
+  'Colima',
+  'Durango',
+  'Estado de México',
+  'Guanajuato',
+  'Guerrero',
+  'Hidalgo',
+  'Jalisco',
+  'Michoacán',
+  'Morelos',
+  'Nayarit',
+  'Nuevo León',
+  'Oaxaca',
+  'Puebla',
+  'Querétaro',
+  'Quintana Roo',
+  'San Luis Potosí',
+  'Sinaloa',
+  'Sonora',
+  'Tabasco',
+  'Tamaulipas',
+  'Tlaxcala',
+  'Veracruz',
+  'Yucatán',
+  'Zacatecas',
+]
+
+function getStatusOptions(currentStatus = 'Activo') {
+  if (currentStatus === 'Activo') {
+    return [
+      { value: 'Activo', label: 'Activo' },
+      { value: 'Vendido', label: 'Vendido' },
+      { value: 'Fallecido', label: 'Muerto / Fallecido' },
+    ]
+  }
+
+  if (currentStatus === 'Vendido') return [{ value: 'Vendido', label: 'Vendido' }]
+  if (currentStatus === 'Fallecido') return [{ value: 'Fallecido', label: 'Muerto / Fallecido' }]
+
+  return [{ value: currentStatus, label: currentStatus }]
+}
+
 const emptyPreviousOwner = {
   nombre: '',
-  documentoIdentificacion: '',
+  documentoIdentificacion: 'INE',
   rfc: '',
   rancho: '',
   ciudad: '',
-  estado: '',
+  estado: 'Jalisco',
   documentoPdf: null,
 }
 
@@ -50,9 +102,12 @@ function normalizeAnimal(animal) {
 }
 
 function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' }) {
-  const [form, setForm] = useState(normalizeAnimal(initialAnimal))
+  const isNewAnimal = !initialAnimal
+  const initialStatus = initialAnimal?.estado ?? 'Activo'
+  const [form, setForm] = useState({ ...normalizeAnimal(initialAnimal), estado: isNewAnimal ? 'Activo' : initialStatus })
   const [preview, setPreview] = useState(initialAnimal?.fotografia ?? '')
   const [pdfName, setPdfName] = useState(form.duenosAnteriores.documentoPdf?.name ?? '')
+  const statusOptions = getStatusOptions(initialStatus)
 
   const canSubmit = useMemo(() => {
     return Boolean(form.identificador.trim() && form.especie.trim() && form.raza.trim() && Number(form.peso) > 0 && form.fechaIngreso && form.estado && form.ubicacion.trim())
@@ -60,6 +115,7 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
 
   function updateField(event) {
     const { name, value } = event.target
+    if (name === 'estado' && isNewAnimal) return
     setForm((current) => ({ ...current, [name]: value }))
   }
 
@@ -145,13 +201,21 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
 
         <label className="block">
           <span className="text-sm font-bold text-[#1d1d1b]">Estado</span>
-          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="estado" onChange={updateField} value={form.estado}>
-            {['Activo', 'Vendido', 'Fallecido', 'Inactivo'].map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          {isNewAnimal ? (
+            <div className="mt-2 flex h-12 w-full items-center rounded-2xl border border-[#4CAF50]/25 bg-[#4CAF50]/10 px-4 text-sm font-bold text-[#2f8f36]">
+              Activo
+            </div>
+          ) : (
+            <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="estado" onChange={updateField} value={form.estado}>
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
+          {isNewAnimal ? <p className="mt-2 text-xs font-semibold text-[#98a287]">Todo animal nuevo se registra primero como activo.</p> : null}
+          {!isNewAnimal && statusOptions.length === 1 ? <p className="mt-2 text-xs font-semibold text-[#98a287]">Este estado ya no permite cambiar a otro.</p> : null}
         </label>
 
         <label className="block">
@@ -169,11 +233,9 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           {[
             ['nombre', 'Nombre del dueño anterior', 'Carlos Mendoza'],
-            ['documentoIdentificacion', 'Documento de identificación', 'INE, acta, folio o documento interno'],
             ['rfc', 'RFC', 'MECG780415K92'],
             ['rancho', 'Rancho donde es', 'Rancho La Esperanza'],
             ['ciudad', 'Ciudad', 'Tepatitlan'],
-            ['estado', 'Estado', 'Jalisco'],
           ].map(([name, label, placeholder]) => (
             <label className="block" key={name}>
               <span className="text-sm font-bold text-[#1d1d1b]">{label}</span>
@@ -186,14 +248,36 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
               />
             </label>
           ))}
+
+          <label className="block">
+            <span className="text-sm font-bold text-[#1d1d1b]">Documento de identificación</span>
+            <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="documentoIdentificacion" onChange={updatePreviousOwner} value={form.duenosAnteriores.documentoIdentificacion}>
+              {identificationDocuments.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-bold text-[#1d1d1b]">Estado de la República</span>
+            <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="estado" onChange={updatePreviousOwner} value={form.duenosAnteriores.estado}>
+              {mexicanStates.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="mt-5 rounded-2xl border border-dashed border-[#07612d]/25 bg-[#F4F4F4] p-4">
           <span className="text-sm font-bold text-[#1d1d1b]">Documento del dueño anterior en PDF</span>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-[#1d1d1b]/70">
-              <FileText size={18} className="text-[#07612d]" />
-              {pdfName || 'Sin PDF cargado'}
+            <div className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-[#1d1d1b]/70">
+              <FileText size={18} className="shrink-0 text-[#07612d]" />
+              <span className="min-w-0 break-words">{pdfName || 'Sin PDF cargado'}</span>
             </div>
             <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#07612d] px-4 text-sm font-bold text-white">
               <Upload size={18} /> Subir PDF

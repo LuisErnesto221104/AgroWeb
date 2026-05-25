@@ -35,7 +35,9 @@ function sanitizeStatus(event) {
   return isOverdue(event) ? { ...event, estado: 'Vencido' } : event
 }
 
-function HealthDetail({ events }) {
+const healthStatusOptions = ['Completado', 'Pendiente', 'Vencido']
+
+function HealthDetail({ events, onStatusChange }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const event = events.find((item) => item.id === Number(id))
@@ -58,7 +60,16 @@ function HealthDetail({ events }) {
         <button className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-[#07612d]/25 bg-white px-4 text-sm font-bold text-[#07612d]" onClick={() => navigate('/sanidad')} type="button">
           Volver
         </button>
-        <HealthStatusBadge estado={event.estado} />
+        <div className="flex flex-col gap-2 sm:items-end">
+          <HealthStatusBadge estado={event.estado} />
+          <select className="h-11 rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-bold text-[#1d1d1b] outline-none focus:border-[#07612d]" onChange={(item) => onStatusChange(event.id, item.target.value)} value={event.estado}>
+            {healthStatusOptions.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <article className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-6">
@@ -107,7 +118,7 @@ function NewHealthEvent({ animals, onCreate }) {
   )
 }
 
-function HealthDashboard({ animals, events, filters, onFiltersChange, isLoading }) {
+function HealthDashboard({ animals, events, filters, onFiltersChange, isLoading, onStatusChange }) {
   const [viewMode, setViewMode] = useState('cards')
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -178,12 +189,12 @@ function HealthDashboard({ animals, events, filters, onFiltersChange, isLoading 
           {!isLoading && filteredEvents.length > 0 && viewMode === 'cards' ? (
             <div className="grid gap-5 md:grid-cols-2">
               {filteredEvents.map((event) => (
-                <HealthEventCard event={event} key={event.id} />
+                <HealthEventCard event={event} key={event.id} onStatusChange={onStatusChange} />
               ))}
             </div>
           ) : null}
 
-          {!isLoading && filteredEvents.length > 0 && viewMode === 'table' ? <HealthEventTable events={filteredEvents} /> : null}
+          {!isLoading && filteredEvents.length > 0 && viewMode === 'table' ? <HealthEventTable events={filteredEvents} onStatusChange={onStatusChange} /> : null}
 
           {!isLoading && filteredEvents.length === 0 ? (
             <section className="rounded-2xl border border-[#98a287]/18 bg-white p-8 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
@@ -221,6 +232,10 @@ function HealthPage({ calendarOnly = false }) {
     setEvents((current) => [sanitizeStatus(event), ...current])
   }
 
+  function updateEventStatus(eventId, estado) {
+    setEvents((current) => current.map((event) => (event.id === eventId ? { ...event, estado } : event)))
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
         {calendarOnly ? (
@@ -233,9 +248,9 @@ function HealthPage({ calendarOnly = false }) {
           </section>
         ) : (
           <Routes>
-            <Route index element={<HealthDashboard animals={animals} events={events} filters={filters} isLoading={isLoading} onFiltersChange={setFilters} />} />
+            <Route index element={<HealthDashboard animals={animals} events={events} filters={filters} isLoading={isLoading} onFiltersChange={setFilters} onStatusChange={updateEventStatus} />} />
             <Route path="nuevo" element={<NewHealthEvent animals={animals} onCreate={createEvent} />} />
-            <Route path=":id" element={<HealthDetail events={events} />} />
+            <Route path=":id" element={<HealthDetail events={events} onStatusChange={updateEventStatus} />} />
           </Routes>
         )}
     </div>

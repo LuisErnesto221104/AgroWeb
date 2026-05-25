@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom'
 import { Eye } from 'lucide-react'
 import HealthStatusBadge from './HealthStatusBadge'
 
-function HealthEventTable({ events }) {
+const statusOptions = ['Completado', 'Pendiente', 'Vencido']
+
+function HealthEventTable({ events, onStatusChange }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-[#98a287]/18 bg-white shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
       <table className="w-full min-w-[960px] border-separate border-spacing-y-2 p-3 text-left text-sm">
@@ -28,7 +30,17 @@ function HealthEventTable({ events }) {
               <td className="px-3 py-3">{event.responsable}</td>
               <td className="px-3 py-3">{event.proximaAplicacion || 'Sin fecha'}</td>
               <td className="px-3 py-3">
-                <HealthStatusBadge estado={event.estado} />
+                {onStatusChange ? (
+                  <select className="h-9 rounded-xl border border-[#98a287]/25 bg-white px-3 text-xs font-bold text-[#1d1d1b] outline-none focus:border-[#07612d]" onChange={(item) => onStatusChange(event.id, item.target.value)} value={event.estado}>
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <HealthStatusBadge estado={event.estado} />
+                )}
               </td>
               <td className="rounded-r-2xl px-3 py-3">
                 <Link aria-label="Ver evento sanitario" className="inline-flex size-9 items-center justify-center rounded-xl bg-white text-[#07612d]" to={`/sanidad/${event.id}`}>

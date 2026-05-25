@@ -115,7 +115,7 @@ function ExpenseForm({ animals, onSubmit }) {
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-[#1d1d1b]/70 sm:flex-1">
               <FileText size={18} className="text-[#07612d]" />
-              <span className="truncate">{receiptName || 'Sin comprobante cargado'}</span>
+              <span className="min-w-0 break-words">{receiptName || 'Sin comprobante cargado'}</span>
             </div>
             <label className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#07612d] px-4 text-sm font-bold text-white sm:w-auto">
               <Upload size={18} /> Subir comprobante

@@ -81,6 +81,77 @@ function buildAnimalRows(animals, expenses, feeding, income) {
   })
 }
 
+function buildPrintableReport({ analytics, animals, filters, healthEvents }) {
+  const generatedAt = new Date().toLocaleString('es-MX')
+  const rows = analytics.animalRows
+    .map(
+      (row) => `
+        <tr>
+          <td>${row.identificador}</td>
+          <td>${row.estado}</td>
+          <td>${mxn.format(row.gastos)}</td>
+          <td>${mxn.format(row.alimentacion)}</td>
+          <td>${mxn.format(row.ingresos)}</td>
+          <td>${mxn.format(row.balance)}</td>
+        </tr>
+      `,
+    )
+    .join('')
+
+  return `
+    <!doctype html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8" />
+        <title>Reporte de Inversión AgroWeb</title>
+        <style>
+          body { font-family: Arial, sans-serif; color: #1d1d1b; margin: 32px; }
+          h1, h2 { color: #07612d; }
+          .meta { color: #66735d; font-size: 13px; }
+          .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0; }
+          .card { border: 1px solid #d9dfd2; border-radius: 12px; padding: 14px; background: #f7f8f5; }
+          .label { color: #66735d; font-size: 12px; text-transform: uppercase; font-weight: 700; }
+          .value { margin-top: 8px; font-size: 20px; font-weight: 800; }
+          table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+          th, td { border: 1px solid #d9dfd2; padding: 10px; text-align: left; }
+          th { background: #07612d; color: white; }
+          @media print { button { display: none; } body { margin: 18px; } }
+        </style>
+      </head>
+      <body>
+        <button onclick="window.print()">Guardar como PDF</button>
+        <h1>Reporte de Inversión AgroWeb</h1>
+        <p class="meta">Generado: ${generatedAt}</p>
+        <p class="meta">Tipo: ${filters.tipoReporte} | Desde: ${filters.desde || 'sin inicio'} | Hasta: ${filters.hasta || 'sin fin'}</p>
+        <div class="grid">
+          <div class="card"><div class="label">Animales registrados</div><div class="value">${animals.length}</div></div>
+          <div class="card"><div class="label">Total ingresos</div><div class="value">${mxn.format(analytics.totalIngresos)}</div></div>
+          <div class="card"><div class="label">Total pérdidas</div><div class="value">${mxn.format(analytics.perdidas)}</div></div>
+          <div class="card"><div class="label">Balance</div><div class="value">${mxn.format(analytics.balance)}</div></div>
+          <div class="card"><div class="label">Gastos</div><div class="value">${mxn.format(analytics.totalGastos)}</div></div>
+          <div class="card"><div class="label">Alimentación</div><div class="value">${mxn.format(analytics.totalAlimentacion)}</div></div>
+          <div class="card"><div class="label">Ganancias</div><div class="value">${mxn.format(analytics.ganancias)}</div></div>
+          <div class="card"><div class="label">Eventos sanitarios</div><div class="value">${healthEvents.length}</div></div>
+        </div>
+        <h2>Inversión por animal</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Animal</th>
+              <th>Estado</th>
+              <th>Gastos</th>
+              <th>Alimentación</th>
+              <th>Ingresos</th>
+              <th>Balance</th>
+            </tr>
+          </thead>
+          <tbody>${rows || '<tr><td colspan="6">Sin datos</td></tr>'}</tbody>
+        </table>
+      </body>
+    </html>
+  `
+}
+
 function ReportsPage() {
   const [animals, setAnimals] = useState([])
   const [expenses, setExpenses] = useState([])
@@ -155,7 +226,17 @@ function ReportsPage() {
   )
 
   function exportReport() {
-    setMessage(`Reporte "${filters.tipoReporte}" preparado para exportación PDF. La descarga real queda lista para integrar backend.`)
+    const popup = window.open('', '_blank')
+    if (!popup) {
+      setMessage('No se pudo abrir la ventana de exportación. Revisa si el navegador bloqueó ventanas emergentes.')
+      return
+    }
+
+    popup.document.write(buildPrintableReport({ analytics, animals, filters, healthEvents }))
+    popup.document.close()
+    popup.focus()
+    popup.print()
+    setMessage(`Reporte "${filters.tipoReporte}" generado. Usa "Guardar como PDF" en la ventana de impresión.`)
     window.setTimeout(() => setMessage(''), 4500)
   }
 

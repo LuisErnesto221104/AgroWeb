@@ -20,12 +20,12 @@ function ExpenseTable({ expenses }) {
         <tbody>
           {expenses.map((expense) => (
             <tr className="bg-[#F4F4F4]" key={expense.id}>
-              <td className="rounded-l-2xl px-3 py-3 font-bold text-[#07612d]">{expense.tipoCompra}</td>
-              <td className="px-3 py-3 font-semibold">{expense.categoria}</td>
-              <td className="px-3 py-3">{expense.animalIdentificador}</td>
-              <td className="px-3 py-3">{expense.fecha}</td>
-              <td className="px-3 py-3 font-bold">{mxn.format(expense.precio)}</td>
-              <td className="px-3 py-3">{expense.comprobante ? 'Cargado' : 'Sin archivo'}</td>
+              <td className="rounded-l-2xl px-3 py-3 break-words font-bold text-[#07612d]">{expense.tipoCompra}</td>
+              <td className="px-3 py-3 break-words font-semibold">{expense.categoria}</td>
+              <td className="px-3 py-3 break-words">{expense.animalIdentificador}</td>
+              <td className="px-3 py-3 break-words">{expense.fecha}</td>
+              <td className="px-3 py-3 break-words font-bold">{mxn.format(expense.precio)}</td>
+              <td className="px-3 py-3 break-words">{expense.comprobante ? 'Cargado' : 'Sin archivo'}</td>
               <td className="rounded-r-2xl px-3 py-3">
                 <Link aria-label="Ver gasto" className="inline-flex size-9 items-center justify-center rounded-xl bg-white text-[#07612d]" to={`/gastos/${expense.id}`}>
                   <Eye size={17} />

@@ -115,6 +115,7 @@ function NewAnimal({ onCreate }) {
     const newAnimal = {
       ...payload,
       id: Date.now(),
+      estado: 'Activo',
       nombre: payload.nombre || payload.identificador,
     }
     onCreate(newAnimal)
@@ -149,7 +150,8 @@ function EditAnimal({ animals, onUpdate }) {
   }
 
   function handleSubmit(payload) {
-    const updatedAnimal = { ...animal, ...payload, nombre: payload.nombre || payload.identificador }
+    const lockedStatus = ['Vendido', 'Fallecido'].includes(animal.estado)
+    const updatedAnimal = { ...animal, ...payload, estado: lockedStatus ? animal.estado : payload.estado, nombre: payload.nombre || payload.identificador }
     onUpdate(updatedAnimal)
     navigate(`/animales/${animal.id}`, { replace: true })
   }
@@ -190,6 +192,10 @@ function AnimalsPage() {
 
   function changeAnimalStatus(estado) {
     if (!animalToDelete) return
+    if (animalToDelete.estado !== 'Activo') {
+      setAnimalToDelete(null)
+      return
+    }
     setAnimals((current) => current.map((animal) => (animal.id === animalToDelete.id ? { ...animal, estado } : animal)))
     setAnimalToDelete(null)
   }

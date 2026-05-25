@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart3, Beef, CircleDollarSign, HeartPulse, Home, PackageCheck, X } from 'lucide-react'
+import { BarChart3, Beef, CircleDollarSign, HeartPulse, Home, PackageCheck, Settings, X } from 'lucide-react'
 
 const navigation = [
   { label: 'Home', to: '/', icon: Home },
@@ -8,6 +8,7 @@ const navigation = [
   { label: 'Gastos', to: '/gastos', icon: CircleDollarSign },
   { label: 'Reporte de Inversión', to: '/reportes', icon: BarChart3 },
   { label: 'Alimentación', to: '/alimentacion', icon: Beef },
+  { label: 'Configuración', to: '/configuracion', icon: Settings },
 ]
 
 function Sidebar({ isOpen, onClose }) {

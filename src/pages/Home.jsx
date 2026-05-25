@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, Beef, CalendarClock, CircleDollarSign, HeartPulse, PackageCheck, Scale, Search, ShieldCheck, TrendingUp, WalletCards } from 'lucide-react'
+import { BarChart3, Beef, CalendarClock, CircleDollarSign, HeartPulse, PackageCheck, Scale, Search, Settings, ShieldCheck, TrendingUp, WalletCards } from 'lucide-react'
 import DashboardCard from '../components/DashboardCard'
 import ModuleCard from '../components/ModuleCard'
 import StatCard from '../components/StatCard'
@@ -51,9 +51,17 @@ const modules = [
     area: 'Operación',
     accent: 'bg-[#4CAF50]/12 text-[#2f8f36]',
   },
+  {
+    title: 'Configuración',
+    description: 'Usuarios, roles y permisos para controlar el acceso a las funciones del sistema.',
+    to: '/configuracion',
+    icon: Settings,
+    area: 'Administración',
+    accent: 'bg-[#1f7a8c]/10 text-[#1f7a8c]',
+  },
 ]
 
-const filters = ['Todos', 'Operación', 'Salud', 'Finanzas']
+const filters = ['Todos', 'Operación', 'Salud', 'Finanzas', 'Administración']
 
 function Home() {
   const [searchTerm, setSearchTerm] = useState('')

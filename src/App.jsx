@@ -7,6 +7,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import ReportsPage from './pages/ReportsPage'
+import SettingsPage from './pages/SettingsPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import Layout from './components/Layout'
 
@@ -27,6 +28,7 @@ function App() {
             <Route path="/costos" element={<Navigate to="/gastos" replace />} />
             <Route path="/reportes" element={<ReportsPage />} />
             <Route path="/alimentacion/*" element={<FeedingPage />} />
+            <Route path="/configuracion" element={<SettingsPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Route>

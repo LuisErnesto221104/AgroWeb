@@ -1,5 +1,6 @@
 export const feedingStatusStyles = {
   Registrado: 'bg-[#4CAF50]/12 text-[#2f8f36] border-[#4CAF50]/25',
+  Completado: 'bg-[#4CAF50]/12 text-[#2f8f36] border-[#4CAF50]/25',
   Pendiente: 'bg-[#FFA000]/14 text-[#9b6300] border-[#FFA000]/25',
   Atrasado: 'bg-[#D32F2F]/10 text-[#D32F2F] border-[#D32F2F]/20',
 }

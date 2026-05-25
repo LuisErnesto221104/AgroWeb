@@ -1,7 +1,7 @@
 import FeedingCard from './FeedingCard'
 import FeedingTable from './FeedingTable'
 
-function FeedingHistory({ records, viewMode }) {
+function FeedingHistory({ records, viewMode, onStatusChange }) {
   if (!records.length) {
     return (
       <section className="rounded-2xl border border-[#98a287]/18 bg-white p-8 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
@@ -12,13 +12,13 @@ function FeedingHistory({ records, viewMode }) {
   }
 
   if (viewMode === 'table') {
-    return <FeedingTable records={records} />
+    return <FeedingTable records={records} onStatusChange={onStatusChange} />
   }
 
   return (
     <div className="grid gap-5 md:grid-cols-2">
       {records.map((record) => (
-        <FeedingCard key={record.id} record={record} />
+        <FeedingCard key={record.id} onStatusChange={onStatusChange} record={record} />
       ))}
     </div>
   )

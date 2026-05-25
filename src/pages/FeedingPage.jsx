@@ -20,7 +20,9 @@ const initialFilters = {
   tipoAlimento: 'Todos',
 }
 
-function FeedingDashboard({ animals, records, filters, onFiltersChange, isLoading }) {
+const feedingStatusOptions = ['Registrado', 'Pendiente', 'Atrasado', 'Completado']
+
+function FeedingDashboard({ animals, records, filters, onFiltersChange, isLoading, onStatusChange }) {
   const [viewMode, setViewMode] = useState('cards')
 
   const filteredRecords = useMemo(() => {
@@ -88,7 +90,7 @@ function FeedingDashboard({ animals, records, filters, onFiltersChange, isLoadin
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
         <div className="grid gap-5">
           {isLoading ? <div className="min-h-80 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" /> : null}
-          {!isLoading ? <FeedingHistory records={filteredRecords} viewMode={viewMode} /> : null}
+          {!isLoading ? <FeedingHistory onStatusChange={onStatusChange} records={filteredRecords} viewMode={viewMode} /> : null}
         </div>
         <FeedingAlert records={records} />
       </div>
@@ -117,7 +119,7 @@ function NewFeeding({ animals, onCreate }) {
   )
 }
 
-function FeedingDetail({ records }) {
+function FeedingDetail({ records, onStatusChange }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const record = records.find((item) => item.id === Number(id))
@@ -145,7 +147,16 @@ function FeedingDetail({ records }) {
             <h1 className="mt-2 break-words text-2xl font-bold text-[#07612d] md:text-3xl">{record.tipoAlimento}</h1>
             <p className="mt-2 text-sm text-[#1d1d1b]/70">{record.animalIdentificador}</p>
           </div>
-          <FeedingStatusBadge estado={record.estado} />
+          <div className="flex flex-col gap-2 sm:items-end">
+            <FeedingStatusBadge estado={record.estado} />
+            <select className="h-11 rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-bold text-[#1d1d1b] outline-none focus:border-[#07612d]" onChange={(item) => onStatusChange(record.id, item.target.value)} value={record.estado}>
+              {feedingStatusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -225,12 +236,16 @@ function FeedingPage() {
     setRecords((current) => [normalizeFeedingStatus(record), ...current])
   }
 
+  function updateRecordStatus(recordId, estado) {
+    setRecords((current) => current.map((record) => (record.id === recordId ? { ...record, estado } : record)))
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-3 py-5 sm:px-4 md:px-6 md:py-6">
         <Routes>
-          <Route index element={<FeedingDashboard animals={animals} filters={filters} isLoading={isLoading} onFiltersChange={setFilters} records={records} />} />
+          <Route index element={<FeedingDashboard animals={animals} filters={filters} isLoading={isLoading} onFiltersChange={setFilters} onStatusChange={updateRecordStatus} records={records} />} />
           <Route path="nuevo" element={<NewFeeding animals={animals} onCreate={createRecord} />} />
-          <Route path=":id" element={<FeedingDetail records={records} />} />
+          <Route path=":id" element={<FeedingDetail onStatusChange={updateRecordStatus} records={records} />} />
         </Routes>
     </div>
   )
