@@ -161,6 +161,7 @@ function ReportsPage() {
   const [filters, setFilters] = useState(initialFilters)
   const [isLoading, setIsLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [generatedReport, setGeneratedReport] = useState(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -240,6 +241,30 @@ function ReportsPage() {
     window.setTimeout(() => setMessage(''), 4500)
   }
 
+  function generateReport() {
+    const selectedAnimal =
+      filters.animalId === 'Todos'
+        ? 'Todos los animales'
+        : filters.animalId === 'general'
+          ? 'Rancho general'
+          : animals.find((animal) => animal.id === Number(filters.animalId))?.identificador ?? 'Animal seleccionado'
+
+    setGeneratedReport({
+      generatedAt: new Date().toLocaleString('es-MX'),
+      filters: { ...filters },
+      selectedAnimal,
+      analytics,
+      records: {
+        animals: filteredData.filteredAnimals.length,
+        expenses: filteredData.filteredExpenses.length,
+        feeding: filteredData.filteredFeeding.length,
+        income: filteredData.filteredIncome.length,
+      },
+    })
+    setMessage('Reporte generado en pantalla con los filtros seleccionados.')
+    window.setTimeout(() => setMessage(''), 3500)
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-3 py-5 sm:px-4 md:px-6 md:py-6">
         <section className="grid gap-6">
@@ -256,7 +281,7 @@ function ReportsPage() {
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#07612d] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(7,97,45,0.2)] sm:w-auto" type="button">
+              <button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#07612d] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(7,97,45,0.2)] sm:w-auto" onClick={generateReport} type="button">
                 <RefreshCw size={18} /> Generar Reporte
               </button>
               <ExportReportButton onExport={exportReport} />
@@ -266,6 +291,48 @@ function ReportsPage() {
           {message ? <div className="rounded-2xl border border-[#4CAF50]/20 bg-[#4CAF50]/10 p-4 text-sm font-bold text-[#2f8f36]">{message}</div> : null}
 
           <ReportFilters animals={animals} filters={filters} onChange={setFilters} />
+
+          {generatedReport ? (
+            <ReportCard title="Reporte generado" subtitle={`Generado el ${generatedReport.generatedAt}`}>
+              <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+                <div className="rounded-2xl bg-[#F4F4F4] p-4">
+                  <p className="text-xs font-bold uppercase text-[#98a287]">Filtros aplicados</p>
+                  <div className="mt-3 grid gap-2 text-sm font-semibold text-[#1d1d1b]/75">
+                    <span>Tipo: {generatedReport.filters.tipoReporte}</span>
+                    <span>Animal: {generatedReport.selectedAnimal}</span>
+                    <span>Desde: {generatedReport.filters.desde || 'Sin fecha inicial'}</span>
+                    <span>Hasta: {generatedReport.filters.hasta || 'Sin fecha final'}</span>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {[
+                    ['Ingresos', mxn.format(generatedReport.analytics.totalIngresos)],
+                    ['Pérdidas', mxn.format(generatedReport.analytics.perdidas)],
+                    ['Ganancias', mxn.format(generatedReport.analytics.ganancias)],
+                    ['Balance', mxn.format(generatedReport.analytics.balance)],
+                  ].map(([label, value]) => (
+                    <div className="rounded-2xl bg-[#F4F4F4] p-4" key={label}>
+                      <p className="text-xs font-bold uppercase text-[#98a287]">{label}</p>
+                      <p className="mt-2 break-words text-lg font-bold text-[#07612d]">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {[
+                  ['Animales incluidos', generatedReport.records.animals],
+                  ['Gastos encontrados', generatedReport.records.expenses],
+                  ['Registros de alimentación', generatedReport.records.feeding],
+                  ['Ingresos encontrados', generatedReport.records.income],
+                ].map(([label, value]) => (
+                  <div className="rounded-2xl border border-[#98a287]/18 bg-white p-4" key={label}>
+                    <p className="text-xs font-bold uppercase text-[#98a287]">{label}</p>
+                    <p className="mt-2 text-2xl font-bold text-[#1d1d1b]">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </ReportCard>
+          ) : null}
 
           {isLoading ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -108,14 +108,20 @@ function AnimalDetail({ animals, onRequestDelete }) {
                   <FileText size={16} /> Documento PDF
                 </span>
                 {previousOwner.documentoPdf?.dataUrl ? (
-                  <a
-                    className="mt-3 inline-flex min-h-11 max-w-full items-center gap-2 rounded-xl bg-[#07612d] px-4 text-sm font-bold text-white"
-                    href={previousOwner.documentoPdf.dataUrl}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    <Download size={17} /> <span className="truncate">Ver {previousOwner.documentoPdf.name}</span>
-                  </a>
+                  <div className="mt-3 overflow-hidden rounded-2xl border border-[#98a287]/18 bg-[#F4F4F4]">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#98a287]/18 bg-white px-4 py-3">
+                      <p className="min-w-0 break-words text-sm font-bold text-[#1d1d1b]">{previousOwner.documentoPdf.name}</p>
+                      <a
+                        className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#07612d] px-4 text-sm font-bold text-white"
+                        href={previousOwner.documentoPdf.dataUrl}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        <Download size={17} /> Abrir PDF
+                      </a>
+                    </div>
+                    <iframe className="h-96 w-full bg-white" src={previousOwner.documentoPdf.dataUrl} title={`Documento del dueño anterior de ${animal.identificador}`} />
+                  </div>
                 ) : (
                   <p className="mt-2 text-sm font-semibold text-[#1d1d1b]/70">Sin PDF cargado.</p>
                 )}

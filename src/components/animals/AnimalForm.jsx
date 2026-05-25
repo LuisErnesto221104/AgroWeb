@@ -381,6 +381,17 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
               <input accept="application/pdf,.pdf" className="sr-only" onChange={handleOwnerPdf} type="file" />
             </label>
           </div>
+          {form.duenosAnteriores.documentoPdf?.dataUrl ? (
+            <div className="mt-4 overflow-hidden rounded-2xl border border-[#98a287]/18 bg-white">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#98a287]/18 px-4 py-3">
+                <span className="text-sm font-bold text-[#07612d]">Previsualización del documento</span>
+                <a className="text-sm font-bold text-[#07612d]" href={form.duenosAnteriores.documentoPdf.dataUrl} rel="noreferrer" target="_blank">
+                  Abrir en pestaña
+                </a>
+              </div>
+              <iframe className="h-80 w-full bg-white" src={form.duenosAnteriores.documentoPdf.dataUrl} title="Previsualización del documento del dueño anterior" />
+            </div>
+          ) : null}
         </div>
       </section>
 
