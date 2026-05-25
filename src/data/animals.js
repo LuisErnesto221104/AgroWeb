@@ -1,8 +1,8 @@
 export const animals = [
   {
     id: 1,
-    identificador: 'BOV-001',
-    arete: 'BOV-001',
+    identificador: 'MX011400000001',
+    arete: 'MX011400000001',
     nombre: 'Luna',
     especie: 'Bovino',
     raza: 'Angus',
@@ -24,8 +24,8 @@ export const animals = [
   },
   {
     id: 2,
-    identificador: 'BOV-002',
-    arete: 'BOV-002',
+    identificador: 'MX010500000002',
+    arete: 'MX010500000002',
     nombre: 'Titan',
     especie: 'Bovino',
     raza: 'Brahman',
@@ -47,8 +47,8 @@ export const animals = [
   },
   {
     id: 3,
-    identificador: 'OVI-014',
-    arete: 'OVI-014',
+    identificador: 'MX021100000014',
+    arete: 'MX021100000014',
     nombre: 'Mora',
     especie: 'Ovino',
     raza: 'Dorper',
@@ -70,8 +70,8 @@ export const animals = [
   },
   {
     id: 4,
-    identificador: 'CAP-008',
-    arete: 'CAP-008',
+    identificador: 'MX031400000008',
+    arete: 'MX031400000008',
     nombre: 'Nube',
     especie: 'Caprino',
     raza: 'Boer',
@@ -93,8 +93,8 @@ export const animals = [
   },
   {
     id: 5,
-    identificador: 'BOV-005',
-    arete: 'BOV-005',
+    identificador: 'MX010100000005',
+    arete: 'MX010100000005',
     nombre: 'Canela',
     especie: 'Bovino',
     raza: 'Hereford',
@@ -116,8 +116,8 @@ export const animals = [
   },
   {
     id: 6,
-    identificador: 'BOV-006',
-    arete: 'BOV-006',
+    identificador: 'MX011400000006',
+    arete: 'MX011400000006',
     nombre: 'Estrella',
     especie: 'Bovino',
     raza: 'Holstein',
@@ -139,8 +139,8 @@ export const animals = [
   },
   {
     id: 7,
-    identificador: 'EQU-003',
-    arete: 'EQU-003',
+    identificador: 'MX051400000003',
+    arete: 'MX051400000003',
     nombre: 'Relámpago',
     especie: 'Equino',
     raza: 'Cuarto de Milla',
@@ -162,8 +162,8 @@ export const animals = [
   },
   {
     id: 8,
-    identificador: 'POR-011',
-    arete: 'POR-011',
+    identificador: 'MX041100000011',
+    arete: 'MX041100000011',
     nombre: 'Bruno',
     especie: 'Porcino',
     raza: 'Yorkshire',

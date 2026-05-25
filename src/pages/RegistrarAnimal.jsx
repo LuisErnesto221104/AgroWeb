@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BarChart3, Camera, Home, ImagePlus, PackageCheck, Syringe, WalletCards } from 'lucide-react'
+import { ArrowLeft, BarChart3, Home, ImagePlus, PackageCheck, Syringe, WalletCards } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import { fetchDashboard } from '../store/dashboardSlice'
 import { useAppDispatch } from '../store/hooks'
@@ -220,10 +220,6 @@ function RegistrarAnimal() {
         <section className="rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(29,29,27,0.07)]">
           <h2 className="text-base font-bold text-[#07612d]">Fotografía del animal</h2>
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            <label className="flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-[#07612d] px-5 text-center text-base font-bold text-white shadow-[0_10px_22px_rgba(7,97,45,0.2)]">
-              <Camera size={22} /> Tomar fotografía
-              <input accept="image/*" capture="environment" className="sr-only" onChange={handleImage} type="file" />
-            </label>
             <label className="flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-2xl border border-[#07612d]/25 bg-white px-5 text-center text-base font-bold text-[#07612d]">
               <ImagePlus size={22} /> Seleccionar imagen
               <input accept="image/*" className="sr-only" onChange={handleImage} type="file" />

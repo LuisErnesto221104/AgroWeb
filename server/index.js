@@ -34,7 +34,7 @@ const db = {
   animales: [
     {
       id: 1,
-      arete: 'MX-1028',
+      arete: 'MX011400001028',
       especie: 'Vaca',
       sexo: 'Hembra',
       fecha: '2022-04-12',
@@ -46,7 +46,7 @@ const db = {
     },
     {
       id: 2,
-      arete: 'MX-1044',
+      arete: 'MX010500001044',
       especie: 'Toro',
       sexo: 'Macho',
       fecha: '2021-06-22',
@@ -58,7 +58,7 @@ const db = {
     },
     {
       id: 3,
-      arete: 'SIN-7782',
+      arete: 'MX011500007782',
       especie: 'Vaca',
       sexo: 'Hembra',
       fecha: '2023-02-18',
