@@ -1,8 +1,17 @@
 import { Search } from 'lucide-react';
+import { catalogoAnimal } from '../../data/animalCatalog';
 
 function FiltrosAnimal({ filters: filtros, onChange: alCambiar, options: opciones }) {
+  const razasDisponibles = filtros.especie !== 'Todos' ? catalogoAnimal[filtros.especie]?.razas ?? [] : opciones.razas;
+
   function actualizarCampo(evento) {
-    alCambiar({ ...filtros, [evento.target.name]: evento.target.value });
+    const { name, value } = evento.target;
+    const filtrosSiguientes = { ...filtros, [name]: value };
+    if (name === 'especie') {
+      const razasDeEspecie = value !== 'Todos' ? catalogoAnimal[value]?.razas ?? [] : opciones.razas;
+      if (filtros.raza !== 'Todos' && !razasDeEspecie.includes(filtros.raza)) filtrosSiguientes.raza = 'Todos';
+    }
+    alCambiar(filtrosSiguientes);
   }
 
   return (
@@ -22,7 +31,7 @@ function FiltrosAnimal({ filters: filtros, onChange: alCambiar, options: opcione
         {[
         ['estado', 'Estado', opciones.estados],
         ['especie', 'Especie', opciones.especies],
-        ['raza', 'Raza', opciones.razas],
+        ['raza', 'Raza', razasDisponibles],
         ['ubicacion', 'Ubicación', opciones.ubicaciones]].
         map(([name, etiqueta, valores]) =>
         <label className="block" key={name}>

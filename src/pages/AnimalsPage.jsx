@@ -7,6 +7,7 @@ import FiltrosAnimal from '../components/animals/AnimalFilters';
 import FormularioAnimal from '../components/animals/AnimalForm';
 import TablaAnimal from '../components/animals/AnimalTable';
 import ModalConfirmarBaja from '../components/animals/ConfirmDeleteModal';
+import { catalogoAnimal } from '../data/animalCatalog';
 import { animales as mockAnimals } from '../data/animals';
 import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
 
@@ -28,8 +29,8 @@ function ListaAnimales({ animals: animales, filters: filtros, onFiltersChange: a
   const opciones = useMemo(
     () => ({
       estados: valoresUnicos(animales, 'estado'),
-      especies: valoresUnicos(animales, 'especie'),
-      razas: valoresUnicos(animales, 'raza'),
+      especies: Object.keys(catalogoAnimal),
+      razas: Object.values(catalogoAnimal).flatMap((catalogo) => catalogo.razas).toSorted((a, b) => a.localeCompare(b)),
       ubicaciones: valoresUnicos(animales, 'ubicacion')
     }),
     [animales]

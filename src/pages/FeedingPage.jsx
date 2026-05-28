@@ -17,6 +17,8 @@ import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
 const filtrosIniciales = {
   query: '',
   animalId: 'Todos',
+  especie: 'Todos',
+  raza: 'Todos',
   fecha: '',
   tipoAlimento: 'Todos'
 };
@@ -25,10 +27,12 @@ const opcionesEstadoAlimentacion = ['Registrado', 'Pendiente', 'Atrasado', 'Comp
 
 function PanelAlimentacion({ animals: animales, records: registros, filters: filtros, onFiltersChange: alCambiarFiltros, isLoading: cargando, onStatusChange: alCambiarEstado }) {
   const [modoVista, setViewMode] = useState('cards');
+  const animalesPorId = useMemo(() => new Map(animales.map((animal) => [animal.id, animal])), [animales]);
 
   const registrosFiltrados = useMemo(() => {
     const consulta = filtros.query.trim().toLowerCase();
     return registros.filter((registro) => {
+      const animalRelacionado = animalesPorId.get(registro.animalId);
       const coincideConsulta =
       !consulta ||
       [registro.animalIdentificador, registro.responsable, registro.observaciones, registro.grupo].some((valor) => String(valor ?? '').toLowerCase().includes(consulta));
@@ -36,11 +40,13 @@ function PanelAlimentacion({ animals: animales, records: registros, filters: fil
       filtros.animalId === 'Todos' ||
       filtros.animalId === 'grupo' && registro.animalId === null ||
       registro.animalId === Number(filtros.animalId);
+      const coincideEspecie = filtros.especie === 'Todos' || animalRelacionado?.especie === filtros.especie;
+      const coincideRaza = filtros.raza === 'Todos' || animalRelacionado?.raza === filtros.raza;
       const coincideFecha = !filtros.fecha || registro.fecha === filtros.fecha;
       const coincideAlimento = filtros.tipoAlimento === 'Todos' || registro.tipoAlimento === filtros.tipoAlimento;
-      return coincideConsulta && coincideAnimal && coincideFecha && coincideAlimento;
+      return coincideConsulta && coincideAnimal && coincideEspecie && coincideRaza && coincideFecha && coincideAlimento;
     });
-  }, [filtros, registros]);
+  }, [animalesPorId, filtros, registros]);
 
   const consumoTotal = registros.reduce((suma, registro) => suma + Number(registro.cantidad), 0);
   const costoTotal = registros.reduce((suma, registro) => suma + Number(registro.costoAproximado), 0);

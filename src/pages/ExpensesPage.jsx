@@ -19,6 +19,8 @@ import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
 const filtrosIniciales = {
   query: '',
   animalId: 'Todos',
+  especie: 'Todos',
+  raza: 'Todos',
   fecha: '',
   categoria: 'Todos',
   tipoCompra: ''
@@ -37,12 +39,14 @@ function obtenerInversionAnimal(gastos) {
 function PanelGastos({ animals: animales, expenses: gastos, filters: filtros, onFiltersChange: alCambiarFiltros, isLoading: cargando }) {
   const [modoVista, setViewMode] = useState('cards');
   const operationalExpenses = useMemo(() => gastos.filter((gasto) => !gasto.esVenta), [gastos]);
+  const animalesPorId = useMemo(() => new Map(animales.map((animal) => [animal.id, animal])), [animales]);
 
   const gastosFiltrados = useMemo(() => {
     const consulta = filtros.query.trim().toLowerCase();
     const tipo = filtros.tipoCompra.trim().toLowerCase();
 
     return gastos.filter((gasto) => {
+      const animalRelacionado = animalesPorId.get(gasto.animalId);
       const coincideConsulta =
       !consulta ||
       [gasto.tipoCompra, gasto.descripcion, gasto.categoria, gasto.animalIdentificador].some((valor) => String(valor).toLowerCase().includes(consulta));
@@ -50,12 +54,14 @@ function PanelGastos({ animals: animales, expenses: gastos, filters: filtros, on
       filtros.animalId === 'Todos' ||
       filtros.animalId === 'general' && gasto.animalId === null ||
       gasto.animalId === Number(filtros.animalId);
+      const coincideEspecie = filtros.especie === 'Todos' || animalRelacionado?.especie === filtros.especie;
+      const coincideRaza = filtros.raza === 'Todos' || animalRelacionado?.raza === filtros.raza;
       const coincideFecha = !filtros.fecha || gasto.fecha === filtros.fecha;
       const matchesCategoria = filtros.categoria === 'Todos' || gasto.categoria === filtros.categoria;
       const coincideTipo = !tipo || gasto.tipoCompra.toLowerCase().includes(tipo);
-      return coincideConsulta && coincideAnimal && coincideFecha && matchesCategoria && coincideTipo;
+      return coincideConsulta && coincideAnimal && coincideEspecie && coincideRaza && coincideFecha && matchesCategoria && coincideTipo;
     });
-  }, [gastos, filtros]);
+  }, [animalesPorId, gastos, filtros]);
 
   const estadisticas = useMemo(() => {
     const total = operationalExpenses.reduce((suma, gasto) => suma + Number(gasto.precio), 0);

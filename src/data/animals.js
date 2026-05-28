@@ -97,7 +97,7 @@ export const animales = [
     arete: 'MX010100000005',
     nombre: 'Canela',
     especie: 'Bovino',
-    raza: 'Hereford',
+    raza: 'Criollo',
     peso: 506,
     duenosAnteriores: {
       nombre: 'Hector Alvarez',

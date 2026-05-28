@@ -566,8 +566,8 @@ function PaginaConfiguracion() {
         </section>
       </section>
       {detalleRanchoSeleccionado ?
-      <div className="fixed inset-0 z-50 grid place-items-center bg-[#1d1d1b]/45 p-4">
-          <section className="max-h-[88vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white p-5 shadow-[0_24px_60px_rgba(29,29,27,0.22)]">
+      <div className="fixed inset-0 z-[2000] grid place-items-center bg-[#1d1d1b]/45 p-4">
+          <section className="relative z-[2001] max-h-[88vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white p-5 shadow-[0_24px_60px_rgba(29,29,27,0.22)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <p className="text-xs font-bold uppercase text-[#98a287]">Detalle del rancho</p>

@@ -19,6 +19,8 @@ import { leerAlmacenamiento } from '../utils/storage';
 const filtrosIniciales = {
   tipoReporte: 'general',
   animalId: 'Todos',
+  especie: 'Todos',
+  raza: 'Todos',
   desde: '',
   hasta: ''
 };
@@ -66,6 +68,13 @@ function coincideAnimal(elemento, filtros) {
   if (filtros.animalId === 'Todos') return true;
   if (filtros.animalId === 'general') return elemento.animalId === null;
   return elemento.animalId === Number(filtros.animalId);
+}
+
+function coincideEspecieYRaza(elemento, filtros, animalesPorId) {
+  const animalRelacionado = animalesPorId.get(elemento.animalId);
+  const coincideEspecie = filtros.especie === 'Todos' || animalRelacionado?.especie === filtros.especie;
+  const coincideRaza = filtros.raza === 'Todos' || animalRelacionado?.raza === filtros.raza;
+  return coincideEspecie && coincideRaza;
 }
 
 function claveMes(fecha) {
@@ -156,7 +165,7 @@ function crearReporteImprimible({ analytics: analitica, animals: animales, filte
         <button onclick="window.print()">Guardar como PDF</button>
         <h1>Reporte de Inversión AgroWeb</h1>
         <p class="meta">Generado: ${generadoEn}</p>
-        <p class="meta">Tipo: ${filtros.tipoReporte} | Desde: ${filtros.desde || 'sin inicio'} | Hasta: ${filtros.hasta || 'sin fin'}</p>
+        <p class="meta">Tipo: ${filtros.tipoReporte} | Especie: ${filtros.especie || 'Todas'} | Raza: ${filtros.raza || 'Todas'} | Desde: ${filtros.desde || 'sin inicio'} | Hasta: ${filtros.hasta || 'sin fin'}</p>
         <div class="grid">
           <div class="card"><div class="label">Animales registrados</div><div class="value">${animales.length}</div></div>
           <div class="card"><div class="label">Total ingresos</div><div class="value">${mxn.format(analitica.totalIngresos)}</div></div>
@@ -198,6 +207,7 @@ function PaginaReportes() {
   const [generatedReport, setGeneratedReport] = useState(null);
   const erroresFiltro = useMemo(() => validarFiltrosReporte(filtros), [filtros]);
   const hasFilterErrors = Object.keys(erroresFiltro).length > 0;
+  const animalesPorId = useMemo(() => new Map(animales.map((animal) => [animal.id, animal])), [animales]);
 
   useEffect(() => {
     const temporizador = window.setTimeout(() => {
@@ -213,16 +223,19 @@ function PaginaReportes() {
   }, []);
 
   const datosFiltrados = useMemo(() => {
-    const gastosFiltrados = gastos.filter((gasto) => !gasto.esVenta && enRangoFechas(gasto.fecha, filtros) && coincideAnimal(gasto, filtros));
-    const ingresosFiltrados = ingresos.filter((elemento) => enRangoFechas(elemento.fecha, filtros) && coincideAnimal(elemento, filtros));
-    const alimentacionFiltrada = alimentacion.filter((elemento) => coincideAnimal(elemento, filtros));
+    const gastosFiltrados = gastos.filter((gasto) => !gasto.esVenta && enRangoFechas(gasto.fecha, filtros) && coincideAnimal(gasto, filtros) && coincideEspecieYRaza(gasto, filtros, animalesPorId));
+    const ingresosFiltrados = ingresos.filter((elemento) => enRangoFechas(elemento.fecha, filtros) && coincideAnimal(elemento, filtros) && coincideEspecieYRaza(elemento, filtros, animalesPorId));
+    const alimentacionFiltrada = alimentacion.filter((elemento) => enRangoFechas(elemento.fecha, filtros) && coincideAnimal(elemento, filtros) && coincideEspecieYRaza(elemento, filtros, animalesPorId));
     const animalesFiltrados =
-    filtros.tipoReporte !== 'animal' || filtros.animalId === 'Todos' ?
-    animales :
-    animales.filter((animal) => animal.id === Number(filtros.animalId));
+    animales.filter((animal) => {
+      const coincideAnimalSeleccionado = filtros.tipoReporte !== 'animal' || filtros.animalId === 'Todos' || animal.id === Number(filtros.animalId);
+      const coincideEspecie = filtros.especie === 'Todos' || animal.especie === filtros.especie;
+      const coincideRaza = filtros.raza === 'Todos' || animal.raza === filtros.raza;
+      return coincideAnimalSeleccionado && coincideEspecie && coincideRaza;
+    });
 
     return { filteredExpenses: gastosFiltrados, filteredIncome: ingresosFiltrados, filteredFeeding: alimentacionFiltrada, filteredAnimals: animalesFiltrados };
-  }, [animales, gastos, alimentacion, filtros, ingresos]);
+  }, [animales, animalesPorId, gastos, alimentacion, filtros, ingresos]);
 
   const analitica = useMemo(() => {
     const totalGastos = datosFiltrados.filteredExpenses.reduce((acc, elemento) => acc + Number(elemento.precio), 0);
@@ -275,11 +288,15 @@ function PaginaReportes() {
       return;
     }
 
-    popup.document.write(crearReporteImprimible({ analytics: analitica, animals: animales, filters: filtros, healthEvents: eventosSanitarios }));
-    popup.document.close();
-    popup.focus();
-    popup.print();
-    establecerMensaje(`Reporte "${filtros.tipoReporte}" generado. Usa "Guardar como PDF" en la ventana de impresión.`);
+    try {
+      popup.document.write(crearReporteImprimible({ analytics: analitica, animals: animales, filters: filtros, healthEvents: eventosSanitarios }));
+      popup.document.close();
+      popup.focus();
+      establecerMensaje(`Reporte "${filtros.tipoReporte}" abierto en una nueva ventana. Presiona "Guardar como PDF" cuando quieras exportarlo.`);
+    } catch (errorExportacion) {
+      popup.close();
+      establecerMensaje(`No se pudo exportar el reporte: ${errorExportacion.message}`);
+    }
     window.setTimeout(() => establecerMensaje(''), 4500);
   }
 
@@ -295,7 +312,10 @@ function PaginaReportes() {
     'Todos los animales' :
     filtros.animalId === 'general' ?
     'Rancho general' :
-    animales.find((animal) => animal.id === Number(filtros.animalId))?.identificador ?? 'Animal seleccionado';
+    (() => {
+      const animalEncontrado = animales.find((animal) => animal.id === Number(filtros.animalId));
+      return animalEncontrado ? `${animalEncontrado.identificador} - ${animalEncontrado.nombre}` : 'Animal seleccionado';
+    })();
 
     setGeneratedReport({
       generatedAt: new Date().toLocaleString('es-MX'),
@@ -348,6 +368,8 @@ function PaginaReportes() {
                   <div className="mt-3 grid gap-2 text-sm font-semibold text-[#1d1d1b]/75">
                     <span>Tipo: {generatedReport.filters.tipoReporte}</span>
                     <span>Animal: {generatedReport.selectedAnimal}</span>
+                    <span>Especie: {generatedReport.filters.especie}</span>
+                    <span>Raza: {generatedReport.filters.raza}</span>
                     <span>Desde: {generatedReport.filters.desde || 'Sin fecha inicial'}</span>
                     <span>Hasta: {generatedReport.filters.hasta || 'Sin fecha final'}</span>
                   </div>

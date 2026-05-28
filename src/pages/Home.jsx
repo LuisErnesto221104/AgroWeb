@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Beef, CircleDollarSign, HeartPulse, PackageCheck, Search, Settings, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import TarjetaPanel from '../components/DashboardCard';
-import TarjetaModulo from '../components/ModuleCard';
 import { catalogoAnimal } from '../data/animalCatalog';
 import { animales } from '../data/animals';
 import { gastos } from '../data/expenses';
@@ -11,62 +10,7 @@ import { leerAlmacenamiento } from '../utils/storage';
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 
-const modulos = [
-{
-  title: 'Gestión Ganadera',
-  description: 'Inventario, registro de animales, estados productivos y seguimiento general del hato.',
-  to: '/animales',
-  icon: PackageCheck,
-  area: 'Operación',
-  accent: 'bg-[#07612d]/10 text-[#07612d]'
-},
-{
-  title: 'Sanidad',
-  description: 'Vacunas, tratamientos, revisiones clínicas y próximos eventos sanitarios.',
-  to: '/sanidad',
-  icon: HeartPulse,
-  area: 'Salud',
-  accent: 'bg-[#D32F2F]/10 text-[#D32F2F]'
-},
-{
-  title: 'Gastos',
-  description: 'Control de egresos por medicinas, mantenimiento, transporte y operación diaria.',
-  to: '/gastos',
-  icon: CircleDollarSign,
-  area: 'Finanzas',
-  accent: 'bg-[#FFA000]/14 text-[#9b6300]'
-},
-{
-  title: 'Reporte de Inversión',
-  description: 'Resumen financiero del rancho para analizar inversión, gastos y balance general.',
-  to: '/reportes',
-  icon: BarChart3,
-  area: 'Finanzas',
-  accent: 'bg-[#1f7a8c]/10 text-[#1f7a8c]'
-},
-{
-  title: 'Control de Alimentación',
-  description: 'Registro de alimento, raciones, costos y consumo por animal o grupo.',
-  to: '/alimentacion',
-  icon: Beef,
-  area: 'Operación',
-  accent: 'bg-[#4CAF50]/12 text-[#2f8f36]'
-},
-{
-  title: 'Configuración',
-  description: 'Usuarios, roles y permisos para controlar el acceso a las funciones del sistema.',
-  to: '/configuracion',
-  icon: Settings,
-  area: 'Administración',
-  accent: 'bg-[#1f7a8c]/10 text-[#1f7a8c]'
-}];
-
-
-const filtros = ['Todos', 'Operación', 'Salud', 'Finanzas', 'Administración'];
-
 function Inicio() {
-  const [terminoBusqueda, establecerTerminoBusqueda] = useState('');
-  const [areaSeleccionada, establecerAreaSeleccionada] = useState('Todos');
   const [cargando, establecerCargando] = useState(true);
   const [especieSeleccionada, establecerEspecieSeleccionada] = useState('Bovino');
 
@@ -98,15 +42,6 @@ function Inicio() {
 
   const resumenSeleccionado = resumenesTipo.find((summary) => summary.species === especieSeleccionada) ?? resumenesTipo[0];
 
-  const modulosFiltrados = useMemo(() => {
-    const consulta = terminoBusqueda.trim().toLowerCase();
-    return modulos.filter((module) => {
-      const coincideArea = areaSeleccionada === 'Todos' || module.area === areaSeleccionada;
-      const coincideConsulta = [module.title, module.description, module.area].some((valor) => valor.toLowerCase().includes(consulta));
-      return coincideArea && coincideConsulta;
-    });
-  }, [terminoBusqueda, areaSeleccionada]);
-
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 md:px-6">
         <TarjetaPanel className="overflow-hidden">
@@ -120,36 +55,16 @@ function Inicio() {
               <p className="mt-4 max-w-2xl text-base leading-7 text-[#1d1d1b]/72 md:text-lg">
                 Sistema web para la gestión ganadera, sanitaria, alimenticia y financiera del rancho
               </p>
-              <div className="mt-7 grid gap-3 sm:flex sm:flex-wrap">
-                {filtros.map((filtro) =>
-              <button
-                className={`min-h-10 rounded-full px-4 text-sm font-bold transition ${
-                areaSeleccionada === filtro ? 'bg-[#07612d] text-white shadow-[0_10px_22px_rgba(7,97,45,0.18)]' : 'bg-[#F4F4F4] text-[#1d1d1b]/70 hover:text-[#07612d]'}`
-                }
-                key={filtro}
-                onClick={() => establecerAreaSeleccionada(filtro)}
-                type="button">
-                
-                    {filtro}
-                  </button>
-              )}
-              </div>
-              <label className="relative mt-5 block max-w-xl">
-                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#98a287]" size={18} />
-                <input
-                className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] pl-10 pr-4 text-sm outline-none transition placeholder:text-[#98a287] focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10"
-                onChange={(evento) => establecerTerminoBusqueda(evento.target.value)}
-                placeholder="Buscar módulo..."
-                value={terminoBusqueda} />
-              
-              </label>
+              <p className="mt-5 max-w-xl rounded-2xl bg-[#07612d]/8 px-4 py-3 text-sm font-semibold leading-6 text-[#07612d]">
+                El menú lateral mantiene la navegación principal siempre disponible; este inicio se concentra en el estado del inventario por especie.
+              </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl bg-[#07612d] p-5 text-white">
-                <p className="text-sm font-semibold text-white/75">Módulos activos</p>
-                <strong className="mt-2 block text-4xl font-bold">{modulos.length}</strong>
-                <p className="mt-3 text-sm leading-6 text-white/78">Accesos principales del sistema disponibles desde este Home.</p>
+                <p className="text-sm font-semibold text-white/75">Especies gestionadas</p>
+                <strong className="mt-2 block text-4xl font-bold">{Object.keys(catalogoAnimal).length}</strong>
+                <p className="mt-3 text-sm leading-6 text-white/78">Catálogo productivo configurado para el rancho.</p>
               </div>
               <div className="rounded-2xl bg-[#F4F4F4] p-5">
                 <p className="text-sm font-semibold text-[#98a287]">Alimentación registrada</p>
@@ -210,28 +125,6 @@ function Inicio() {
                   </div>
                 </div>
               </div>
-            </TarjetaPanel> :
-        null}
-        </section>
-
-        <section>
-          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-[#07612d]">Accesos rápidos</h2>
-              <p className="mt-1 text-sm text-[#98a287]">Entra a cada módulo sin recargar la página usando React Router.</p>
-            </div>
-            <span className="text-sm font-bold text-[#07612d]">{modulosFiltrados.length} módulos visibles</span>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {modulosFiltrados.map((module) =>
-          <TarjetaModulo key={module.to} {...module} />
-          )}
-          </div>
-
-          {modulosFiltrados.length === 0 ?
-        <TarjetaPanel className="mt-5 p-6 text-sm font-semibold text-[#1d1d1b]/70">
-              No hay módulos que coincidan con "{terminoBusqueda}" en el filtro {areaSeleccionada}.
             </TarjetaPanel> :
         null}
         </section>

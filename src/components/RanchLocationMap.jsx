@@ -96,8 +96,8 @@ function MapaUbicacionRancho({ accuracy: precision, value: valor, onChange: alCa
   }, [precision, coordenadas.lat, coordenadas.lng, valor?.lat, valor?.lng]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4]">
-      <div className="h-80 w-full" ref={referenciaContenedor} />
+    <div className="relative z-0 overflow-hidden rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4]">
+      <div className="relative z-0 h-80 w-full" ref={referenciaContenedor} />
       <div className="flex flex-col gap-1 border-t border-[#98a287]/18 bg-white px-4 py-3 text-xs font-bold text-[#1d1d1b]/70 sm:flex-row sm:items-center sm:justify-between">
         <span>Haz click en el mapa o arrastra el marcador.</span>
         <span className="text-[#07612d]">

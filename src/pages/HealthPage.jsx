@@ -17,6 +17,8 @@ const hoy = '2026-05-23';
 
 const filtrosIniciales = {
   animalId: 'Todos',
+  especie: 'Todos',
+  raza: 'Todos',
   tipo: 'Todos',
   estado: 'Todos',
   fecha: ''
@@ -121,15 +123,19 @@ function NuevoEventoSanitario({ animals: animales, onCreate: alCrear }) {
 
 function PanelSanidad({ animals: animales, events: eventos, filters: filtros, onFiltersChange: alCambiarFiltros, isLoading: cargando, onStatusChange: alCambiarEstado }) {
   const [modoVista, setViewMode] = useState('cards');
+  const animalesPorId = useMemo(() => new Map(animales.map((animal) => [animal.id, animal])), [animales]);
   const eventosFiltrados = useMemo(() => {
     return eventos.filter((evento) => {
+      const animalRelacionado = animalesPorId.get(evento.animalId);
       const coincideAnimal = filtros.animalId === 'Todos' || evento.animalId === Number(filtros.animalId);
+      const coincideEspecie = filtros.especie === 'Todos' || animalRelacionado?.especie === filtros.especie;
+      const coincideRaza = filtros.raza === 'Todos' || animalRelacionado?.raza === filtros.raza;
       const coincideTipo = filtros.tipo === 'Todos' || evento.tipo === filtros.tipo;
       const coincideEstado = filtros.estado === 'Todos' || evento.estado === filtros.estado;
       const coincideFecha = !filtros.fecha || evento.fecha === filtros.fecha || evento.proximaAplicacion === filtros.fecha;
-      return coincideAnimal && coincideTipo && coincideEstado && coincideFecha;
+      return coincideAnimal && coincideEspecie && coincideRaza && coincideTipo && coincideEstado && coincideFecha;
     });
-  }, [eventos, filtros]);
+  }, [animalesPorId, eventos, filtros]);
 
   const eventosProximos = useMemo(() => eventos.filter((evento) => evento.estado === 'Vencido' || estaProximo(evento)), [eventos]);
 

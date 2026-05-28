@@ -28,9 +28,8 @@ function ModalConfirmarBaja({ animal: animal, onClose: alCerrar, onConfirm: alCo
         }
 
         {puedeCambiarEstado ?
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="mt-5 grid gap-3">
             {[
-          ['Vendido', 'Vendido'],
           ['Fallecido', 'Muerto / Fallecido']].
           map(([estado, etiqueta]) =>
           <button className="min-h-11 rounded-xl border border-[#98a287]/25 bg-[#F4F4F4] px-3 text-sm font-bold text-[#1d1d1b] hover:border-[#07612d]/30" key={estado} onClick={() => alConfirmar(estado)} type="button">

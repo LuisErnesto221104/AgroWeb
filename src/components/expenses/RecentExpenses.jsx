@@ -19,14 +19,14 @@ function GastosRecientes({ expenses: gastos }) {
       <div className="mt-4 grid gap-3">
         {recent.map((gasto) =>
         <article className="rounded-2xl bg-[#F4F4F4] p-4" key={gasto.id}>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-bold text-[#1d1d1b]">{gasto.tipoCompra}</p>
-                <p className="text-xs text-[#98a287]">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="break-words text-sm font-bold text-[#1d1d1b]">{gasto.tipoCompra}</p>
+                <p className="break-words text-xs text-[#98a287]">
                   {gasto.fecha} - {gasto.animalIdentificador}
                 </p>
               </div>
-              <strong className="text-sm text-[#07612d]">{mxn.format(gasto.precio)}</strong>
+              <strong className="max-w-full break-words text-sm text-[#07612d]">{mxn.format(gasto.precio)}</strong>
             </div>
           </article>
         )}

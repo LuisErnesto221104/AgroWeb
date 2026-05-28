@@ -30,6 +30,10 @@ button {
   cursor: pointer;
 }
 
+.leaflet-container {
+  z-index: 0;
+}
+
 #root {
   min-height: 100svh;
 }

@@ -1,7 +1,11 @@
+import { catalogoAnimal } from '../../data/animalCatalog';
+
 const hoy = new Date().toISOString().slice(0, 10);
 
 function FiltrosReporte({ filters: filtros, animals: animales, onChange: alCambiar, errors = {} }) {
   const isAnimalReport = filtros.tipoReporte === 'animal';
+  const especies = Object.keys(catalogoAnimal);
+  const razasDisponibles = filtros.especie !== 'Todos' ? catalogoAnimal[filtros.especie]?.razas ?? [] : Object.values(catalogoAnimal).flatMap((catalogo) => catalogo.razas).toSorted((a, b) => a.localeCompare(b));
 
   function actualizarCampo(evento) {
     const { name, value: valor } = evento.target;
@@ -19,12 +23,17 @@ function FiltrosReporte({ filters: filtros, animals: animales, onChange: alCambi
       filtrosSiguientes.hasta = '';
     }
 
+    if (name === 'especie') {
+      const razasDeEspecie = valor !== 'Todos' ? catalogoAnimal[valor]?.razas ?? [] : Object.values(catalogoAnimal).flatMap((catalogo) => catalogo.razas);
+      if (filtros.raza !== 'Todos' && !razasDeEspecie.includes(filtros.raza)) filtrosSiguientes.raza = 'Todos';
+    }
+
     alCambiar(filtrosSiguientes);
   }
 
   return (
     <section className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <select className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="tipoReporte" onChange={actualizarCampo} value={filtros.tipoReporte}>
           <option value="general">Reporte general</option>
           <option value="animal">Por animal</option>
@@ -35,7 +44,23 @@ function FiltrosReporte({ filters: filtros, animals: animales, onChange: alCambi
           <option value="Todos">Selecciona animal</option>
           {animales.map((animal) =>
           <option key={animal.id} value={animal.id}>
-              {animal.identificador}
+              {animal.identificador} - {animal.nombre}
+            </option>
+          )}
+        </select>
+        <select className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="especie" onChange={actualizarCampo} value={filtros.especie}>
+          <option value="Todos">Especie: Todas</option>
+          {especies.map((especie) =>
+          <option key={especie} value={especie}>
+              {especie}
+            </option>
+          )}
+        </select>
+        <select className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="raza" onChange={actualizarCampo} value={filtros.raza}>
+          <option value="Todos">Raza: Todas</option>
+          {razasDisponibles.map((raza) =>
+          <option key={raza} value={raza}>
+              {raza}
             </option>
           )}
         </select>

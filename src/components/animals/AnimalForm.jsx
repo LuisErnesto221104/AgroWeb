@@ -45,7 +45,6 @@ function obtenerOpcionesEstado(currentStatus = 'Activo') {
   if (currentStatus === 'Activo') {
     return [
     { value: 'Activo', label: 'Activo' },
-    { value: 'Vendido', label: 'Vendido' },
     { value: 'Fallecido', label: 'Muerto / Fallecido' }];
 
   }
@@ -153,8 +152,9 @@ function FormularioAnimal({ initialAnimal: animalInicial, onSubmit: alEnviar, su
   const [vistaPrevia, establecerVistaPrevia] = useState(animalInicial?.fotografia ?? '');
   const [pdfName, setPdfName] = useState(formulario.duenosAnteriores.documentoPdf?.name ?? '');
   const opcionesEstado = obtenerOpcionesEstado(initialStatus);
+  const estadoSoloLectura = !esAnimalNuevo && opcionesEstado.length === 1;
   const tieneIdSinidaValido = /^MX\d{4}(\d{6}|\d{8})$/.test(formulario.identificador);
-  const breedOptions = catalogoAnimal[formulario.especie]?.razas ?? [];
+  const opcionesRaza = catalogoAnimal[formulario.especie]?.razas ?? [];
   const ranchoSeleccionado = ranchos.find((rancho) => rancho.id === Number(formulario.ranchoId));
   const lugarSeleccionado = ranchoSeleccionado?.lugares?.find((lugar) => lugar.id === Number(formulario.lugarId));
 
@@ -318,11 +318,11 @@ function FormularioAnimal({ initialAnimal: animalInicial, onSubmit: alEnviar, su
         <label className="block">
           <span className="text-sm font-bold text-[#1d1d1b]">Raza <span className="text-[#D32F2F]">*</span></span>
           <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="raza" onChange={actualizarCampo} value={formulario.raza}>
-            {breedOptions.map((breed) =>
-            <option key={breed} value={breed}>
-                {breed}
-              </option>
-            )}
+          {opcionesRaza.map((raza) =>
+          <option key={raza} value={raza}>
+              {raza}
+            </option>
+          )}
           </select>
           <p className="mt-2 text-xs font-semibold text-[#98a287]">Las razas cambian según la especie seleccionada.</p>
         </label>
@@ -340,6 +340,10 @@ function FormularioAnimal({ initialAnimal: animalInicial, onSubmit: alEnviar, su
           {esAnimalNuevo ?
           <div className="mt-2 flex h-12 w-full items-center rounded-2xl border border-[#4CAF50]/25 bg-[#4CAF50]/10 px-4 text-sm font-bold text-[#2f8f36]">
               Activo
+            </div> :
+          estadoSoloLectura ?
+          <div className="mt-2 flex h-12 w-full items-center rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-bold text-[#1d1d1b]/70">
+              {opcionesEstado[0]?.label ?? formulario.estado}
             </div> :
 
           <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="estado" onChange={actualizarCampo} value={formulario.estado}>
