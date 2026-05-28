@@ -1,49 +1,49 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import { CalendarDays, HeartPulse, LayoutGrid, List, Plus, Stethoscope, Syringe, TriangleAlert } from 'lucide-react'
-import StatCard from '../components/StatCard'
-import HealthEventCard from '../components/health/HealthEventCard'
-import HealthEventForm from '../components/health/HealthEventForm'
-import HealthEventTable from '../components/health/HealthEventTable'
-import HealthFilters from '../components/health/HealthFilters'
-import HealthStatusBadge from '../components/health/HealthStatusBadge'
-import SanitaryCalendar from '../components/health/SanitaryCalendar'
-import UpcomingHealthEvents from '../components/health/UpcomingHealthEvents'
-import { animals as mockAnimals } from '../data/animals'
-import { healthEvents as mockHealthEvents } from '../data/healthEvents'
-import { readStorage, writeStorage } from '../utils/storage'
+import { useEffect, useMemo, useState } from 'react';
+import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { CalendarDays, HeartPulse, LayoutGrid, List, Plus, Stethoscope, Syringe, TriangleAlert } from 'lucide-react';
+import TarjetaEstadistica from '../components/StatCard';
+import TarjetaEventoSanitario from '../components/health/HealthEventCard';
+import FormularioEventoSanitario from '../components/health/HealthEventForm';
+import TablaEventoSanitario from '../components/health/HealthEventTable';
+import FiltrosSanidad from '../components/health/HealthFilters';
+import InsigniaEstadoSanidad from '../components/health/HealthStatusBadge';
+import CalendarioSanitario from '../components/health/SanitaryCalendar';
+import EventosSanitariosProximos from '../components/health/UpcomingHealthEvents';
+import { animales as mockAnimals } from '../data/animals';
+import { eventosSanitarios as mockHealthEvents } from '../data/healthEvents';
+import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
 
-const today = '2026-05-23'
+const hoy = '2026-05-23';
 
-const initialFilters = {
+const filtrosIniciales = {
   animalId: 'Todos',
   tipo: 'Todos',
   estado: 'Todos',
-  fecha: '',
+  fecha: ''
+};
+
+function estaVencido(evento) {
+  const fechaObjetivo = evento.proximaAplicacion || evento.fecha;
+  return evento.estado !== 'Completado' && fechaObjetivo && fechaObjetivo < hoy;
 }
 
-function isOverdue(event) {
-  const targetDate = event.proximaAplicacion || event.fecha
-  return event.estado !== 'Completado' && targetDate && targetDate < today
+function estaProximo(evento) {
+  const fechaObjetivo = evento.proximaAplicacion || evento.fecha;
+  return evento.estado === 'Pendiente' && fechaObjetivo && fechaObjetivo >= hoy;
 }
 
-function isUpcoming(event) {
-  const targetDate = event.proximaAplicacion || event.fecha
-  return event.estado === 'Pendiente' && targetDate && targetDate >= today
+function sanearEstado(evento) {
+  return estaVencido(evento) ? { ...evento, estado: 'Vencido' } : evento;
 }
 
-function sanitizeStatus(event) {
-  return isOverdue(event) ? { ...event, estado: 'Vencido' } : event
-}
+const opcionesEstadoSanidad = ['Completado', 'Pendiente', 'Vencido'];
 
-const healthStatusOptions = ['Completado', 'Pendiente', 'Vencido']
+function HealthDetail({ events: eventos, onStatusChange: alCambiarEstado }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const evento = eventos.find((elemento) => elemento.id === Number(id));
 
-function HealthDetail({ events, onStatusChange }) {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const event = events.find((item) => item.id === Number(id))
-
-  if (!event) {
+  if (!evento) {
     return (
       <section className="rounded-2xl border border-[#98a287]/18 bg-white p-6 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
         <h1 className="text-2xl font-bold text-[#07612d]">Evento no encontrado</h1>
@@ -51,8 +51,8 @@ function HealthDetail({ events, onStatusChange }) {
         <button className="mt-5 rounded-2xl bg-[#07612d] px-5 py-3 text-sm font-bold text-white" onClick={() => navigate('/sanidad')} type="button">
           Volver a Sanidad
         </button>
-      </section>
-    )
+      </section>);
+
   }
 
   return (
@@ -62,50 +62,50 @@ function HealthDetail({ events, onStatusChange }) {
           Volver
         </button>
         <div className="flex flex-col gap-2 sm:items-end">
-          <HealthStatusBadge estado={event.estado} />
-          <select className="h-11 rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-bold text-[#1d1d1b] outline-none focus:border-[#07612d]" onChange={(item) => onStatusChange(event.id, item.target.value)} value={event.estado}>
-            {healthStatusOptions.map((status) => (
-              <option key={status} value={status}>
+          <InsigniaEstadoSanidad estado={evento.estado} />
+          <select className="h-11 rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-bold text-[#1d1d1b] outline-none focus:border-[#07612d]" onChange={(elemento) => alCambiarEstado(evento.id, elemento.target.value)} value={evento.estado}>
+            {opcionesEstadoSanidad.map((status) =>
+            <option key={status} value={status}>
                 {status}
               </option>
-            ))}
+            )}
           </select>
         </div>
       </div>
 
       <article className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-6">
-        <p className="text-sm font-bold text-[#4CAF50]">{event.animalIdentificador}</p>
-        <h1 className="mt-2 break-words text-2xl font-bold text-[#07612d] md:text-3xl">{event.tipo}</h1>
+        <p className="text-sm font-bold text-[#4CAF50]">{evento.animalIdentificador}</p>
+        <h1 className="mt-2 break-words text-2xl font-bold text-[#07612d] md:text-3xl">{evento.tipo}</h1>
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[
-            ['Fecha del evento', event.fecha],
-            ['Producto aplicado', event.producto],
-            ['Dosis', event.dosis],
-            ['Responsable', event.responsable],
-            ['Próxima aplicación', event.proximaAplicacion || 'Sin fecha'],
-            ['ID del evento', event.id],
-          ].map(([label, value]) => (
-            <div className="rounded-2xl bg-[#F4F4F4] p-4" key={label}>
-              <p className="text-xs font-bold uppercase text-[#98a287]">{label}</p>
-              <p className="mt-2 text-sm font-semibold text-[#1d1d1b]">{value}</p>
+          ['Fecha del evento', evento.fecha],
+          ['Producto aplicado', evento.producto],
+          ['Dosis', evento.dosis],
+          ['Responsable', evento.responsable],
+          ['Próxima aplicación', evento.proximaAplicacion || 'Sin fecha'],
+          ['ID del evento', evento.id]].
+          map(([etiqueta, valor]) =>
+          <div className="rounded-2xl bg-[#F4F4F4] p-4" key={etiqueta}>
+              <p className="text-xs font-bold uppercase text-[#98a287]">{etiqueta}</p>
+              <p className="mt-2 text-sm font-semibold text-[#1d1d1b]">{valor}</p>
             </div>
-          ))}
+          )}
         </div>
         <div className="mt-5 rounded-2xl bg-[#F4F4F4] p-4">
           <p className="text-xs font-bold uppercase text-[#98a287]">Observaciones</p>
-          <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{event.observaciones || 'Sin observaciones registradas.'}</p>
+          <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{evento.observaciones || 'Sin observaciones registradas.'}</p>
         </div>
       </article>
-    </section>
-  )
+    </section>);
+
 }
 
-function NewHealthEvent({ animals, onCreate }) {
-  const navigate = useNavigate()
+function NuevoEventoSanitario({ animals: animales, onCreate: alCrear }) {
+  const navigate = useNavigate();
 
-  function handleSubmit(event) {
-    onCreate(event)
-    navigate(`/sanidad/${event.id}`, { replace: true })
+  function manejarEnvio(evento) {
+    alCrear(evento);
+    navigate(`/sanidad/${evento.id}`, { replace: true });
   }
 
   return (
@@ -114,34 +114,34 @@ function NewHealthEvent({ animals, onCreate }) {
         <h1 className="text-3xl font-bold text-[#07612d]">Registrar Evento Sanitario</h1>
         <p className="mt-2 text-sm text-[#1d1d1b]/70">Captura vacunas, desparasitantes, tratamientos, revisiones, enfermedades u otros eventos.</p>
       </div>
-      <HealthEventForm animals={animals} onSubmit={handleSubmit} />
-    </section>
-  )
+      <FormularioEventoSanitario animals={animales} onSubmit={manejarEnvio} />
+    </section>);
+
 }
 
-function HealthDashboard({ animals, events, filters, onFiltersChange, isLoading, onStatusChange }) {
-  const [viewMode, setViewMode] = useState('cards')
-  const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
-      const matchesAnimal = filters.animalId === 'Todos' || event.animalId === Number(filters.animalId)
-      const matchesTipo = filters.tipo === 'Todos' || event.tipo === filters.tipo
-      const matchesEstado = filters.estado === 'Todos' || event.estado === filters.estado
-      const matchesFecha = !filters.fecha || event.fecha === filters.fecha || event.proximaAplicacion === filters.fecha
-      return matchesAnimal && matchesTipo && matchesEstado && matchesFecha
-    })
-  }, [events, filters])
+function PanelSanidad({ animals: animales, events: eventos, filters: filtros, onFiltersChange: alCambiarFiltros, isLoading: cargando, onStatusChange: alCambiarEstado }) {
+  const [modoVista, setViewMode] = useState('cards');
+  const eventosFiltrados = useMemo(() => {
+    return eventos.filter((evento) => {
+      const coincideAnimal = filtros.animalId === 'Todos' || evento.animalId === Number(filtros.animalId);
+      const coincideTipo = filtros.tipo === 'Todos' || evento.tipo === filtros.tipo;
+      const coincideEstado = filtros.estado === 'Todos' || evento.estado === filtros.estado;
+      const coincideFecha = !filtros.fecha || evento.fecha === filtros.fecha || evento.proximaAplicacion === filtros.fecha;
+      return coincideAnimal && coincideTipo && coincideEstado && coincideFecha;
+    });
+  }, [eventos, filtros]);
 
-  const upcomingEvents = useMemo(() => events.filter((event) => event.estado === 'Vencido' || isUpcoming(event)), [events])
+  const eventosProximos = useMemo(() => eventos.filter((evento) => evento.estado === 'Vencido' || estaProximo(evento)), [eventos]);
 
-  const stats = useMemo(
+  const estadisticas = useMemo(
     () => [
-      { title: 'Total de eventos', value: events.length, detail: 'Historial sanitario registrado', icon: HeartPulse, tone: 'primary' },
-      { title: 'Próximas vacunas', value: events.filter((event) => event.tipo === 'Vacuna' && isUpcoming(event)).length, detail: 'Aplicaciones pendientes', icon: Syringe, tone: 'warning' },
-      { title: 'Eventos vencidos', value: events.filter((event) => event.estado === 'Vencido').length, detail: 'Requieren atención inmediata', icon: TriangleAlert, tone: 'danger' },
-      { title: 'Tratamientos activos', value: events.filter((event) => event.tipo === 'Tratamiento' && event.estado === 'Pendiente').length, detail: 'Seguimiento veterinario', icon: Stethoscope, tone: 'info' },
-    ],
-    [events],
-  )
+    { title: 'Total de eventos', value: eventos.length, detail: 'Historial sanitario registrado', icon: HeartPulse, tone: 'primary' },
+    { title: 'Próximas vacunas', value: eventos.filter((evento) => evento.tipo === 'Vacuna' && estaProximo(evento)).length, detail: 'Aplicaciones pendientes', icon: Syringe, tone: 'warning' },
+    { title: 'Eventos vencidos', value: eventos.filter((evento) => evento.estado === 'Vencido').length, detail: 'Requieren atención inmediata', icon: TriangleAlert, tone: 'danger' },
+    { title: 'Tratamientos activos', value: eventos.filter((evento) => evento.tipo === 'Tratamiento' && evento.estado === 'Pendiente').length, detail: 'Seguimiento veterinario', icon: Stethoscope, tone: 'info' }],
+
+    [eventos]
+  );
 
   return (
     <section className="grid gap-6">
@@ -157,10 +157,10 @@ function HealthDashboard({ animals, events, filters, onFiltersChange, isLoading,
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
           <div className="grid w-full grid-cols-2 gap-2 rounded-2xl bg-white p-1 shadow-[0_10px_24px_rgba(29,29,27,0.06)] sm:w-auto">
-            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${viewMode === 'cards' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('cards')} type="button">
+            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${modoVista === 'cards' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('cards')} type="button">
               <LayoutGrid size={17} /> Tarjetas
             </button>
-            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${viewMode === 'table' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('table')} type="button">
+            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${modoVista === 'table' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('table')} type="button">
               <List size={17} /> Tabla
             </button>
           </div>
@@ -174,96 +174,96 @@ function HealthDashboard({ animals, events, filters, onFiltersChange, isLoading,
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.title} {...stat} />
-        ))}
+        {estadisticas.map((estadistica) =>
+        <TarjetaEstadistica key={estadistica.title} {...estadistica} />
+        )}
       </div>
 
-      <HealthFilters animals={animals} filters={filters} onChange={onFiltersChange} />
+      <FiltrosSanidad animals={animales} filters={filtros} onChange={alCambiarFiltros} />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
         <div className="grid gap-5">
-          {isLoading ? (
-            <div className="min-h-80 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" />
-          ) : null}
+          {cargando ?
+          <div className="min-h-80 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" /> :
+          null}
 
-          {!isLoading && filteredEvents.length > 0 && viewMode === 'cards' ? (
-            <div className="grid gap-5 md:grid-cols-2">
-              {filteredEvents.map((event) => (
-                <HealthEventCard event={event} key={event.id} onStatusChange={onStatusChange} />
-              ))}
-            </div>
-          ) : null}
+          {!cargando && eventosFiltrados.length > 0 && modoVista === 'cards' ?
+          <div className="grid gap-5 md:grid-cols-2">
+              {eventosFiltrados.map((evento) =>
+            <TarjetaEventoSanitario event={evento} key={evento.id} onStatusChange={alCambiarEstado} />
+            )}
+            </div> :
+          null}
 
-          {!isLoading && filteredEvents.length > 0 && viewMode === 'table' ? <HealthEventTable events={filteredEvents} onStatusChange={onStatusChange} /> : null}
+          {!cargando && eventosFiltrados.length > 0 && modoVista === 'table' ? <TablaEventoSanitario events={eventosFiltrados} onStatusChange={alCambiarEstado} /> : null}
 
-          {!isLoading && filteredEvents.length === 0 ? (
-            <section className="rounded-2xl border border-[#98a287]/18 bg-white p-8 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
+          {!cargando && eventosFiltrados.length === 0 ?
+          <section className="rounded-2xl border border-[#98a287]/18 bg-white p-8 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
               <h2 className="text-2xl font-bold text-[#07612d]">No hay eventos sanitarios registrados</h2>
               <p className="mt-2 text-sm text-[#1d1d1b]/70">No se encontraron eventos con los filtros actuales.</p>
-            </section>
-          ) : null}
+            </section> :
+          null}
         </div>
 
-        <UpcomingHealthEvents events={upcomingEvents} />
+        <EventosSanitariosProximos events={eventosProximos} />
       </div>
 
-      <SanitaryCalendar events={events} />
-    </section>
-  )
+      <CalendarioSanitario events={eventos} />
+    </section>);
+
 }
 
-function HealthPage({ calendarOnly = false }) {
-  const [animals, setAnimals] = useState([])
-  const [events, setEvents] = useState([])
-  const [filters, setFilters] = useState(initialFilters)
-  const [isLoading, setIsLoading] = useState(true)
+function PaginaSanidad({ calendarOnly: soloCalendario = false }) {
+  const [animales, establecerAnimales] = useState([]);
+  const [eventos, establecerEventos] = useState([]);
+  const [filtros, setFilters] = useState(filtrosIniciales);
+  const [cargando, establecerCargando] = useState(true);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setAnimals(readStorage('agroweb.animals', mockAnimals))
-      setEvents(readStorage('agroweb.healthEvents', mockHealthEvents).map(sanitizeStatus))
-      setIsLoading(false)
-    }, 350)
+    const temporizador = window.setTimeout(() => {
+      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
+      establecerEventos(leerAlmacenamiento('agroweb.healthEvents', mockHealthEvents).map(sanearEstado));
+      establecerCargando(false);
+    }, 350);
 
-    return () => window.clearTimeout(timer)
-  }, [])
+    return () => window.clearTimeout(temporizador);
+  }, []);
 
-  function createEvent(event) {
-    setEvents((current) => {
-      const nextEvents = [sanitizeStatus(event), ...current]
-      writeStorage('agroweb.healthEvents', nextEvents)
-      return nextEvents
-    })
+  function crearEvento(evento) {
+    establecerEventos((actual) => {
+      const eventosSiguientes = [sanearEstado(evento), ...actual];
+      escribirAlmacenamiento('agroweb.healthEvents', eventosSiguientes);
+      return eventosSiguientes;
+    });
   }
 
-  function updateEventStatus(eventId, estado) {
-    setEvents((current) => {
-      const nextEvents = current.map((event) => (event.id === eventId ? { ...event, estado } : event))
-      writeStorage('agroweb.healthEvents', nextEvents)
-      return nextEvents
-    })
+  function actualizarEstadoEvento(idEvento, estado) {
+    establecerEventos((actual) => {
+      const eventosSiguientes = actual.map((evento) => evento.id === idEvento ? { ...evento, estado } : evento);
+      escribirAlmacenamiento('agroweb.healthEvents', eventosSiguientes);
+      return eventosSiguientes;
+    });
   }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
-        {calendarOnly ? (
-          <section className="grid gap-5">
+        {soloCalendario ?
+      <section className="grid gap-5">
             <div>
               <h1 className="text-3xl font-bold text-[#07612d]">Calendario sanitario</h1>
               <p className="mt-2 text-sm text-[#1d1d1b]/70">Consulta próximas aplicaciones y eventos médicos programados.</p>
             </div>
-            <SanitaryCalendar events={events} />
-          </section>
-        ) : (
-          <Routes>
-            <Route index element={<HealthDashboard animals={animals} events={events} filters={filters} isLoading={isLoading} onFiltersChange={setFilters} onStatusChange={updateEventStatus} />} />
-            <Route path="nuevo" element={<NewHealthEvent animals={animals} onCreate={createEvent} />} />
-            <Route path=":id" element={<HealthDetail events={events} onStatusChange={updateEventStatus} />} />
+            <CalendarioSanitario events={eventos} />
+          </section> :
+
+      <Routes>
+            <Route index element={<PanelSanidad animals={animales} events={eventos} filters={filtros} isLoading={cargando} onFiltersChange={setFilters} onStatusChange={actualizarEstadoEvento} />} />
+            <Route path="nuevo" element={<NuevoEventoSanitario animals={animales} onCreate={crearEvento} />} />
+            <Route path=":id" element={<HealthDetail events={eventos} onStatusChange={actualizarEstadoEvento} />} />
           </Routes>
-        )}
-    </div>
-  )
+      }
+    </div>);
+
 }
 
-export default HealthPage
+export default PaginaSanidad;

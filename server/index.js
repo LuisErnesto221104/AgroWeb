@@ -1,882 +1,882 @@
-import crypto from 'node:crypto'
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import cors from 'cors'
-import dotenv from 'dotenv'
-import express from 'express'
-import { animals as frontendAnimals } from '../src/data/animals.js'
-import { expenses as frontendExpenses } from '../src/data/expenses.js'
-import { feeding as frontendFeeding } from '../src/data/feeding.js'
-import { healthEvents as frontendHealthEvents } from '../src/data/healthEvents.js'
-import { income as frontendIncome } from '../src/data/income.js'
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import ruta from 'node:path';
+import { fileURLToPath } from 'node:url';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import express from 'express';
+import { animales as animalesFrontend } from '../src/data/animals.js';
+import { gastos as gastosFrontend } from '../src/data/expenses.js';
+import { alimentacion as alimentacionFrontend } from '../src/data/feeding.js';
+import { eventosSanitarios as eventosSanitariosFrontend } from '../src/data/healthEvents.js';
+import { ingresos as ingresosFrontend } from '../src/data/income.js';
 
-dotenv.config()
+dotenv.config();
 
-const app = express()
-const port = process.env.PORT ?? 4000
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(__dirname, '..')
-const dataDirectory = path.join(__dirname, 'data')
-const uploadsDirectory = path.join(__dirname, 'uploads')
-const imagesDirectory = path.join(uploadsDirectory, 'images')
-const documentsDirectory = path.join(uploadsDirectory, 'documents')
-const localStorePath = path.join(dataDirectory, 'local-store.json')
+const aplicacionExpress = express();
+const puerto = process.env.PORT ?? 4000;
+const __dirname = ruta.dirname(fileURLToPath(import.meta.url));
+const raizProyecto = ruta.resolve(__dirname, '..');
+const directorioDatos = ruta.join(__dirname, 'data');
+const directorioCargas = ruta.join(__dirname, 'uploads');
+const directorioImagenes = ruta.join(directorioCargas, 'images');
+const directorioDocumentos = ruta.join(directorioCargas, 'documents');
+const rutaAlmacenLocal = ruta.join(directorioDatos, 'local-store.json');
 
-app.use(cors())
-app.use(express.json({ limit: '8mb' }))
-app.use('/uploads', express.static(uploadsDirectory))
+aplicacionExpress.use(cors());
+aplicacionExpress.use(express.json({ limit: '8mb' }));
+aplicacionExpress.use('/uploads', express.static(directorioCargas));
 
-for (const directory of [dataDirectory, uploadsDirectory, imagesDirectory, documentsDirectory]) {
-  fs.mkdirSync(directory, { recursive: true })
+for (const directorio of [directorioDatos, directorioCargas, directorioImagenes, directorioDocumentos]) {
+  fs.mkdirSync(directorio, { recursive: true });
 }
 
-const animalImageSeeds = [
-  { id: 1, source: 'src/img/Animales/Bovino/vaca.webp', target: 'animals/luna-bovino.webp' },
-  { id: 2, source: 'src/img/Animales/Bovino/brahman.jpeg', target: 'animals/titan-brahman.jpeg' },
-  { id: 3, source: 'src/img/Animales/Ovino/borrego1.jpg', target: 'animals/mora-ovino.jpg' },
-  { id: 4, source: 'src/img/Animales/Cabrino/cabra.jpg', target: 'animals/nube-caprino.jpg' },
-  { id: 5, source: 'src/img/Animales/Bovino/hereford.jpg', target: 'animals/canela-hereford.jpg' },
-  { id: 6, source: 'src/img/Animales/Bovino/vaca lechera.webp', target: 'animals/estrella-holstein.webp' },
-  { id: 7, source: 'src/img/Animales/Equino/descarga.webp', target: 'animals/relampago-equino.webp' },
-  { id: 8, source: 'src/img/Animales/Porcino/Cerdo1.jpg', target: 'animals/bruno-porcino.jpg' },
-]
+const imagenesBaseAnimales = [
+{ id: 1, source: 'src/img/Animales/Bovino/vaca.webp', target: 'animals/luna-bovino.webp' },
+{ id: 2, source: 'src/img/Animales/Bovino/brahman.jpeg', target: 'animals/titan-brahman.jpeg' },
+{ id: 3, source: 'src/img/Animales/Ovino/borrego1.jpg', target: 'animals/mora-ovino.jpg' },
+{ id: 4, source: 'src/img/Animales/Cabrino/cabra.jpg', target: 'animals/nube-caprino.jpg' },
+{ id: 5, source: 'src/img/Animales/Bovino/hereford.jpg', target: 'animals/canela-hereford.jpg' },
+{ id: 6, source: 'src/img/Animales/Bovino/vaca lechera.webp', target: 'animals/estrella-holstein.webp' },
+{ id: 7, source: 'src/img/Animales/Equino/descarga.webp', target: 'animals/relampago-equino.webp' },
+{ id: 8, source: 'src/img/Animales/Porcino/Cerdo1.jpg', target: 'animals/bruno-porcino.jpg' }];
 
-const animalPhotoById = Object.fromEntries(animalImageSeeds.map((image) => [image.id, `/uploads/images/${image.target}`]))
 
-function ensureSeedAnimalImages() {
-  for (const image of animalImageSeeds) {
-    const sourcePath = path.join(projectRoot, image.source)
-    const targetPath = path.join(imagesDirectory, image.target)
-    if (!fs.existsSync(sourcePath)) continue
-    fs.mkdirSync(path.dirname(targetPath), { recursive: true })
-    if (!fs.existsSync(targetPath)) fs.copyFileSync(sourcePath, targetPath)
+const fotoAnimalPorId = Object.fromEntries(imagenesBaseAnimales.map((imagen) => [imagen.id, `/uploads/images/${imagen.target}`]));
+
+function asegurarImagenesBaseAnimales() {
+  for (const imagen of imagenesBaseAnimales) {
+    const rutaOrigen = ruta.join(raizProyecto, imagen.source);
+    const rutaDestino = ruta.join(directorioImagenes, imagen.target);
+    if (!fs.existsSync(rutaOrigen)) continue;
+    fs.mkdirSync(ruta.dirname(rutaDestino), { recursive: true });
+    if (!fs.existsSync(rutaDestino)) fs.copyFileSync(rutaOrigen, rutaDestino);
   }
 }
 
-function addDefaultAnimalPhotos(animalList = []) {
-  return animalList.map((animal) => ({
+function agregarFotosPredeterminadasAnimales(listaAnimales = []) {
+  return listaAnimales.map((animal) => ({
     ...animal,
-    fotografia: animal.fotografia || animalPhotoById[animal.id] || '',
-  }))
+    fotografia: animal.fotografia || fotoAnimalPorId[animal.id] || ''
+  }));
 }
 
-ensureSeedAnimalImages()
+asegurarImagenesBaseAnimales();
 
-function createSalt() {
-  return crypto.randomBytes(16).toString('hex')
+function crearSal() {
+  return crypto.randomBytes(16).toString('hex');
 }
 
-function hashPin(pin, salt) {
-  return crypto.pbkdf2Sync(String(pin), salt, 1000, 32, 'sha256').toString('hex')
+function crearHashPin(pin, sal) {
+  return crypto.pbkdf2Sync(String(pin), sal, 1000, 32, 'sha256').toString('hex');
 }
 
-function sanitizeUser(user) {
+function sanearUsuario(usuario) {
   return {
-    id: user.id,
-    nombre: user.nombre,
-    fecha_creacion: user.fecha_creacion,
-    ultimo_acceso: user.ultimo_acceso,
+    id: usuario.id,
+    nombre: usuario.nombre,
+    fecha_creacion: usuario.fecha_creacion,
+    ultimo_acceso: usuario.ultimo_acceso
+  };
+}
+
+const salAdministrador = 'agroweb_admin_salt';
+
+const permisosSistema = ['animales', 'sanidad', 'gastos', 'reportes', 'alimentacion', 'configuracion'];
+
+const ranchosPredeterminados = [
+{
+  id: 1,
+  nombre: 'Rancho AgroWeb',
+  propietario: 'Administrador AgroWeb',
+  telefono: '3330000000',
+  direccion: 'Tepatitlan, Jalisco',
+  coordenadas: { lat: 20.8169, lng: -102.7635 },
+  lugares: [
+  { id: 1, nombre: 'Corral 1', tipo: 'Corral', capacidad: 25, descripcion: 'Área principal para bovinos activos.' },
+  { id: 2, nombre: 'Corral Lechero', tipo: 'Corral', capacidad: 18, descripcion: 'Zona para vacas lecheras.' },
+  { id: 3, nombre: 'Caballerizas', tipo: 'Caballeriza', capacidad: 8, descripcion: 'Espacio para equinos de trabajo.' }]
+
+}];
+
+
+const usuariosConfiguracionPredeterminados = [
+{
+  id: 1,
+  usuario_id: 1,
+  nombre: 'Administrador AgroWeb',
+  correo: 'admin@agroweb.mx',
+  rol: 'Administrador',
+  activo: true,
+  permisos: permisosSistema,
+  protegido: true
+},
+{
+  id: 2,
+  usuario_id: null,
+  nombre: 'Encargado del Rancho',
+  correo: 'rancho@agroweb.mx',
+  rol: 'Ganadero',
+  activo: true,
+  permisos: ['animales', 'sanidad', 'alimentacion'],
+  protegido: false
+},
+{
+  id: 3,
+  usuario_id: null,
+  nombre: 'Contabilidad',
+  correo: 'finanzas@agroweb.mx',
+  rol: 'Finanzas',
+  activo: true,
+  permisos: ['gastos', 'reportes'],
+  protegido: false
+}];
+
+
+function leerArchivoJson(filePath, respaldo) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return respaldo;
   }
 }
 
-const adminSalt = 'agroweb_admin_salt'
+function escribirArchivoJson(filePath, datos) {
+  fs.writeFileSync(filePath, JSON.stringify(datos, null, 2));
+}
 
-const systemPermissions = ['animales', 'sanidad', 'gastos', 'reportes', 'alimentacion', 'configuracion']
+function obtenerAlmacenLocalPredeterminado() {
+  return {
+    'agroweb.animals': agregarFotosPredeterminadasAnimales(animalesFrontend),
+    'agroweb.expenses': gastosFrontend,
+    'agroweb.feeding': alimentacionFrontend,
+    'agroweb.healthEvents': eventosSanitariosFrontend,
+    'agroweb.income': ingresosFrontend,
+    'agroweb.settings.users': usuariosConfiguracionPredeterminados,
+    'agroweb.ranches': ranchosPredeterminados
+  };
+}
 
-const defaultRanches = [
+let almacenLocal = { ...obtenerAlmacenLocalPredeterminado(), ...leerArchivoJson(rutaAlmacenLocal, {}) };
+almacenLocal['agroweb.animals'] = agregarFotosPredeterminadasAnimales(almacenLocal['agroweb.animals'] ?? animalesFrontend);
+
+function urlDatosABuffer(urlDatos) {
+  const coincidencia = String(urlDatos).match(/^data:([^;]+);base64,(.+)$/);
+  if (!coincidencia) return null;
+  return {
+    mimeType: coincidencia[1],
+    buffer: Buffer.from(coincidencia[2], 'base64')
+  };
+}
+
+function extensionDesdeMime(tipoMime, nombreRespaldo = '') {
+  if (tipoMime === 'application/pdf') return '.pdf';
+  if (tipoMime === 'image/jpeg') return '.jpg';
+  if (tipoMime === 'image/png') return '.png';
+  if (tipoMime === 'image/webp') return '.webp';
+  return ruta.extname(nombreRespaldo) || '.bin';
+}
+
+function nombreArchivoSeguro(nombreArchivo) {
+  return String(nombreArchivo || 'archivo').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '-');
+}
+
+function persistirUrlDatos(urlDatos, nombreArchivo, claveAlmacen) {
+  const analizado = urlDatosABuffer(urlDatos);
+  if (!analizado) return urlDatos;
+  const esImagen = analizado.mimeType.startsWith('image/');
+  const directorioBase = esImagen ? directorioImagenes : ruta.join(directorioDocumentos, nombreArchivoSeguro(claveAlmacen));
+  fs.mkdirSync(directorioBase, { recursive: true });
+  const nombreFinal = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}-${nombreArchivoSeguro(nombreArchivo).replace(/\.[^.]+$/, '')}${extensionDesdeMime(analizado.mimeType, nombreArchivo)}`;
+  const rutaFinal = ruta.join(directorioBase, nombreFinal);
+  fs.writeFileSync(rutaFinal, analizado.buffer);
+  const rutaPublica = ruta.relative(directorioCargas, rutaFinal).split(ruta.sep).join('/');
+  return `/uploads/${rutaPublica}`;
+}
+
+function persistirCargas(valor, claveAlmacen) {
+  if (Array.isArray(valor)) return valor.map((elemento) => persistirCargas(elemento, claveAlmacen));
+  if (!valor || typeof valor !== 'object') {
+    if (typeof valor === 'string' && valor.startsWith('data:image/')) return persistirUrlDatos(valor, 'imagen-subida', claveAlmacen);
+    return valor;
+  }
+
+  const siguiente = { ...valor };
+  if (typeof siguiente.dataUrl === 'string' && siguiente.dataUrl.startsWith('data:')) {
+    siguiente.dataUrl = persistirUrlDatos(siguiente.dataUrl, siguiente.name, claveAlmacen);
+  }
+
+  if (typeof siguiente.fotografia === 'string' && siguiente.fotografia.startsWith('data:image/')) {
+    siguiente.fotografia = persistirUrlDatos(siguiente.fotografia, `${siguiente.identificador || siguiente.id || 'animal'}.jpg`, claveAlmacen);
+  }
+
+  for (const [clave, nestedValue] of Object.entries(siguiente)) {
+    if (clave !== 'dataUrl' && clave !== 'fotografia') siguiente[clave] = persistirCargas(nestedValue, claveAlmacen);
+  }
+
+  return siguiente;
+}
+
+function guardarAlmacenLocal() {
+  escribirArchivoJson(rutaAlmacenLocal, almacenLocal);
+}
+
+guardarAlmacenLocal();
+
+const baseDatos = {
+  animales: [
   {
     id: 1,
-    nombre: 'Rancho AgroWeb',
-    propietario: 'Administrador AgroWeb',
-    telefono: '3330000000',
-    direccion: 'Tepatitlan, Jalisco',
-    coordenadas: { lat: 20.8169, lng: -102.7635 },
-    lugares: [
-      { id: 1, nombre: 'Corral 1', tipo: 'Corral', capacidad: 25, descripcion: 'Área principal para bovinos activos.' },
-      { id: 2, nombre: 'Corral Lechero', tipo: 'Corral', capacidad: 18, descripcion: 'Zona para vacas lecheras.' },
-      { id: 3, nombre: 'Caballerizas', tipo: 'Caballeriza', capacidad: 8, descripcion: 'Espacio para equinos de trabajo.' },
-    ],
-  },
-]
-
-const defaultConfigUsers = [
-  {
-    id: 1,
-    usuario_id: 1,
-    nombre: 'Administrador AgroWeb',
-    correo: 'admin@agroweb.mx',
-    rol: 'Administrador',
-    activo: true,
-    permisos: systemPermissions,
-    protegido: true,
+    arete: 'MX011400001028',
+    especie: 'Vaca',
+    sexo: 'Hembra',
+    fecha: '2022-04-12',
+    peso: 485,
+    estado: 'OBSERVACION',
+    foto_path: '',
+    fecha_baja: null,
+    motivo_baja: null
   },
   {
     id: 2,
-    usuario_id: null,
-    nombre: 'Encargado del Rancho',
-    correo: 'rancho@agroweb.mx',
-    rol: 'Ganadero',
-    activo: true,
-    permisos: ['animales', 'sanidad', 'alimentacion'],
-    protegido: false,
+    arete: 'MX010500001044',
+    especie: 'Toro',
+    sexo: 'Macho',
+    fecha: '2021-06-22',
+    peso: 690,
+    estado: 'TRATAMIENTO',
+    foto_path: '',
+    fecha_baja: null,
+    motivo_baja: null
   },
   {
     id: 3,
-    usuario_id: null,
-    nombre: 'Contabilidad',
-    correo: 'finanzas@agroweb.mx',
-    rol: 'Finanzas',
-    activo: true,
-    permisos: ['gastos', 'reportes'],
-    protegido: false,
-  },
-]
+    arete: 'MX011500007782',
+    especie: 'Vaca',
+    sexo: 'Hembra',
+    fecha: '2023-02-18',
+    peso: 438,
+    estado: 'ACTIVO',
+    foto_path: '',
+    fecha_baja: null,
+    motivo_baja: null
+  }],
 
-function readJsonFile(filePath, fallback) {
-  try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'))
-  } catch {
-    return fallback
-  }
-}
-
-function writeJsonFile(filePath, payload) {
-  fs.writeFileSync(filePath, JSON.stringify(payload, null, 2))
-}
-
-function getDefaultLocalStore() {
-  return {
-    'agroweb.animals': addDefaultAnimalPhotos(frontendAnimals),
-    'agroweb.expenses': frontendExpenses,
-    'agroweb.feeding': frontendFeeding,
-    'agroweb.healthEvents': frontendHealthEvents,
-    'agroweb.income': frontendIncome,
-    'agroweb.settings.users': defaultConfigUsers,
-    'agroweb.ranches': defaultRanches,
-  }
-}
-
-let localStore = { ...getDefaultLocalStore(), ...readJsonFile(localStorePath, {}) }
-localStore['agroweb.animals'] = addDefaultAnimalPhotos(localStore['agroweb.animals'] ?? frontendAnimals)
-
-function dataUrlToBuffer(dataUrl) {
-  const match = String(dataUrl).match(/^data:([^;]+);base64,(.+)$/)
-  if (!match) return null
-  return {
-    mimeType: match[1],
-    buffer: Buffer.from(match[2], 'base64'),
-  }
-}
-
-function extensionFromMime(mimeType, fallbackName = '') {
-  if (mimeType === 'application/pdf') return '.pdf'
-  if (mimeType === 'image/jpeg') return '.jpg'
-  if (mimeType === 'image/png') return '.png'
-  if (mimeType === 'image/webp') return '.webp'
-  return path.extname(fallbackName) || '.bin'
-}
-
-function safeFileName(fileName) {
-  return String(fileName || 'archivo').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '-')
-}
-
-function persistDataUrl(dataUrl, fileName, storeKey) {
-  const parsed = dataUrlToBuffer(dataUrl)
-  if (!parsed) return dataUrl
-  const isImage = parsed.mimeType.startsWith('image/')
-  const baseDirectory = isImage ? imagesDirectory : path.join(documentsDirectory, safeFileName(storeKey))
-  fs.mkdirSync(baseDirectory, { recursive: true })
-  const finalName = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}-${safeFileName(fileName).replace(/\.[^.]+$/, '')}${extensionFromMime(parsed.mimeType, fileName)}`
-  const finalPath = path.join(baseDirectory, finalName)
-  fs.writeFileSync(finalPath, parsed.buffer)
-  const publicPath = path.relative(uploadsDirectory, finalPath).split(path.sep).join('/')
-  return `/uploads/${publicPath}`
-}
-
-function persistUploads(value, storeKey) {
-  if (Array.isArray(value)) return value.map((item) => persistUploads(item, storeKey))
-  if (!value || typeof value !== 'object') {
-    if (typeof value === 'string' && value.startsWith('data:image/')) return persistDataUrl(value, 'imagen-subida', storeKey)
-    return value
-  }
-
-  const next = { ...value }
-  if (typeof next.dataUrl === 'string' && next.dataUrl.startsWith('data:')) {
-    next.dataUrl = persistDataUrl(next.dataUrl, next.name, storeKey)
-  }
-
-  if (typeof next.fotografia === 'string' && next.fotografia.startsWith('data:image/')) {
-    next.fotografia = persistDataUrl(next.fotografia, `${next.identificador || next.id || 'animal'}.jpg`, storeKey)
-  }
-
-  for (const [key, nestedValue] of Object.entries(next)) {
-    if (key !== 'dataUrl' && key !== 'fotografia') next[key] = persistUploads(nestedValue, storeKey)
-  }
-
-  return next
-}
-
-function saveLocalStore() {
-  writeJsonFile(localStorePath, localStore)
-}
-
-saveLocalStore()
-
-const db = {
-  animales: [
-    {
-      id: 1,
-      arete: 'MX011400001028',
-      especie: 'Vaca',
-      sexo: 'Hembra',
-      fecha: '2022-04-12',
-      peso: 485,
-      estado: 'OBSERVACION',
-      foto_path: '',
-      fecha_baja: null,
-      motivo_baja: null,
-    },
-    {
-      id: 2,
-      arete: 'MX010500001044',
-      especie: 'Toro',
-      sexo: 'Macho',
-      fecha: '2021-06-22',
-      peso: 690,
-      estado: 'TRATAMIENTO',
-      foto_path: '',
-      fecha_baja: null,
-      motivo_baja: null,
-    },
-    {
-      id: 3,
-      arete: 'MX011500007782',
-      especie: 'Vaca',
-      sexo: 'Hembra',
-      fecha: '2023-02-18',
-      peso: 438,
-      estado: 'ACTIVO',
-      foto_path: '',
-      fecha_baja: null,
-      motivo_baja: null,
-    },
-  ],
   eventos_sanitarios: [
-    {
-      id: 1,
-      animal_id: 1,
-      tipo_evento: 'Revision',
-      descripcion: 'Revision postparto',
-      fecha_evento: '2026-05-13',
-      fecha_proximo_evento: '2026-05-16',
-      veterinario: 'Dra. Morales',
-      dosis: '',
-      observaciones: 'Monitorear temperatura y apetito.',
-    },
-    {
-      id: 2,
-      animal_id: 2,
-      tipo_evento: 'Tratamiento',
-      descripcion: 'Dosis antibiotico',
-      fecha_evento: '2026-05-13',
-      fecha_proximo_evento: '2026-05-14',
-      veterinario: 'Dr. Campos',
-      dosis: '10 ml',
-      observaciones: 'Aplicar segunda dosis.',
-    },
-    {
-      id: 3,
-      animal_id: 3,
-      tipo_evento: 'Vacuna',
-      descripcion: 'Vacuna clostridial',
-      fecha_evento: '2026-05-10',
-      fecha_proximo_evento: '2026-05-20',
-      veterinario: 'Dra. Morales',
-      dosis: '5 ml',
-      observaciones: 'Refuerzo programado.',
-    },
-  ],
+  {
+    id: 1,
+    animal_id: 1,
+    tipo_evento: 'Revision',
+    descripcion: 'Revision postparto',
+    fecha_evento: '2026-05-13',
+    fecha_proximo_evento: '2026-05-16',
+    veterinario: 'Dra. Morales',
+    dosis: '',
+    observaciones: 'Monitorear temperatura y apetito.'
+  },
+  {
+    id: 2,
+    animal_id: 2,
+    tipo_evento: 'Tratamiento',
+    descripcion: 'Dosis antibiotico',
+    fecha_evento: '2026-05-13',
+    fecha_proximo_evento: '2026-05-14',
+    veterinario: 'Dr. Campos',
+    dosis: '10 ml',
+    observaciones: 'Aplicar segunda dosis.'
+  },
+  {
+    id: 3,
+    animal_id: 3,
+    tipo_evento: 'Vacuna',
+    descripcion: 'Vacuna clostridial',
+    fecha_evento: '2026-05-10',
+    fecha_proximo_evento: '2026-05-20',
+    veterinario: 'Dra. Morales',
+    dosis: '5 ml',
+    observaciones: 'Refuerzo programado.'
+  }],
+
   gastos: [
-    { id: 1, animal_id: 1, categoria: 'Medicinas', monto: 1200, fecha: '2026-05-13', descripcion: 'Revision y medicamento' },
-    { id: 2, animal_id: 2, categoria: 'Medicinas', monto: 3000, fecha: '2026-05-13', descripcion: 'Tratamiento antibiotico' },
-    { id: 3, animal_id: null, categoria: 'Mantenimiento', monto: 2100, fecha: '2026-05-09', descripcion: 'Equipo de corral' },
-  ],
+  { id: 1, animal_id: 1, categoria: 'Medicinas', monto: 1200, fecha: '2026-05-13', descripcion: 'Revision y medicamento' },
+  { id: 2, animal_id: 2, categoria: 'Medicinas', monto: 3000, fecha: '2026-05-13', descripcion: 'Tratamiento antibiotico' },
+  { id: 3, animal_id: null, categoria: 'Mantenimiento', monto: 2100, fecha: '2026-05-09', descripcion: 'Equipo de corral' }],
+
   alimentacion: [
-    { id: 1, animal_id: 1, tipo_alimento: 'Concentrado', cantidad: 18, unidad: 'kg', fecha: '2026-05-13', costo: 680, observaciones: 'Racion de recuperacion' },
-    { id: 2, animal_id: 2, tipo_alimento: 'Forraje', cantidad: 24, unidad: 'kg', fecha: '2026-05-13', costo: 520, observaciones: 'Consumo normal' },
-    { id: 3, animal_id: 3, tipo_alimento: 'Minerales', cantidad: 4, unidad: 'kg', fecha: '2026-05-12', costo: 380, observaciones: 'Suplemento semanal' },
-  ],
+  { id: 1, animal_id: 1, tipo_alimento: 'Concentrado', cantidad: 18, unidad: 'kg', fecha: '2026-05-13', costo: 680, observaciones: 'Racion de recuperacion' },
+  { id: 2, animal_id: 2, tipo_alimento: 'Forraje', cantidad: 24, unidad: 'kg', fecha: '2026-05-13', costo: 520, observaciones: 'Consumo normal' },
+  { id: 3, animal_id: 3, tipo_alimento: 'Minerales', cantidad: 4, unidad: 'kg', fecha: '2026-05-12', costo: 380, observaciones: 'Suplemento semanal' }],
+
   usuarios: [
-    {
-      id: 1,
-      pin_hash: hashPin('1234', adminSalt),
-      salt: adminSalt,
-      nombre: 'admin',
-      fecha_creacion: '2026-05-13T14:00:00.000Z',
-      ultimo_acceso: '2026-05-16T08:00:00.000Z',
-    },
-  ],
-  configuracion_usuarios: localStore['agroweb.settings.users'] ?? defaultConfigUsers,
+  {
+    id: 1,
+    pin_hash: crearHashPin('1234', salAdministrador),
+    salt: salAdministrador,
+    nombre: 'admin',
+    fecha_creacion: '2026-05-13T14:00:00.000Z',
+    ultimo_acceso: '2026-05-16T08:00:00.000Z'
+  }],
+
+  configuracion_usuarios: almacenLocal['agroweb.settings.users'] ?? usuariosConfiguracionPredeterminados,
   session_manager: [
-    {
-      id: 1,
-      usuario_id: 1,
-      inicio_sesion: '2026-05-16T08:00:00.000Z',
-      ultimo_ping: '2026-05-16T08:20:00.000Z',
-      activa: 1,
-    },
-  ],
+  {
+    id: 1,
+    usuario_id: 1,
+    inicio_sesion: '2026-05-16T08:00:00.000Z',
+    ultimo_ping: '2026-05-16T08:20:00.000Z',
+    activa: 1
+  }]
+
+};
+
+const eventosCompletados = new Set();
+
+function siguienteId(coleccion) {
+  return coleccion.length ? Math.max(...coleccion.map((elemento) => elemento.id)) + 1 : 1;
 }
 
-const completedEvents = new Set()
-
-function nextId(collection) {
-  return collection.length ? Math.max(...collection.map((item) => item.id)) + 1 : 1
+function buscarPorId(coleccion, id) {
+  return coleccion.find((elemento) => elemento.id === Number(id));
 }
 
-function findById(collection, id) {
-  return collection.find((item) => item.id === Number(id))
+function noEncontrado(respuesta, entidad) {
+  respuesta.status(404).json({ message: `${entidad} no encontrado.` });
 }
 
-function notFound(response, entity) {
-  response.status(404).json({ message: `${entity} no encontrado.` })
-}
-
-function validateAnimal(payload) {
-  if (!payload?.arete || !payload?.especie || !payload?.sexo || !payload?.fecha || payload?.peso === undefined) {
-    return 'El animal requiere arete, especie, sexo, fecha y peso.'
+function validarAnimal(datos) {
+  if (!datos?.arete || !datos?.especie || !datos?.sexo || !datos?.fecha || datos?.peso === undefined) {
+    return 'El animal requiere arete, especie, sexo, fecha y peso.';
   }
 
-  if (db.animales.some((animal) => animal.arete === payload.arete)) {
-    return 'El arete ya existe.'
+  if (baseDatos.animales.some((animal) => animal.arete === datos.arete)) {
+    return 'El arete ya existe.';
   }
 
-  return null
+  return null;
 }
 
-function animalExists(animalId) {
-  return db.animales.some((animal) => animal.id === Number(animalId))
+function existeAnimal(idAnimal) {
+  return baseDatos.animales.some((animal) => animal.id === Number(idAnimal));
 }
 
-function daysBetween(date) {
-  const today = new Date('2026-05-16T00:00:00.000Z')
-  const target = new Date(`${date}T00:00:00.000Z`)
-  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
+function diasEntre(fecha) {
+  const hoy = new Date('2026-05-16T00:00:00.000Z');
+  const destino = new Date(`${fecha}T00:00:00.000Z`);
+  return Math.ceil((destino.getTime() - hoy.getTime()) / 86_400_000);
 }
 
-function priorityFromDate(date) {
-  const days = daysBetween(date)
-  if (days <= 0) return 'Urgente'
-  if (days <= 3) return 'Próximo'
-  return 'Normal'
+function prioridadDesdeFecha(fecha) {
+  const days = diasEntre(fecha);
+  if (days <= 0) return 'Urgente';
+  if (days <= 3) return 'Próximo';
+  return 'Normal';
 }
 
-function formatShortDate(date) {
-  return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long' }).format(new Date(`${date}T00:00:00.000Z`))
+function formatearFechaCorta(fecha) {
+  return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long' }).format(new Date(`${fecha}T00:00:00.000Z`));
 }
 
-function calculateAgeText(date) {
-  const start = new Date(`${date}T00:00:00.000Z`)
-  const today = new Date('2026-05-16T00:00:00.000Z')
-  const years = today.getUTCFullYear() - start.getUTCFullYear()
-  if (years > 0) return `${years} ${years === 1 ? 'año' : 'años'}`
+function calcularTextoEdad(fecha) {
+  const inicio = new Date(`${fecha}T00:00:00.000Z`);
+  const hoy = new Date('2026-05-16T00:00:00.000Z');
+  const anios = hoy.getUTCFullYear() - inicio.getUTCFullYear();
+  if (anios > 0) return `${anios} ${anios === 1 ? 'año' : 'años'}`;
 
-  const months = Math.max(1, today.getUTCMonth() - start.getUTCMonth() + 12 * years)
-  return `${months} ${months === 1 ? 'mes' : 'meses'}`
+  const meses = Math.max(1, hoy.getUTCMonth() - inicio.getUTCMonth() + 12 * anios);
+  return `${meses} ${meses === 1 ? 'mes' : 'meses'}`;
 }
 
-function latestEventForAnimal(animalId) {
-  return db.eventos_sanitarios
-    .filter((event) => event.animal_id === animalId)
-    .toSorted((a, b) => b.fecha_evento.localeCompare(a.fecha_evento))[0]
+function ultimoEventoPorAnimal(idAnimal) {
+  return baseDatos.eventos_sanitarios.
+  filter((evento) => evento.animal_id === idAnimal).
+  toSorted((a, b) => b.fecha_evento.localeCompare(a.fecha_evento))[0];
 }
 
-function dashboardAnimals() {
-  return db.animales.map((animal) => {
-    const latestEvent = latestEventForAnimal(animal.id)
+function animalesPanel() {
+  return baseDatos.animales.map((animal) => {
+    const ultimoEvento = ultimoEventoPorAnimal(animal.id);
     return {
       id: animal.arete,
       name: animal.arete,
       type: animal.especie,
-      age: calculateAgeText(animal.fecha),
+      age: calcularTextoEdad(animal.fecha),
       status: animal.estado === 'ACTIVO' ? 'Activo' : animal.estado === 'OBSERVACION' ? 'Observación' : 'Tratamiento',
-      last: latestEvent?.descripcion ?? 'Alta inventario',
-      next: latestEvent?.fecha_proximo_evento ? formatShortDate(latestEvent.fecha_proximo_evento) : 'Sin tarea',
-      priority: latestEvent?.fecha_proximo_evento ? priorityFromDate(latestEvent.fecha_proximo_evento) : 'Normal',
-    }
-  })
+      last: ultimoEvento?.descripcion ?? 'Alta inventario',
+      next: ultimoEvento?.fecha_proximo_evento ? formatearFechaCorta(ultimoEvento.fecha_proximo_evento) : 'Sin tarea',
+      priority: ultimoEvento?.fecha_proximo_evento ? prioridadDesdeFecha(ultimoEvento.fecha_proximo_evento) : 'Normal'
+    };
+  });
 }
 
-function dashboardTasks() {
-  return db.eventos_sanitarios.map((event) => {
-    const animal = findById(db.animales, event.animal_id)
-    const priority = priorityFromDate(event.fecha_proximo_evento)
+function tareasPanel() {
+  return baseDatos.eventos_sanitarios.map((evento) => {
+    const animal = buscarPorId(baseDatos.animales, evento.animal_id);
+    const prioridad = prioridadDesdeFecha(evento.fecha_proximo_evento);
     return {
-      id: event.id,
-      group: priority === 'Urgente' ? 'Hoy' : priority === 'Próximo' ? 'Mañana' : 'Esta semana',
-      date: formatShortDate(event.fecha_proximo_evento),
-      task: `${event.tipo_evento}: ${animal?.arete ?? 'animal sin arete'}`,
+      id: evento.id,
+      group: prioridad === 'Urgente' ? 'Hoy' : prioridad === 'Próximo' ? 'Mañana' : 'Esta semana',
+      date: formatearFechaCorta(evento.fecha_proximo_evento),
+      task: `${evento.tipo_evento}: ${animal?.arete ?? 'animal sin arete'}`,
       module: 'Sanitario',
-      priority,
-      completed: completedEvents.has(event.id),
-    }
-  })
+      priority: prioridad,
+      completed: eventosCompletados.has(evento.id)
+    };
+  });
 }
 
-function dashboardCosts() {
-  const totals = new Map()
-  for (const gasto of db.gastos) totals.set(gasto.categoria, (totals.get(gasto.categoria) ?? 0) + gasto.monto)
-  const alimentoTotal = db.alimentacion.reduce((total, item) => total + item.costo, 0)
-  totals.set('Alimento', (totals.get('Alimento') ?? 0) + alimentoTotal)
+function costosPanel() {
+  const totales = new Map();
+  for (const gasto of baseDatos.gastos) totales.set(gasto.categoria, (totales.get(gasto.categoria) ?? 0) + gasto.monto);
+  const totalAlimento = baseDatos.alimentacion.reduce((total, elemento) => total + elemento.costo, 0);
+  totales.set('Alimento', (totales.get('Alimento') ?? 0) + totalAlimento);
 
-  const total = [...totals.values()].reduce((sum, value) => sum + value, 0)
-  return [...totals.entries()].map(([label, value]) => ({
-    label,
-    value,
-    percent: total > 0 ? Math.round((value / total) * 100) : 0,
-  }))
+  const total = [...totales.values()].reduce((suma, valor) => suma + valor, 0);
+  return [...totales.entries()].map(([etiqueta, valor]) => ({
+    label: etiqueta,
+    value: valor,
+    percent: total > 0 ? Math.round(valor / total * 100) : 0
+  }));
 }
 
-function dashboardHealthSummary() {
-  const nextEvents = db.eventos_sanitarios.filter((event) => !completedEvents.has(event.id))
+function resumenSanidadPanel() {
+  const eventosSiguientes = baseDatos.eventos_sanitarios.filter((evento) => !eventosCompletados.has(evento.id));
   return [
-    { label: 'Vacunas pendientes', value: nextEvents.filter((event) => event.tipo_evento === 'Vacuna').length, tone: 'warning' },
-    { label: 'Desparasitaciones próximas', value: nextEvents.filter((event) => event.tipo_evento === 'Desparasitacion').length, tone: 'primary' },
-    { label: 'Revisiones clínicas', value: nextEvents.filter((event) => event.tipo_evento === 'Revision').length, tone: 'danger' },
-    { label: 'Animales en observación', value: db.animales.filter((animal) => animal.estado === 'OBSERVACION').length, tone: 'warning' },
-    { label: 'Historial reciente', value: db.eventos_sanitarios.length, tone: 'success' },
-  ]
+  { label: 'Vacunas pendientes', value: eventosSiguientes.filter((evento) => evento.tipo_evento === 'Vacuna').length, tone: 'warning' },
+  { label: 'Desparasitaciones próximas', value: eventosSiguientes.filter((evento) => evento.tipo_evento === 'Desparasitacion').length, tone: 'primary' },
+  { label: 'Revisiones clínicas', value: eventosSiguientes.filter((evento) => evento.tipo_evento === 'Revision').length, tone: 'danger' },
+  { label: 'Animales en observación', value: baseDatos.animales.filter((animal) => animal.estado === 'OBSERVACION').length, tone: 'warning' },
+  { label: 'Historial reciente', value: baseDatos.eventos_sanitarios.length, tone: 'success' }];
+
 }
 
-function getDashboard() {
-  const animals = dashboardAnimals()
-  const tasks = dashboardTasks()
-  const costs = dashboardCosts()
-  const totalCosts = costs.reduce((total, cost) => total + cost.value, 0)
+function obtenerPanel() {
+  const animales = animalesPanel();
+  const tareas = tareasPanel();
+  const costos = costosPanel();
+  const costosTotales = costos.reduce((total, costo) => total + costo.value, 0);
 
   return {
     stats: [
-      { title: 'Animales activos', value: db.animales.filter((animal) => animal.estado !== 'BAJA').length.toString(), detail: 'Inventario productivo', tone: 'primary' },
-      { title: 'En observación', value: db.animales.filter((animal) => animal.estado === 'OBSERVACION').length.toString(), detail: 'Requieren seguimiento', tone: 'warning' },
-      { title: 'Eventos próximos', value: tasks.filter((task) => !task.completed).length.toString(), detail: 'Sanitario y manejo', tone: 'primary' },
-      { title: 'Gastos del mes', value: `$${totalCosts.toLocaleString('es-MX')}`, detail: 'Gastos y alimentación', tone: 'success' },
-      { title: 'Tareas pendientes', value: tasks.filter((task) => !task.completed).length.toString(), detail: 'Prioriza las de hoy', tone: 'warning' },
-      { title: 'Alertas urgentes', value: tasks.filter((task) => task.priority === 'Urgente' && !task.completed).length.toString(), detail: 'Atención inmediata', tone: 'danger' },
-    ],
-    animals,
-    tasks,
-    costs,
-    healthSummary: dashboardHealthSummary(),
-  }
+    { title: 'Animales activos', value: baseDatos.animales.filter((animal) => animal.estado !== 'BAJA').length.toString(), detail: 'Inventario productivo', tone: 'primary' },
+    { title: 'En observación', value: baseDatos.animales.filter((animal) => animal.estado === 'OBSERVACION').length.toString(), detail: 'Requieren seguimiento', tone: 'warning' },
+    { title: 'Eventos próximos', value: tareas.filter((tarea) => !tarea.completed).length.toString(), detail: 'Sanitario y manejo', tone: 'primary' },
+    { title: 'Gastos del mes', value: `$${costosTotales.toLocaleString('es-MX')}`, detail: 'Gastos y alimentación', tone: 'success' },
+    { title: 'Tareas pendientes', value: tareas.filter((tarea) => !tarea.completed).length.toString(), detail: 'Prioriza las de hoy', tone: 'warning' },
+    { title: 'Alertas urgentes', value: tareas.filter((tarea) => tarea.priority === 'Urgente' && !tarea.completed).length.toString(), detail: 'Atención inmediata', tone: 'danger' }],
+
+    animals: animales,
+    tasks: tareas,
+    costs: costos,
+    healthSummary: resumenSanidadPanel()
+  };
 }
 
-function sanitizeConfigUser(user) {
+function sanearUsuarioConfiguracion(usuario) {
   return {
-    id: user.id,
-    usuario_id: user.usuario_id,
-    nombre: user.nombre,
-    correo: user.correo,
-    rol: user.rol,
-    activo: user.activo,
-    permisos: user.permisos,
-    protegido: user.protegido,
-  }
+    id: usuario.id,
+    usuario_id: usuario.usuario_id,
+    nombre: usuario.nombre,
+    correo: usuario.correo,
+    rol: usuario.rol,
+    activo: usuario.activo,
+    permisos: usuario.permisos,
+    protegido: usuario.protegido
+  };
 }
 
-function getConfigUser(id) {
-  return db.configuracion_usuarios.find((user) => user.id === Number(id))
+function obtenerUsuarioConfiguracion(id) {
+  return baseDatos.configuracion_usuarios.find((usuario) => usuario.id === Number(id));
 }
 
-function validatePermissions(permisos) {
-  if (!Array.isArray(permisos)) return 'Los permisos deben enviarse como arreglo.'
-  const invalidPermission = permisos.find((permission) => !systemPermissions.includes(permission))
-  if (invalidPermission) return `Permiso inválido: ${invalidPermission}.`
-  return null
+function validarPermisos(permisos) {
+  if (!Array.isArray(permisos)) return 'Los permisos deben enviarse como arreglo.';
+  const permisoInvalido = permisos.find((permiso) => !permisosSistema.includes(permiso));
+  if (permisoInvalido) return `Permiso inválido: ${permisoInvalido}.`;
+  return null;
 }
 
-function registerCrudRoutes(path, collectionName, requiredFields = []) {
-  app.get(`/api/${path}`, (_request, response) => {
-    response.json(db[collectionName])
-  })
+function registrarRutasCrud(ruta, nombreColeccion, camposRequeridos = []) {
+  aplicacionExpress.get(`/api/${ruta}`, (_request, respuesta) => {
+    respuesta.json(baseDatos[nombreColeccion]);
+  });
 
-  app.get(`/api/${path}/:id`, (request, response) => {
-    const entity = findById(db[collectionName], request.params.id)
-    if (!entity) {
-      notFound(response, collectionName)
-      return
+  aplicacionExpress.get(`/api/${ruta}/:id`, (solicitud, respuesta) => {
+    const entidad = buscarPorId(baseDatos[nombreColeccion], solicitud.params.id);
+    if (!entidad) {
+      noEncontrado(respuesta, nombreColeccion);
+      return;
     }
 
-    response.json(entity)
-  })
+    respuesta.json(entidad);
+  });
 
-  app.post(`/api/${path}`, (request, response) => {
-    const missingField = requiredFields.find((field) => request.body?.[field] === undefined || request.body?.[field] === '')
-    if (missingField) {
-      response.status(400).json({ message: `Falta el campo ${missingField}.` })
-      return
+  aplicacionExpress.post(`/api/${ruta}`, (solicitud, respuesta) => {
+    const campoFaltante = camposRequeridos.find((campo) => solicitud.body?.[campo] === undefined || solicitud.body?.[campo] === '');
+    if (campoFaltante) {
+      respuesta.status(400).json({ message: `Falta el campo ${campoFaltante}.` });
+      return;
     }
 
-    const entity = { id: nextId(db[collectionName]), ...request.body }
-    db[collectionName].push(entity)
-    response.status(201).json(entity)
-  })
+    const entidad = { id: siguienteId(baseDatos[nombreColeccion]), ...solicitud.body };
+    baseDatos[nombreColeccion].push(entidad);
+    respuesta.status(201).json(entidad);
+  });
 
-  app.put(`/api/${path}/:id`, (request, response) => {
-    const index = db[collectionName].findIndex((item) => item.id === Number(request.params.id))
-    if (index < 0) {
-      notFound(response, collectionName)
-      return
+  aplicacionExpress.put(`/api/${ruta}/:id`, (solicitud, respuesta) => {
+    const indice = baseDatos[nombreColeccion].findIndex((elemento) => elemento.id === Number(solicitud.params.id));
+    if (indice < 0) {
+      noEncontrado(respuesta, nombreColeccion);
+      return;
     }
 
-    db[collectionName][index] = { ...db[collectionName][index], ...request.body, id: Number(request.params.id) }
-    response.json(db[collectionName][index])
-  })
+    baseDatos[nombreColeccion][indice] = { ...baseDatos[nombreColeccion][indice], ...solicitud.body, id: Number(solicitud.params.id) };
+    respuesta.json(baseDatos[nombreColeccion][indice]);
+  });
 
-  app.delete(`/api/${path}/:id`, (request, response) => {
-    const index = db[collectionName].findIndex((item) => item.id === Number(request.params.id))
-    if (index < 0) {
-      notFound(response, collectionName)
-      return
+  aplicacionExpress.delete(`/api/${ruta}/:id`, (solicitud, respuesta) => {
+    const indice = baseDatos[nombreColeccion].findIndex((elemento) => elemento.id === Number(solicitud.params.id));
+    if (indice < 0) {
+      noEncontrado(respuesta, nombreColeccion);
+      return;
     }
 
-    const [deleted] = db[collectionName].splice(index, 1)
-    response.json(deleted)
-  })
+    const [deleted] = baseDatos[nombreColeccion].splice(indice, 1);
+    respuesta.json(deleted);
+  });
 }
 
-app.get('/api/health', (_request, response) => {
-  response.json({ ok: true, service: 'AgroWeb API', database: 'mock-der-v1' })
-})
+aplicacionExpress.get('/api/health', (_request, respuesta) => {
+  respuesta.json({ ok: true, service: 'AgroWeb API', database: 'mock-der-v1' });
+});
 
-app.get('/api/dashboard', (_request, response) => {
-  response.json(getDashboard())
-})
+aplicacionExpress.get('/api/dashboard', (_request, respuesta) => {
+  respuesta.json(obtenerPanel());
+});
 
-app.get('/api/db', (_request, response) => {
-  response.json(db)
-})
+aplicacionExpress.get('/api/db', (_request, respuesta) => {
+  respuesta.json(baseDatos);
+});
 
-app.get('/api/local-store', (_request, response) => {
-  response.json(localStore)
-})
+aplicacionExpress.get('/api/local-store', (_request, respuesta) => {
+  respuesta.json(almacenLocal);
+});
 
-app.get('/api/local-store/:key', (request, response) => {
-  const key = decodeURIComponent(request.params.key)
-  response.json(localStore[key] ?? null)
-})
+aplicacionExpress.get('/api/local-store/:key', (solicitud, respuesta) => {
+  const clave = decodeURIComponent(solicitud.params.key);
+  respuesta.json(almacenLocal[clave] ?? null);
+});
 
-app.put('/api/local-store/:key', (request, response) => {
-  const key = decodeURIComponent(request.params.key)
-  const value = persistUploads(request.body?.value, key)
-  localStore[key] = value
+aplicacionExpress.put('/api/local-store/:key', (solicitud, respuesta) => {
+  const clave = decodeURIComponent(solicitud.params.key);
+  const valor = persistirCargas(solicitud.body?.value, clave);
+  almacenLocal[clave] = valor;
 
-  if (key === 'agroweb.settings.users') db.configuracion_usuarios = value
-  saveLocalStore()
-  response.json({ key, value })
-})
+  if (clave === 'agroweb.settings.users') baseDatos.configuracion_usuarios = valor;
+  guardarAlmacenLocal();
+  respuesta.json({ key: clave, value: valor });
+});
 
-app.post('/api/auth/login', (request, response) => {
-  const { nombre, pin } = request.body
+aplicacionExpress.post('/api/auth/login', (solicitud, respuesta) => {
+  const { nombre, pin: pin } = solicitud.body;
   if (!nombre || !pin) {
-    response.status(400).json({ message: 'Ingresa usuario y PIN.' })
-    return
+    respuesta.status(400).json({ message: 'Ingresa usuario y PIN.' });
+    return;
   }
 
-  const user = db.usuarios.find((usuario) => usuario.nombre.toLowerCase() === String(nombre).trim().toLowerCase())
-  if (!user || user.pin_hash !== hashPin(pin, user.salt)) {
-    response.status(401).json({ message: 'Credenciales incorrectas.' })
-    return
+  const usuario = baseDatos.usuarios.find((usuario) => usuario.nombre.toLowerCase() === String(nombre).trim().toLowerCase());
+  if (!usuario || usuario.pin_hash !== crearHashPin(pin, usuario.salt)) {
+    respuesta.status(401).json({ message: 'Credenciales incorrectas.' });
+    return;
   }
 
-  const now = new Date().toISOString()
-  user.ultimo_acceso = now
+  const ahora = new Date().toISOString();
+  usuario.ultimo_acceso = ahora;
 
-  const session = {
-    id: nextId(db.session_manager),
-    usuario_id: user.id,
-    inicio_sesion: now,
-    ultimo_ping: now,
-    activa: 1,
-  }
-  db.session_manager.push(session)
+  const sesion = {
+    id: siguienteId(baseDatos.session_manager),
+    usuario_id: usuario.id,
+    inicio_sesion: ahora,
+    ultimo_ping: ahora,
+    activa: 1
+  };
+  baseDatos.session_manager.push(sesion);
 
-  response.json({ user: sanitizeUser(user), session })
-})
+  respuesta.json({ user: sanearUsuario(usuario), session: sesion });
+});
 
-app.post('/api/auth/register', (request, response) => {
-  const { nombre, pin } = request.body
+aplicacionExpress.post('/api/auth/register', (solicitud, respuesta) => {
+  const { nombre, pin: pin } = solicitud.body;
   if (!nombre || !pin) {
-    response.status(400).json({ message: 'Ingresa nombre de usuario y PIN.' })
-    return
+    respuesta.status(400).json({ message: 'Ingresa nombre de usuario y PIN.' });
+    return;
   }
 
   if (String(pin).length < 4) {
-    response.status(400).json({ message: 'El PIN debe tener al menos 4 caracteres.' })
-    return
+    respuesta.status(400).json({ message: 'El PIN debe tener al menos 4 caracteres.' });
+    return;
   }
 
-  const normalizedName = String(nombre).trim()
-  const exists = db.usuarios.some((usuario) => usuario.nombre.toLowerCase() === normalizedName.toLowerCase())
-  if (exists) {
-    response.status(409).json({ message: 'Ese usuario ya existe.' })
-    return
+  const nombreNormalizado = String(nombre).trim();
+  const existe = baseDatos.usuarios.some((usuario) => usuario.nombre.toLowerCase() === nombreNormalizado.toLowerCase());
+  if (existe) {
+    respuesta.status(409).json({ message: 'Ese usuario ya existe.' });
+    return;
   }
 
-  const salt = createSalt()
-  const now = new Date().toISOString()
-  const user = {
-    id: nextId(db.usuarios),
-    pin_hash: hashPin(pin, salt),
-    salt,
-    nombre: normalizedName,
-    fecha_creacion: now,
-    ultimo_acceso: now,
+  const sal = crearSal();
+  const ahora = new Date().toISOString();
+  const usuario = {
+    id: siguienteId(baseDatos.usuarios),
+    pin_hash: crearHashPin(pin, sal),
+    salt: sal,
+    nombre: nombreNormalizado,
+    fecha_creacion: ahora,
+    ultimo_acceso: ahora
+  };
+
+  baseDatos.usuarios.push(usuario);
+
+  const sesion = {
+    id: siguienteId(baseDatos.session_manager),
+    usuario_id: usuario.id,
+    inicio_sesion: ahora,
+    ultimo_ping: ahora,
+    activa: 1
+  };
+  baseDatos.session_manager.push(sesion);
+
+  respuesta.status(201).json({ user: sanearUsuario(usuario), session: sesion });
+});
+
+aplicacionExpress.post('/api/auth/logout', (solicitud, respuesta) => {
+  const { sessionId: idSesion } = solicitud.body;
+  const sesion = buscarPorId(baseDatos.session_manager, idSesion);
+  if (sesion) {
+    sesion.activa = 0;
+    sesion.ultimo_ping = new Date().toISOString();
   }
 
-  db.usuarios.push(user)
+  respuesta.json({ ok: true });
+});
 
-  const session = {
-    id: nextId(db.session_manager),
-    usuario_id: user.id,
-    inicio_sesion: now,
-    ultimo_ping: now,
-    activa: 1,
-  }
-  db.session_manager.push(session)
-
-  response.status(201).json({ user: sanitizeUser(user), session })
-})
-
-app.post('/api/auth/logout', (request, response) => {
-  const { sessionId } = request.body
-  const session = findById(db.session_manager, sessionId)
-  if (session) {
-    session.activa = 0
-    session.ultimo_ping = new Date().toISOString()
-  }
-
-  response.json({ ok: true })
-})
-
-app.post('/api/animales', (request, response) => {
-  const error = validateAnimal(request.body)
+aplicacionExpress.post('/api/animales', (solicitud, respuesta) => {
+  const error = validarAnimal(solicitud.body);
   if (error) {
-    response.status(400).json({ message: error })
-    return
+    respuesta.status(400).json({ message: error });
+    return;
   }
 
   const animal = {
-    id: nextId(db.animales),
+    id: siguienteId(baseDatos.animales),
     estado: 'ACTIVO',
     foto_path: '',
     fecha_baja: null,
     motivo_baja: null,
-    ...request.body,
-  }
-  db.animales.push(animal)
+    ...solicitud.body
+  };
+  baseDatos.animales.push(animal);
 
-  const precioCompra = Number(request.body.precio_compra ?? 0)
+  const precioCompra = Number(solicitud.body.precio_compra ?? 0);
   if (precioCompra > 0) {
-    db.gastos.push({
-      id: nextId(db.gastos),
+    baseDatos.gastos.push({
+      id: siguienteId(baseDatos.gastos),
       animal_id: animal.id,
       categoria: 'Compra',
       monto: precioCompra,
-      fecha: request.body.fecha,
-      descripcion: `Compra de animal ${animal.arete}`,
-    })
+      fecha: solicitud.body.fecha,
+      descripcion: `Compra de animal ${animal.arete}`
+    });
   }
 
-  response.status(201).json(animal)
-})
+  respuesta.status(201).json(animal);
+});
 
-app.put('/api/animales/:id', (request, response) => {
-  const index = db.animales.findIndex((animal) => animal.id === Number(request.params.id))
-  if (index < 0) {
-    notFound(response, 'Animal')
-    return
+aplicacionExpress.put('/api/animales/:id', (solicitud, respuesta) => {
+  const indice = baseDatos.animales.findIndex((animal) => animal.id === Number(solicitud.params.id));
+  if (indice < 0) {
+    noEncontrado(respuesta, 'Animal');
+    return;
   }
 
-  db.animales[index] = { ...db.animales[index], ...request.body, id: Number(request.params.id) }
-  response.json(db.animales[index])
-})
+  baseDatos.animales[indice] = { ...baseDatos.animales[indice], ...solicitud.body, id: Number(solicitud.params.id) };
+  respuesta.json(baseDatos.animales[indice]);
+});
 
-app.delete('/api/animales/:id', (request, response) => {
-  const animal = findById(db.animales, request.params.id)
+aplicacionExpress.delete('/api/animales/:id', (solicitud, respuesta) => {
+  const animal = buscarPorId(baseDatos.animales, solicitud.params.id);
   if (!animal) {
-    notFound(response, 'Animal')
-    return
+    noEncontrado(respuesta, 'Animal');
+    return;
   }
 
-  animal.estado = 'BAJA'
-  animal.fecha_baja = new Date().toISOString()
-  animal.motivo_baja = request.body?.motivo_baja ?? 'Baja administrativa'
-  response.json(animal)
-})
+  animal.estado = 'BAJA';
+  animal.fecha_baja = new Date().toISOString();
+  animal.motivo_baja = solicitud.body?.motivo_baja ?? 'Baja administrativa';
+  respuesta.json(animal);
+});
 
-app.get('/api/animales', (_request, response) => {
-  response.json(db.animales)
-})
+aplicacionExpress.get('/api/animales', (_request, respuesta) => {
+  respuesta.json(baseDatos.animales);
+});
 
-app.get('/api/animales/:id', (request, response) => {
-  const animal = findById(db.animales, request.params.id)
+aplicacionExpress.get('/api/animales/:id', (solicitud, respuesta) => {
+  const animal = buscarPorId(baseDatos.animales, solicitud.params.id);
   if (!animal) {
-    notFound(response, 'Animal')
-    return
+    noEncontrado(respuesta, 'Animal');
+    return;
   }
 
-  response.json(animal)
-})
+  respuesta.json(animal);
+});
 
-registerCrudRoutes('usuarios', 'usuarios', ['pin_hash', 'salt', 'nombre'])
-registerCrudRoutes('session-manager', 'session_manager', ['usuario_id', 'inicio_sesion', 'ultimo_ping'])
+registrarRutasCrud('usuarios', 'usuarios', ['pin_hash', 'salt', 'nombre']);
+registrarRutasCrud('session-manager', 'session_manager', ['usuario_id', 'inicio_sesion', 'ultimo_ping']);
 
-app.get('/api/configuracion/usuarios', (_request, response) => {
-  response.json(db.configuracion_usuarios.map(sanitizeConfigUser))
-})
+aplicacionExpress.get('/api/configuracion/usuarios', (_request, respuesta) => {
+  respuesta.json(baseDatos.configuracion_usuarios.map(sanearUsuarioConfiguracion));
+});
 
-app.put('/api/configuracion/usuarios/:id/rol', (request, response) => {
-  const user = getConfigUser(request.params.id)
-  if (!user) {
-    notFound(response, 'Usuario de configuración')
-    return
+aplicacionExpress.put('/api/configuracion/usuarios/:id/rol', (solicitud, respuesta) => {
+  const usuario = obtenerUsuarioConfiguracion(solicitud.params.id);
+  if (!usuario) {
+    noEncontrado(respuesta, 'Usuario de configuración');
+    return;
   }
 
-  const { rol } = request.body
+  const { rol } = solicitud.body;
   if (!rol) {
-    response.status(400).json({ message: 'El rol es obligatorio.' })
-    return
+    respuesta.status(400).json({ message: 'El rol es obligatorio.' });
+    return;
   }
 
-  if (user.protegido && rol !== 'Administrador') {
-    response.status(403).json({ message: 'El administrador principal no puede dejar de ser Administrador.' })
-    return
+  if (usuario.protegido && rol !== 'Administrador') {
+    respuesta.status(403).json({ message: 'El administrador principal no puede dejar de ser Administrador.' });
+    return;
   }
 
-  user.rol = rol
-  localStore['agroweb.settings.users'] = db.configuracion_usuarios
-  saveLocalStore()
-  response.json(sanitizeConfigUser(user))
-})
+  usuario.rol = rol;
+  almacenLocal['agroweb.settings.users'] = baseDatos.configuracion_usuarios;
+  guardarAlmacenLocal();
+  respuesta.json(sanearUsuarioConfiguracion(usuario));
+});
 
-app.patch('/api/configuracion/usuarios/:id/estado', (request, response) => {
-  const user = getConfigUser(request.params.id)
-  if (!user) {
-    notFound(response, 'Usuario de configuración')
-    return
+aplicacionExpress.patch('/api/configuracion/usuarios/:id/estado', (solicitud, respuesta) => {
+  const usuario = obtenerUsuarioConfiguracion(solicitud.params.id);
+  if (!usuario) {
+    noEncontrado(respuesta, 'Usuario de configuración');
+    return;
   }
 
-  if (user.protegido) {
-    response.status(403).json({ message: 'El administrador principal no puede bloquearse.' })
-    return
+  if (usuario.protegido) {
+    respuesta.status(403).json({ message: 'El administrador principal no puede bloquearse.' });
+    return;
   }
 
-  user.activo = Boolean(request.body?.activo)
-  localStore['agroweb.settings.users'] = db.configuracion_usuarios
-  saveLocalStore()
-  response.json(sanitizeConfigUser(user))
-})
+  usuario.activo = Boolean(solicitud.body?.activo);
+  almacenLocal['agroweb.settings.users'] = baseDatos.configuracion_usuarios;
+  guardarAlmacenLocal();
+  respuesta.json(sanearUsuarioConfiguracion(usuario));
+});
 
-app.put('/api/configuracion/usuarios/:id/permisos', (request, response) => {
-  const user = getConfigUser(request.params.id)
-  if (!user) {
-    notFound(response, 'Usuario de configuración')
-    return
+aplicacionExpress.put('/api/configuracion/usuarios/:id/permisos', (solicitud, respuesta) => {
+  const usuario = obtenerUsuarioConfiguracion(solicitud.params.id);
+  if (!usuario) {
+    noEncontrado(respuesta, 'Usuario de configuración');
+    return;
   }
 
-  const error = validatePermissions(request.body?.permisos)
+  const error = validarPermisos(solicitud.body?.permisos);
   if (error) {
-    response.status(400).json({ message: error })
-    return
+    respuesta.status(400).json({ message: error });
+    return;
   }
 
-  if (user.protegido) {
-    const removedPermission = systemPermissions.find((permission) => !request.body.permisos.includes(permission))
-    if (removedPermission) {
-      response.status(403).json({ message: 'El administrador principal no puede quitarse permisos.' })
-      return
+  if (usuario.protegido) {
+    const permisoEliminado = permisosSistema.find((permiso) => !solicitud.body.permisos.includes(permiso));
+    if (permisoEliminado) {
+      respuesta.status(403).json({ message: 'El administrador principal no puede quitarse permisos.' });
+      return;
     }
   }
 
-  user.permisos = [...new Set(request.body.permisos)]
-  localStore['agroweb.settings.users'] = db.configuracion_usuarios
-  saveLocalStore()
-  response.json(sanitizeConfigUser(user))
-})
+  usuario.permisos = [...new Set(solicitud.body.permisos)];
+  almacenLocal['agroweb.settings.users'] = baseDatos.configuracion_usuarios;
+  guardarAlmacenLocal();
+  respuesta.json(sanearUsuarioConfiguracion(usuario));
+});
 
-app.post('/api/eventos-sanitarios', (request, response) => {
-  if (!animalExists(request.body?.animal_id)) {
-    response.status(400).json({ message: 'El animal_id no existe.' })
-    return
+aplicacionExpress.post('/api/eventos-sanitarios', (solicitud, respuesta) => {
+  if (!existeAnimal(solicitud.body?.animal_id)) {
+    respuesta.status(400).json({ message: 'El animal_id no existe.' });
+    return;
   }
 
-  const requiredFields = ['tipo_evento', 'descripcion', 'fecha_evento', 'fecha_proximo_evento']
-  const missingField = requiredFields.find((field) => !request.body?.[field])
-  if (missingField) {
-    response.status(400).json({ message: `Falta el campo ${missingField}.` })
-    return
+  const camposRequeridos = ['tipo_evento', 'descripcion', 'fecha_evento', 'fecha_proximo_evento'];
+  const campoFaltante = camposRequeridos.find((campo) => !solicitud.body?.[campo]);
+  if (campoFaltante) {
+    respuesta.status(400).json({ message: `Falta el campo ${campoFaltante}.` });
+    return;
   }
 
-  const event = { id: nextId(db.eventos_sanitarios), veterinario: '', dosis: '', observaciones: '', ...request.body }
-  db.eventos_sanitarios.push(event)
-  response.status(201).json(event)
-})
+  const evento = { id: siguienteId(baseDatos.eventos_sanitarios), veterinario: '', dosis: '', observaciones: '', ...solicitud.body };
+  baseDatos.eventos_sanitarios.push(evento);
+  respuesta.status(201).json(evento);
+});
 
-registerCrudRoutes('eventos-sanitarios', 'eventos_sanitarios')
+registrarRutasCrud('eventos-sanitarios', 'eventos_sanitarios');
 
-app.post('/api/gastos', (request, response) => {
-  if (request.body?.animal_id !== null && request.body?.animal_id !== undefined && !animalExists(request.body.animal_id)) {
-    response.status(400).json({ message: 'El animal_id no existe.' })
-    return
+aplicacionExpress.post('/api/gastos', (solicitud, respuesta) => {
+  if (solicitud.body?.animal_id !== null && solicitud.body?.animal_id !== undefined && !existeAnimal(solicitud.body.animal_id)) {
+    respuesta.status(400).json({ message: 'El animal_id no existe.' });
+    return;
   }
 
-  if (!request.body?.categoria || Number(request.body?.monto) <= 0 || !request.body?.fecha) {
-    response.status(400).json({ message: 'El gasto requiere categoria, monto mayor a 0 y fecha.' })
-    return
+  if (!solicitud.body?.categoria || Number(solicitud.body?.monto) <= 0 || !solicitud.body?.fecha) {
+    respuesta.status(400).json({ message: 'El gasto requiere categoria, monto mayor a 0 y fecha.' });
+    return;
   }
 
-  const gasto = { id: nextId(db.gastos), descripcion: '', ...request.body }
-  db.gastos.push(gasto)
-  response.status(201).json(gasto)
-})
+  const gasto = { id: siguienteId(baseDatos.gastos), descripcion: '', ...solicitud.body };
+  baseDatos.gastos.push(gasto);
+  respuesta.status(201).json(gasto);
+});
 
-registerCrudRoutes('gastos', 'gastos')
+registrarRutasCrud('gastos', 'gastos');
 
-app.post('/api/alimentacion', (request, response) => {
-  if (!animalExists(request.body?.animal_id)) {
-    response.status(400).json({ message: 'El animal_id no existe.' })
-    return
+aplicacionExpress.post('/api/alimentacion', (solicitud, respuesta) => {
+  if (!existeAnimal(solicitud.body?.animal_id)) {
+    respuesta.status(400).json({ message: 'El animal_id no existe.' });
+    return;
   }
 
-  const requiredFields = ['tipo_alimento', 'cantidad', 'unidad', 'fecha', 'costo']
-  const missingField = requiredFields.find((field) => request.body?.[field] === undefined || request.body?.[field] === '')
-  if (missingField) {
-    response.status(400).json({ message: `Falta el campo ${missingField}.` })
-    return
+  const camposRequeridos = ['tipo_alimento', 'cantidad', 'unidad', 'fecha', 'costo'];
+  const campoFaltante = camposRequeridos.find((campo) => solicitud.body?.[campo] === undefined || solicitud.body?.[campo] === '');
+  if (campoFaltante) {
+    respuesta.status(400).json({ message: `Falta el campo ${campoFaltante}.` });
+    return;
   }
 
-  const item = { id: nextId(db.alimentacion), observaciones: '', ...request.body }
-  db.alimentacion.push(item)
-  response.status(201).json(item)
-})
+  const elemento = { id: siguienteId(baseDatos.alimentacion), observaciones: '', ...solicitud.body };
+  baseDatos.alimentacion.push(elemento);
+  respuesta.status(201).json(elemento);
+});
 
-registerCrudRoutes('alimentacion', 'alimentacion')
+registrarRutasCrud('alimentacion', 'alimentacion');
 
-app.patch('/api/tasks/:id/toggle', (request, response) => {
-  const event = findById(db.eventos_sanitarios, request.params.id)
-  if (!event) {
-    notFound(response, 'Evento sanitario')
-    return
+aplicacionExpress.patch('/api/tasks/:id/toggle', (solicitud, respuesta) => {
+  const evento = buscarPorId(baseDatos.eventos_sanitarios, solicitud.params.id);
+  if (!evento) {
+    noEncontrado(respuesta, 'Evento sanitario');
+    return;
   }
 
-  if (completedEvents.has(event.id)) completedEvents.delete(event.id)
-  else completedEvents.add(event.id)
+  if (eventosCompletados.has(evento.id)) eventosCompletados.delete(evento.id);else
+  eventosCompletados.add(evento.id);
 
-  const task = dashboardTasks().find((item) => item.id === event.id)
-  response.json(task)
-})
+  const tarea = tareasPanel().find((elemento) => elemento.id === evento.id);
+  respuesta.json(tarea);
+});
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`AgroWeb API escuchando en http://localhost:${port}`)
-})
+aplicacionExpress.listen(puerto, '0.0.0.0', () => {
+  console.log(`AgroWeb API escuchando en http://localhost:${puerto}`);
+});

@@ -1,20 +1,20 @@
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BadgeCheck, CalendarDays, Edit3, FileText, Landmark, Map, MapPin, Skull, UserRound, Weight } from 'lucide-react'
-import FilePreview from '../FilePreview'
-import AnimalStatusBadge from './AnimalStatusBadge'
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, BadgeCheck, CalendarDays, Edit3, FileText, Landmark, Map, MapPin, Skull, UserRound, Weight } from 'lucide-react';
+import VistaPreviaArchivo from '../FilePreview';
+import InsigniaEstadoAnimal from './AnimalStatusBadge';
 
-function DetailItem({ icon: Icon, label, value }) {
+function ElementoDetalle({ icon: Icon, label: etiqueta, value: valor }) {
   return (
     <div className="rounded-2xl bg-[#F4F4F4] p-4">
       <span className="inline-flex items-center gap-2 text-xs font-bold uppercase text-[#98a287]">
-        <Icon size={16} /> {label}
+        <Icon size={16} /> {etiqueta}
       </span>
-      <p className="mt-2 text-sm font-semibold leading-6 text-[#1d1d1b]">{value || 'Sin información'}</p>
-    </div>
-  )
+      <p className="mt-2 text-sm font-semibold leading-6 text-[#1d1d1b]">{valor || 'Sin información'}</p>
+    </div>);
+
 }
 
-function getPreviousOwner(owner) {
+function obtenerDuenoAnterior(owner) {
   if (typeof owner === 'string') {
     return {
       nombre: owner,
@@ -23,18 +23,18 @@ function getPreviousOwner(owner) {
       rancho: '',
       ciudad: '',
       estado: '',
-      documentoPdf: null,
-    }
+      documentoPdf: null
+    };
   }
 
-  return owner ?? {}
+  return owner ?? {};
 }
 
-function AnimalDetail({ animals, onRequestDelete }) {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const animal = animals.find((item) => item.id === Number(id))
-  const previousOwner = getPreviousOwner(animal?.duenosAnteriores)
+function DetalleAnimal({ animals: animales, onRequestDelete: alSolicitarBaja }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const animal = animales.find((elemento) => elemento.id === Number(id));
+  const previousOwner = obtenerDuenoAnterior(animal?.duenosAnteriores);
 
   if (!animal) {
     return (
@@ -44,8 +44,8 @@ function AnimalDetail({ animals, onRequestDelete }) {
         <button className="mt-5 rounded-2xl bg-[#07612d] px-5 py-3 text-sm font-bold text-white" onClick={() => navigate('/animales')} type="button">
           Volver a Gestión Ganadera
         </button>
-      </section>
-    )
+      </section>);
+
   }
 
   return (
@@ -58,7 +58,7 @@ function AnimalDetail({ animals, onRequestDelete }) {
           <Link className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#1f7a8c] px-4 text-sm font-bold text-white sm:w-auto" to={`/animales/${animal.id}/editar`}>
             <Edit3 size={18} /> Editar
           </Link>
-          <button className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#D32F2F] px-4 text-sm font-bold text-white sm:w-auto" onClick={() => onRequestDelete(animal)} type="button">
+          <button className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#D32F2F] px-4 text-sm font-bold text-white sm:w-auto" onClick={() => alSolicitarBaja(animal)} type="button">
             <Skull size={18} /> Dar de baja
           </button>
         </div>
@@ -67,11 +67,11 @@ function AnimalDetail({ animals, onRequestDelete }) {
       <article className="overflow-hidden rounded-2xl border border-[#98a287]/18 bg-white shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
         <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
           <div className="flex min-h-56 items-center justify-center bg-[#07612d]/8 md:min-h-80">
-            {animal.fotografia ? (
-              <img alt={`Fotografía de ${animal.identificador}`} className="h-full min-h-56 w-full object-contain p-3 md:min-h-80" src={animal.fotografia} />
-            ) : (
-              <span className="text-7xl font-bold text-[#07612d]/25">{animal.especie.slice(0, 1)}</span>
-            )}
+            {animal.fotografia ?
+            <img alt={`Fotografía de ${animal.identificador}`} className="h-full min-h-56 w-full object-contain p-3 md:min-h-80" src={animal.fotografia} /> :
+
+            <span className="text-7xl font-bold text-[#07612d]/25">{animal.especie.slice(0, 1)}</span>
+            }
           </div>
 
           <div className="p-4 md:p-6">
@@ -83,13 +83,13 @@ function AnimalDetail({ animals, onRequestDelete }) {
                   {animal.especie} de raza {animal.raza}
                 </p>
               </div>
-              <AnimalStatusBadge estado={animal.estado} />
+              <InsigniaEstadoAnimal estado={animal.estado} />
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <DetailItem icon={Weight} label="Peso" value={`${animal.peso} kg`} />
-              <DetailItem icon={MapPin} label="Ubicación" value={animal.ubicacion} />
-              <DetailItem icon={CalendarDays} label="Fecha de ingreso" value={animal.fechaIngreso} />
+              <ElementoDetalle icon={Weight} label="Peso" value={`${animal.peso} kg`} />
+              <ElementoDetalle icon={MapPin} label="Ubicación" value={animal.ubicacion} />
+              <ElementoDetalle icon={CalendarDays} label="Fecha de ingreso" value={animal.fechaIngreso} />
             </div>
 
             <div className="mt-5 rounded-2xl bg-[#F4F4F4] p-4">
@@ -97,22 +97,22 @@ function AnimalDetail({ animals, onRequestDelete }) {
                 <UserRound size={16} /> Dueño anterior
               </span>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <DetailItem icon={UserRound} label="Nombre" value={previousOwner.nombre} />
-                <DetailItem icon={FileText} label="Documento" value={previousOwner.documentoIdentificacion} />
-                <DetailItem icon={BadgeCheck} label="RFC" value={previousOwner.rfc} />
-                <DetailItem icon={Landmark} label="Rancho" value={previousOwner.rancho} />
-                <DetailItem icon={MapPin} label="Ciudad" value={previousOwner.ciudad} />
-                <DetailItem icon={Map} label="Estado" value={previousOwner.estado} />
+                <ElementoDetalle icon={UserRound} label="Nombre" value={previousOwner.nombre} />
+                <ElementoDetalle icon={FileText} label="Documento" value={previousOwner.documentoIdentificacion} />
+                <ElementoDetalle icon={BadgeCheck} label="RFC" value={previousOwner.rfc} />
+                <ElementoDetalle icon={Landmark} label="Rancho" value={previousOwner.rancho} />
+                <ElementoDetalle icon={MapPin} label="Ciudad" value={previousOwner.ciudad} />
+                <ElementoDetalle icon={Map} label="Estado" value={previousOwner.estado} />
               </div>
               <div className="mt-3 rounded-2xl bg-white p-4">
                 <span className="inline-flex items-center gap-2 text-xs font-bold uppercase text-[#98a287]">
                   <FileText size={16} /> Documento
                 </span>
-                {previousOwner.documentoPdf?.dataUrl ? (
-                  <FilePreview file={previousOwner.documentoPdf} title="Documento del dueño anterior" />
-                ) : (
-                  <p className="mt-2 text-sm font-semibold text-[#1d1d1b]/70">Sin documento cargado.</p>
-                )}
+                {previousOwner.documentoPdf?.dataUrl ?
+                <VistaPreviaArchivo file={previousOwner.documentoPdf} title="Documento del dueño anterior" /> :
+
+                <p className="mt-2 text-sm font-semibold text-[#1d1d1b]/70">Sin documento cargado.</p>
+                }
               </div>
             </div>
 
@@ -123,8 +123,8 @@ function AnimalDetail({ animals, onRequestDelete }) {
           </div>
         </div>
       </article>
-    </section>
-  )
+    </section>);
+
 }
 
-export default AnimalDetail
+export default DetalleAnimal;

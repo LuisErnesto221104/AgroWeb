@@ -1,8 +1,8 @@
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle, X } from 'lucide-react';
 
-function ConfirmDeleteModal({ animal, onClose, onConfirm }) {
-  if (!animal) return null
-  const canChangeStatus = animal.estado === 'Activo'
+function ModalConfirmarBaja({ animal: animal, onClose: alCerrar, onConfirm: alConfirmar }) {
+  if (!animal) return null;
+  const puedeCambiarEstado = animal.estado === 'Activo';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1d1d1b]/45 px-4">
@@ -11,41 +11,41 @@ function ConfirmDeleteModal({ animal, onClose, onConfirm }) {
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#D32F2F]/10 text-[#D32F2F]">
             <AlertTriangle size={25} />
           </span>
-          <button aria-label="Cerrar modal" className="rounded-xl p-2 text-[#98a287]" onClick={onClose} type="button">
+          <button aria-label="Cerrar modal" className="rounded-xl p-2 text-[#98a287]" onClick={alCerrar} type="button">
             <X size={21} />
           </button>
         </div>
 
         <h2 className="mt-5 text-xl font-bold text-[#1d1d1b]">Dar de baja animal</h2>
-        {canChangeStatus ? (
-          <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/70">
+        {puedeCambiarEstado ?
+        <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/70">
             No se eliminará definitivamente. Se cambiará el estado de {animal.identificador} para conservar su historial.
-          </p>
-        ) : (
-          <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/70">
+          </p> :
+
+        <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/70">
             {animal.identificador} ya está marcado como {animal.estado}. Este estado no permite cambiarse a otro para evitar inconsistencias en el historial.
           </p>
-        )}
+        }
 
-        {canChangeStatus ? (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {puedeCambiarEstado ?
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {[
-              ['Vendido', 'Vendido'],
-              ['Fallecido', 'Muerto / Fallecido'],
-            ].map(([estado, label]) => (
-              <button className="min-h-11 rounded-xl border border-[#98a287]/25 bg-[#F4F4F4] px-3 text-sm font-bold text-[#1d1d1b] hover:border-[#07612d]/30" key={estado} onClick={() => onConfirm(estado)} type="button">
-                {label}
+          ['Vendido', 'Vendido'],
+          ['Fallecido', 'Muerto / Fallecido']].
+          map(([estado, etiqueta]) =>
+          <button className="min-h-11 rounded-xl border border-[#98a287]/25 bg-[#F4F4F4] px-3 text-sm font-bold text-[#1d1d1b] hover:border-[#07612d]/30" key={estado} onClick={() => alConfirmar(estado)} type="button">
+                {etiqueta}
               </button>
-            ))}
-          </div>
-        ) : (
-          <button className="mt-5 min-h-11 w-full rounded-xl bg-[#07612d] px-3 text-sm font-bold text-white" onClick={onClose} type="button">
+          )}
+          </div> :
+
+        <button className="mt-5 min-h-11 w-full rounded-xl bg-[#07612d] px-3 text-sm font-bold text-white" onClick={alCerrar} type="button">
             Entendido
           </button>
-        )}
+        }
       </section>
-    </div>
-  )
+    </div>);
+
 }
 
-export default ConfirmDeleteModal
+export default ModalConfirmarBaja;

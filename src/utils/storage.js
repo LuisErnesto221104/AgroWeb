@@ -1,32 +1,34 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
+const URL_BASE_API = import.meta.env.VITE_API_URL ?? '/api';
 
-export function readStorage(key, fallback) {
+export function leerAlmacenamiento(clave, respaldo) {
   try {
-    const rawValue = window.localStorage.getItem(key)
-    return rawValue ? JSON.parse(rawValue) : fallback
+    const valorCrudo = window.localStorage.getItem(clave);
+    return valorCrudo ? JSON.parse(valorCrudo) : respaldo;
   } catch {
-    return fallback
+    return respaldo;
   }
 }
 
-export function writeStorage(key, value) {
-  window.localStorage.setItem(key, JSON.stringify(value))
-  fetch(`${API_BASE_URL}/local-store/${encodeURIComponent(key)}`, {
+export function escribirAlmacenamiento(clave, valor) {
+  window.localStorage.setItem(clave, JSON.stringify(valor));
+  fetch(`${URL_BASE_API}/local-store/${encodeURIComponent(clave)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ value }),
-  }).catch(() => null)
+    body: JSON.stringify({ value: valor })
+  }).catch(() => null);
 }
 
-export async function syncStorageFromApi() {
+export async function sincronizarAlmacenamientoDesdeApi() {
   try {
-    const response = await fetch(`${API_BASE_URL}/local-store`)
-    if (!response.ok) return
-    const payload = await response.json()
-    Object.entries(payload).forEach(([key, value]) => {
-      window.localStorage.setItem(key, JSON.stringify(value))
-    })
+    const respuesta = await fetch(`${URL_BASE_API}/local-store`);
+    if (!respuesta.ok) return;
+    const datos = await respuesta.json();
+    Object.entries(datos).forEach(([clave, valor]) => {
+      window.localStorage.setItem(clave, JSON.stringify(valor));
+    });
   } catch {
+
+
+
     // La app puede funcionar con datos locales si la API no está disponible.
-  }
-}
+  }}

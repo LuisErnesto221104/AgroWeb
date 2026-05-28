@@ -1,4 +1,4 @@
-export const animalCatalog = {
+export const catalogoAnimal = {
   Bovino: {
     image: new URL('../img/Animales/Bovino/vaca.webp', import.meta.url).href,
     razas: ['Angus', 'Brahman', 'Charolais', 'Hereford', 'Holstein', 'Jersey', 'Limousin', 'Pardo Suizo', 'Santa Gertrudis', 'Simmental', 'Criollo'],
@@ -31,7 +31,7 @@ export const animalCatalog = {
   },
 }
 
-export const speciesOptions = [
+export const opcionesEspecie = [
   { label: 'Bovino', code: '01' },
   { label: 'Ovino', code: '02' },
   { label: 'Caprino', code: '03' },

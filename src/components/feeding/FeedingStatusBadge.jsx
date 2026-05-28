@@ -1,7 +1,7 @@
-import { feedingStatusStyles } from './feedingUtils'
+import { estilosEstadoAlimentacion } from './feedingUtils';
 
-function FeedingStatusBadge({ estado }) {
-  return <span className={`inline-flex min-h-7 items-center rounded-full border px-3 py-1 text-xs font-bold ${feedingStatusStyles[estado] ?? feedingStatusStyles.Pendiente}`}>{estado}</span>
+function InsigniaEstadoAlimentacion({ estado }) {
+  return <span className={`inline-flex min-h-7 items-center rounded-full border px-3 py-1 text-xs font-bold ${estilosEstadoAlimentacion[estado] ?? estilosEstadoAlimentacion.Pendiente}`}>{estado}</span>;
 }
 
-export default FeedingStatusBadge
+export default InsigniaEstadoAlimentacion;

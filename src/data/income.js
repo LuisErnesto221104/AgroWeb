@@ -1,4 +1,4 @@
-export const income = [
+export const ingresos = [
   { id: 1, tipo: 'Venta de animal', animalId: 3, animalIdentificador: 'MX021100000014', monto: 18000, fecha: '2026-05-15', descripcion: 'Venta de ovino Dorper.' },
   { id: 2, tipo: 'Venta de leche', animalId: 1, animalIdentificador: 'MX011400000001', monto: 6200, fecha: '2026-05-20', descripcion: 'Ingreso por producción semanal.' },
   { id: 3, tipo: 'Subproducto', animalId: null, animalIdentificador: 'Rancho general', monto: 2800, fecha: '2026-05-08', descripcion: 'Venta de composta y excedentes.' },

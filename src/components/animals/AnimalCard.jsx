@@ -1,16 +1,16 @@
-import { Link } from 'react-router-dom'
-import { ArrowRight, MapPin, Scale } from 'lucide-react'
-import AnimalStatusBadge from './AnimalStatusBadge'
+import { Link } from 'react-router-dom';
+import { ArrowRight, MapPin, Scale } from 'lucide-react';
+import InsigniaEstadoAnimal from './AnimalStatusBadge';
 
-function AnimalCard({ animal }) {
+function TarjetaAnimal({ animal: animal }) {
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#98a287]/18 bg-white shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
       <div className="flex min-h-40 items-center justify-center bg-[#07612d]/8">
-        {animal.fotografia ? (
-          <img alt={`Fotografía de ${animal.identificador}`} className="h-40 w-full object-contain p-2" src={animal.fotografia} />
-        ) : (
-          <span className="text-5xl font-bold text-[#07612d]/25">{animal.especie.slice(0, 1)}</span>
-        )}
+        {animal.fotografia ?
+        <img alt={`Fotografía de ${animal.identificador}`} className="h-40 w-full object-contain p-2" src={animal.fotografia} /> :
+
+        <span className="text-5xl font-bold text-[#07612d]/25">{animal.especie.slice(0, 1)}</span>
+        }
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -18,7 +18,7 @@ function AnimalCard({ animal }) {
             <p className="text-sm font-bold text-[#07612d]">{animal.identificador}</p>
             <h3 className="mt-1 text-xl font-bold text-[#1d1d1b]">{animal.nombre}</h3>
           </div>
-          <AnimalStatusBadge estado={animal.estado} />
+          <InsigniaEstadoAnimal estado={animal.estado} />
         </div>
         <p className="mt-3 text-sm leading-6 text-[#1d1d1b]/70">
           {animal.especie} {animal.raza} con ingreso el {animal.fechaIngreso}.
@@ -35,8 +35,8 @@ function AnimalCard({ animal }) {
           Ver detalle <ArrowRight size={17} />
         </Link>
       </div>
-    </article>
-  )
+    </article>);
+
 }
 
-export default AnimalCard
+export default TarjetaAnimal;

@@ -1,360 +1,360 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Eye, MapPin, Navigation, ShieldCheck, UserCog, UsersRound, X } from 'lucide-react'
-import RanchLocationMap from '../components/RanchLocationMap'
-import StatCard from '../components/StatCard'
-import { useAuth } from '../hooks/useAuth'
-import { apiRequest } from '../services/api'
-import { readStorage, writeStorage } from '../utils/storage'
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Eye, MapPin, Navigation, ShieldCheck, UserCog, UsersRound, X } from 'lucide-react';
+import MapaUbicacionRancho from '../components/RanchLocationMap';
+import TarjetaEstadistica from '../components/StatCard';
+import { useAuth } from '../hooks/useAuth';
+import { solicitudApi } from '../services/api';
+import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
 
-const permissions = [
-  { key: 'animales', label: 'Gestión Ganadera' },
-  { key: 'sanidad', label: 'Sanidad' },
-  { key: 'gastos', label: 'Gastos' },
-  { key: 'reportes', label: 'Reportes' },
-  { key: 'alimentacion', label: 'Alimentación' },
-  { key: 'configuracion', label: 'Configuración' },
-]
+const permisos = [
+{ key: 'animales', label: 'Gestión Ganadera' },
+{ key: 'sanidad', label: 'Sanidad' },
+{ key: 'gastos', label: 'Gastos' },
+{ key: 'reportes', label: 'Reportes' },
+{ key: 'alimentacion', label: 'Alimentación' },
+{ key: 'configuracion', label: 'Configuración' }];
 
-const placeTypes = ['Corral', 'Potrero', 'Caballeriza', 'Área porcina', 'Área de cuarentena', 'Enfermería', 'Bodega de alimento', 'Manga de manejo', 'Área de ordeña', 'Otro']
 
-function SettingsPage() {
-  const { user: authUser } = useAuth()
-  const [users, setUsers] = useState([])
-  const [selectedUserId, setSelectedUserId] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [isLocating, setIsLocating] = useState(false)
-  const [isResolvingAddress, setIsResolvingAddress] = useState(false)
-  const [locationAccuracy, setLocationAccuracy] = useState(null)
-  const [ranches, setRanches] = useState(() => readStorage('agroweb.ranches', []))
-  const [ranchForm, setRanchForm] = useState({ nombre: '', propietario: '', telefono: '', direccion: '', lat: '', lng: '' })
-  const [placeForm, setPlaceForm] = useState({ ranchoId: '', nombre: '', tipo: 'Corral', capacidad: '', descripcion: '' })
-  const [selectedRanchDetails, setSelectedRanchDetails] = useState(null)
-  const locationWatchRef = useRef(null)
-  const locationTimeoutRef = useRef(null)
-  const addressRequestRef = useRef(0)
+const tiposLugar = ['Corral', 'Potrero', 'Caballeriza', 'Área porcina', 'Área de cuarentena', 'Enfermería', 'Bodega de alimento', 'Manga de manejo', 'Área de ordeña', 'Otro'];
 
-  const selectedUser = users.find((user) => user.id === selectedUserId) ?? users[0]
-  const isProtectedAdmin = Boolean(selectedUser?.protegido)
-  const isCurrentUser = selectedUser?.usuario_id === authUser?.id || selectedUser?.id === authUser?.id
+function PaginaConfiguracion() {
+  const { user: authUser } = useAuth();
+  const [usuarios, establecerUsuarios] = useState([]);
+  const [idUsuarioSeleccionado, establecerIdUsuarioSeleccionado] = useState(null);
+  const [cargando, establecerCargando] = useState(true);
+  const [mensaje, establecerMensaje] = useState('');
+  const [error, establecerError] = useState('');
+  const [localizando, establecerLocalizando] = useState(false);
+  const [resolviendoDireccion, establecerResolviendoDireccion] = useState(false);
+  const [precisionUbicacion, establecerPrecisionUbicacion] = useState(null);
+  const [ranchos, establecerRanchos] = useState(() => leerAlmacenamiento('agroweb.ranches', []));
+  const [formularioRancho, establecerFormularioRancho] = useState({ nombre: '', propietario: '', telefono: '', direccion: '', lat: '', lng: '' });
+  const [formularioLugar, establecerFormularioLugar] = useState({ ranchoId: '', nombre: '', tipo: 'Corral', capacidad: '', descripcion: '' });
+  const [detalleRanchoSeleccionado, establecerDetalleRanchoSeleccionado] = useState(null);
+  const referenciaObservadorUbicacion = useRef(null);
+  const referenciaTiempoUbicacion = useRef(null);
+  const referenciaSolicitudDireccion = useRef(0);
+
+  const usuarioSeleccionado = usuarios.find((usuario) => usuario.id === idUsuarioSeleccionado) ?? usuarios[0];
+  const esAdministradorProtegido = Boolean(usuarioSeleccionado?.protegido);
+  const esUsuarioActual = usuarioSeleccionado?.usuario_id === authUser?.id || usuarioSeleccionado?.id === authUser?.id;
 
   useEffect(() => {
-    let ignore = false
+    let ignore = false;
 
     async function loadUsers() {
       try {
-        setIsLoading(true)
-        setError('')
-        const payload = await apiRequest('/configuracion/usuarios')
-        if (ignore) return
-        setUsers(payload)
-        setSelectedUserId((current) => current ?? payload[0]?.id ?? null)
-      } catch (requestError) {
-        if (!ignore) setError(requestError.message)
+        establecerCargando(true);
+        establecerError('');
+        const datos = await solicitudApi('/configuracion/usuarios');
+        if (ignore) return;
+        establecerUsuarios(datos);
+        establecerIdUsuarioSeleccionado((actual) => actual ?? datos[0]?.id ?? null);
+      } catch (errorSolicitud) {
+        if (!ignore) establecerError(errorSolicitud.message);
       } finally {
-        if (!ignore) setIsLoading(false)
+        if (!ignore) establecerCargando(false);
       }
     }
 
-    loadUsers()
+    loadUsers();
     return () => {
-      ignore = true
-    }
-  }, [])
+      ignore = true;
+    };
+  }, []);
 
   useEffect(
     () => () => {
-      if (locationWatchRef.current) navigator.geolocation?.clearWatch(locationWatchRef.current)
-      if (locationTimeoutRef.current) window.clearTimeout(locationTimeoutRef.current)
+      if (referenciaObservadorUbicacion.current) navigator.geolocation?.clearWatch(referenciaObservadorUbicacion.current);
+      if (referenciaTiempoUbicacion.current) window.clearTimeout(referenciaTiempoUbicacion.current);
     },
-    [],
-  )
+    []
+  );
 
-  const stats = useMemo(
+  const estadisticas = useMemo(
     () => [
-      { title: 'Usuarios', value: users.length, detail: 'Cuentas administradas desde API', icon: UsersRound, tone: 'primary' },
-      { title: 'Usuarios activos', value: users.filter((user) => user.activo).length, detail: 'Con acceso permitido', icon: ShieldCheck, tone: 'success' },
-      { title: 'Roles', value: new Set(users.map((user) => user.rol)).size, detail: 'Perfiles disponibles', icon: UserCog, tone: 'info' },
-    ],
-    [users],
-  )
+    { title: 'Usuarios', value: usuarios.length, detail: 'Cuentas administradas desde API', icon: UsersRound, tone: 'primary' },
+    { title: 'Usuarios activos', value: usuarios.filter((usuario) => usuario.activo).length, detail: 'Con acceso permitido', icon: ShieldCheck, tone: 'success' },
+    { title: 'Roles', value: new Set(usuarios.map((usuario) => usuario.rol)).size, detail: 'Perfiles disponibles', icon: UserCog, tone: 'info' }],
 
-  function updateUserInState(updatedUser) {
-    setUsers((current) => current.map((user) => (user.id === updatedUser.id ? updatedUser : user)))
+    [usuarios]
+  );
+
+  function actualizarUsuarioEnEstado(usuarioActualizado) {
+    establecerUsuarios((actual) => actual.map((usuario) => usuario.id === usuarioActualizado.id ? usuarioActualizado : usuario));
   }
 
-  function showMessage(nextMessage) {
-    setMessage(nextMessage)
-    window.setTimeout(() => setMessage(''), 3500)
+  function mostrarMensaje(nextMessage) {
+    establecerMensaje(nextMessage);
+    window.setTimeout(() => establecerMensaje(''), 3500);
   }
 
-  function showError(nextError) {
-    setError(nextError)
-    window.setTimeout(() => setError(''), 4500)
+  function mostrarError(nextError) {
+    establecerError(nextError);
+    window.setTimeout(() => establecerError(''), 4500);
   }
 
-  async function togglePermission(permissionKey) {
-    if (!selectedUser) return
-    const hasPermission = selectedUser.permisos.includes(permissionKey)
+  async function alternarPermiso(clavePermiso) {
+    if (!usuarioSeleccionado) return;
+    const tienePermiso = usuarioSeleccionado.permisos.includes(clavePermiso);
 
-    if (isProtectedAdmin && hasPermission) {
-      showError('El administrador principal no puede quitarse permisos.')
-      return
+    if (esAdministradorProtegido && tienePermiso) {
+      mostrarError('El administrador principal no puede quitarse permisos.');
+      return;
     }
 
-    const permisos = hasPermission ? selectedUser.permisos.filter((permission) => permission !== permissionKey) : [...selectedUser.permisos, permissionKey]
+    const permisos = tienePermiso ? usuarioSeleccionado.permisos.filter((permiso) => permiso !== clavePermiso) : [...usuarioSeleccionado.permisos, clavePermiso];
 
     try {
-      const updatedUser = await apiRequest(`/configuracion/usuarios/${selectedUser.id}/permisos`, {
+      const usuarioActualizado = await solicitudApi(`/configuracion/usuarios/${usuarioSeleccionado.id}/permisos`, {
         method: 'PUT',
-        body: JSON.stringify({ permisos }),
-      })
-      updateUserInState(updatedUser)
-      showMessage('Permisos actualizados correctamente.')
-    } catch (requestError) {
-      showError(requestError.message)
+        body: JSON.stringify({ permisos })
+      });
+      actualizarUsuarioEnEstado(usuarioActualizado);
+      mostrarMensaje('Permisos actualizados correctamente.');
+    } catch (errorSolicitud) {
+      mostrarError(errorSolicitud.message);
     }
   }
 
-  async function updateRole(event) {
-    if (!selectedUser) return
+  async function actualizarRol(evento) {
+    if (!usuarioSeleccionado) return;
 
     try {
-      const updatedUser = await apiRequest(`/configuracion/usuarios/${selectedUser.id}/rol`, {
+      const usuarioActualizado = await solicitudApi(`/configuracion/usuarios/${usuarioSeleccionado.id}/rol`, {
         method: 'PUT',
-        body: JSON.stringify({ rol: event.target.value }),
-      })
-      updateUserInState(updatedUser)
-      showMessage('Rol actualizado correctamente.')
-    } catch (requestError) {
-      showError(requestError.message)
+        body: JSON.stringify({ rol: evento.target.value })
+      });
+      actualizarUsuarioEnEstado(usuarioActualizado);
+      mostrarMensaje('Rol actualizado correctamente.');
+    } catch (errorSolicitud) {
+      mostrarError(errorSolicitud.message);
     }
   }
 
-  async function toggleUserStatus() {
-    if (!selectedUser) return
+  async function alternarEstadoUsuario() {
+    if (!usuarioSeleccionado) return;
 
-    if (isProtectedAdmin) {
-      showError('El administrador principal no puede bloquearse.')
-      return
+    if (esAdministradorProtegido) {
+      mostrarError('El administrador principal no puede bloquearse.');
+      return;
     }
 
     try {
-      const updatedUser = await apiRequest(`/configuracion/usuarios/${selectedUser.id}/estado`, {
+      const usuarioActualizado = await solicitudApi(`/configuracion/usuarios/${usuarioSeleccionado.id}/estado`, {
         method: 'PATCH',
-        body: JSON.stringify({ activo: !selectedUser.activo }),
-      })
-      updateUserInState(updatedUser)
-      showMessage('Estado del usuario actualizado correctamente.')
-    } catch (requestError) {
-      showError(requestError.message)
+        body: JSON.stringify({ activo: !usuarioSeleccionado.activo })
+      });
+      actualizarUsuarioEnEstado(usuarioActualizado);
+      mostrarMensaje('Estado del usuario actualizado correctamente.');
+    } catch (errorSolicitud) {
+      mostrarError(errorSolicitud.message);
     }
   }
 
-  function saveRanches(nextRanches) {
-    setRanches(nextRanches)
-    writeStorage('agroweb.ranches', nextRanches)
+  function guardarRanchos(ranchosSiguientes) {
+    establecerRanchos(ranchosSiguientes);
+    escribirAlmacenamiento('agroweb.ranches', ranchosSiguientes);
   }
 
-  function updateRanchForm(event) {
-    setRanchForm((current) => ({ ...current, [event.target.name]: event.target.value }))
+  function actualizarFormularioRancho(evento) {
+    establecerFormularioRancho((actual) => ({ ...actual, [evento.target.name]: evento.target.value }));
   }
 
-  function updatePlaceForm(event) {
-    const { name, value } = event.target
-    setPlaceForm((current) => ({ ...current, [name]: name === 'capacidad' ? value.replace(/\D/g, '') : value }))
+  function actualizarFormularioLugar(evento) {
+    const { name, value: valor } = evento.target;
+    establecerFormularioLugar((actual) => ({ ...actual, [name]: name === 'capacidad' ? valor.replace(/\D/g, '') : valor }));
   }
 
-  async function resolveAddressFromCoordinates(coordinates) {
-    const lat = Number(coordinates.lat)
-    const lng = Number(coordinates.lng)
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+  async function resolverDireccionDesdeCoordenadas(coordenadas) {
+    const lat = Number(coordenadas.lat);
+    const lng = Number(coordenadas.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
-    const requestId = Date.now()
-    addressRequestRef.current = requestId
-    setIsResolvingAddress(true)
+    const idSolicitud = Date.now();
+    referenciaSolicitudDireccion.current = idSolicitud;
+    establecerResolviendoDireccion(true);
 
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=es`)
-      if (!response.ok) return
-      const payload = await response.json()
-      if (addressRequestRef.current !== requestId || !payload?.display_name) return
-      setRanchForm((current) => ({ ...current, direccion: payload.display_name }))
+      const respuesta = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=es`);
+      if (!respuesta.ok) return;
+      const datos = await respuesta.json();
+      if (referenciaSolicitudDireccion.current !== idSolicitud || !datos?.display_name) return;
+      establecerFormularioRancho((actual) => ({ ...actual, direccion: datos.display_name }));
     } catch {
-      showError('No se pudo autocompletar la dirección. Puedes escribirla manualmente.')
+      mostrarError('No se pudo autocompletar la dirección. Puedes escribirla manualmente.');
     } finally {
-      if (addressRequestRef.current === requestId) setIsResolvingAddress(false)
+      if (referenciaSolicitudDireccion.current === idSolicitud) establecerResolviendoDireccion(false);
     }
   }
 
-  function updateRanchLocation(coordinates) {
-    setLocationAccuracy(null)
-    setRanchForm((current) => ({
-      ...current,
-      lat: String(coordinates.lat),
-      lng: String(coordinates.lng),
-    }))
-    resolveAddressFromCoordinates(coordinates)
+  function actualizarUbicacionRancho(coordenadas) {
+    establecerPrecisionUbicacion(null);
+    establecerFormularioRancho((actual) => ({
+      ...actual,
+      lat: String(coordenadas.lat),
+      lng: String(coordenadas.lng)
+    }));
+    resolverDireccionDesdeCoordenadas(coordenadas);
   }
 
-  function useCurrentLocation() {
+  function usarUbicacionActual() {
     if (!navigator.geolocation) {
-      showError('Tu navegador no permite obtener ubicación. Selecciona el punto manualmente en el mapa.')
-      return
+      mostrarError('Tu navegador no permite obtener ubicación. Selecciona el punto manualmente en el mapa.');
+      return;
     }
 
     if (!window.isSecureContext) {
-      showError('El navegador bloquea la ubicación en conexiones no seguras. Abre la app en localhost o selecciona el punto en el mapa.')
-      return
+      mostrarError('El navegador bloquea la ubicación en conexiones no seguras. Abre la app en localhost o selecciona el punto en el mapa.');
+      return;
     }
 
-    if (locationWatchRef.current) navigator.geolocation.clearWatch(locationWatchRef.current)
-    if (locationTimeoutRef.current) window.clearTimeout(locationTimeoutRef.current)
+    if (referenciaObservadorUbicacion.current) navigator.geolocation.clearWatch(referenciaObservadorUbicacion.current);
+    if (referenciaTiempoUbicacion.current) window.clearTimeout(referenciaTiempoUbicacion.current);
 
-    let bestPosition = null
+    let mejorPosicion = null;
 
-    function applyPosition(position) {
-      const accuracy = Number(position.coords.accuracy)
-      bestPosition = !bestPosition || accuracy < bestPosition.coords.accuracy ? position : bestPosition
-      setRanchForm((current) => ({
-        ...current,
-        lat: position.coords.latitude.toFixed(6),
-        lng: position.coords.longitude.toFixed(6),
-      }))
-      setLocationAccuracy(accuracy)
+    function aplicarPosicion(posicion) {
+      const precision = Number(posicion.coords.accuracy);
+      mejorPosicion = !mejorPosicion || precision < mejorPosicion.coords.accuracy ? posicion : mejorPosicion;
+      establecerFormularioRancho((actual) => ({
+        ...actual,
+        lat: posicion.coords.latitude.toFixed(6),
+        lng: posicion.coords.longitude.toFixed(6)
+      }));
+      establecerPrecisionUbicacion(precision);
     }
 
-    function finishLocation(messageText) {
-      if (locationWatchRef.current) {
-        navigator.geolocation.clearWatch(locationWatchRef.current)
-        locationWatchRef.current = null
+    function finalizarUbicacion(textoMensaje) {
+      if (referenciaObservadorUbicacion.current) {
+        navigator.geolocation.clearWatch(referenciaObservadorUbicacion.current);
+        referenciaObservadorUbicacion.current = null;
       }
-      if (locationTimeoutRef.current) {
-        window.clearTimeout(locationTimeoutRef.current)
-        locationTimeoutRef.current = null
+      if (referenciaTiempoUbicacion.current) {
+        window.clearTimeout(referenciaTiempoUbicacion.current);
+        referenciaTiempoUbicacion.current = null;
       }
-      if (bestPosition) applyPosition(bestPosition)
-      if (bestPosition) {
-        resolveAddressFromCoordinates({
-          lat: bestPosition.coords.latitude.toFixed(6),
-          lng: bestPosition.coords.longitude.toFixed(6),
-        })
+      if (mejorPosicion) aplicarPosicion(mejorPosicion);
+      if (mejorPosicion) {
+        resolverDireccionDesdeCoordenadas({
+          lat: mejorPosicion.coords.latitude.toFixed(6),
+          lng: mejorPosicion.coords.longitude.toFixed(6)
+        });
       }
-      setIsLocating(false)
-      if (messageText) showMessage(messageText)
+      establecerLocalizando(false);
+      if (textoMensaje) mostrarMensaje(textoMensaje);
     }
 
-    setIsLocating(true)
-    setLocationAccuracy(null)
-    locationWatchRef.current = navigator.geolocation.watchPosition(
-      (position) => {
-        applyPosition(position)
-        if (position.coords.accuracy <= 20) {
-          finishLocation(`Ubicación detectada con precisión aproximada de ${Math.round(position.coords.accuracy)} m.`)
+    establecerLocalizando(true);
+    establecerPrecisionUbicacion(null);
+    referenciaObservadorUbicacion.current = navigator.geolocation.watchPosition(
+      (posicion) => {
+        aplicarPosicion(posicion);
+        if (posicion.coords.accuracy <= 20) {
+          finalizarUbicacion(`Ubicación detectada con precisión aproximada de ${Math.round(posicion.coords.accuracy)} m.`);
         }
       },
-      (locationError) => {
-        if (bestPosition) {
-          finishLocation(`Se usó la mejor ubicación disponible con precisión aproximada de ${Math.round(bestPosition.coords.accuracy)} m.`)
-          return
+      (errorUbicacion) => {
+        if (mejorPosicion) {
+          finalizarUbicacion(`Se usó la mejor ubicación disponible con precisión aproximada de ${Math.round(mejorPosicion.coords.accuracy)} m.`);
+          return;
         }
-        finishLocation('')
-        const messages = {
+        finalizarUbicacion('');
+        const mensajes = {
           1: 'Permiso de ubicación denegado. Actívalo en el navegador o selecciona el punto en el mapa.',
           2: 'No se pudo detectar tu ubicación actual. Selecciona el punto manualmente en el mapa.',
-          3: 'La ubicación tardó demasiado en responder. Intenta de nuevo o selecciona el punto en el mapa.',
-        }
-        showError(messages[locationError.code] ?? 'No se pudo obtener la ubicación del navegador.')
+          3: 'La ubicación tardó demasiado en responder. Intenta de nuevo o selecciona el punto en el mapa.'
+        };
+        mostrarError(mensajes[errorUbicacion.code] ?? 'No se pudo obtener la ubicación del navegador.');
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
-    )
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
 
-    locationTimeoutRef.current = window.setTimeout(() => {
-      if (bestPosition) {
-        finishLocation(`Se usó la mejor ubicación disponible con precisión aproximada de ${Math.round(bestPosition.coords.accuracy)} m.`)
+    referenciaTiempoUbicacion.current = window.setTimeout(() => {
+      if (mejorPosicion) {
+        finalizarUbicacion(`Se usó la mejor ubicación disponible con precisión aproximada de ${Math.round(mejorPosicion.coords.accuracy)} m.`);
       } else {
-        finishLocation('')
-        showError('No se recibió una ubicación precisa. Puedes seleccionar el punto exacto manualmente en el mapa.')
+        finalizarUbicacion('');
+        mostrarError('No se recibió una ubicación precisa. Puedes seleccionar el punto exacto manualmente en el mapa.');
       }
-    }, 10000)
+    }, 10000);
   }
 
-  function createRanch(event) {
-    event.preventDefault()
-    if (!ranchForm.nombre.trim() || !ranchForm.direccion.trim() || !ranchForm.lat || !ranchForm.lng) {
-      showError('El rancho requiere nombre, dirección y coordenadas.')
-      return
+  function crearRancho(evento) {
+    evento.preventDefault();
+    if (!formularioRancho.nombre.trim() || !formularioRancho.direccion.trim() || !formularioRancho.lat || !formularioRancho.lng) {
+      mostrarError('El rancho requiere nombre, dirección y coordenadas.');
+      return;
     }
 
-    if (ranches.some((ranch) => ranch.nombre.trim().toLowerCase() === ranchForm.nombre.trim().toLowerCase())) {
-      showError('Ya existe un rancho con ese nombre.')
-      return
+    if (ranchos.some((rancho) => rancho.nombre.trim().toLowerCase() === formularioRancho.nombre.trim().toLowerCase())) {
+      mostrarError('Ya existe un rancho con ese nombre.');
+      return;
     }
 
-    const newRanch = {
+    const nuevoRancho = {
       id: Date.now(),
-      nombre: ranchForm.nombre.trim(),
-      propietario: ranchForm.propietario.trim(),
-      telefono: ranchForm.telefono.trim(),
-      direccion: ranchForm.direccion.trim(),
-      coordenadas: { lat: Number(ranchForm.lat), lng: Number(ranchForm.lng) },
-      lugares: [],
-    }
-    saveRanches([newRanch, ...ranches])
-    setPlaceForm((current) => ({ ...current, ranchoId: String(newRanch.id) }))
-    setRanchForm({ nombre: '', propietario: '', telefono: '', direccion: '', lat: '', lng: '' })
-    showMessage('Rancho registrado correctamente.')
+      nombre: formularioRancho.nombre.trim(),
+      propietario: formularioRancho.propietario.trim(),
+      telefono: formularioRancho.telefono.trim(),
+      direccion: formularioRancho.direccion.trim(),
+      coordenadas: { lat: Number(formularioRancho.lat), lng: Number(formularioRancho.lng) },
+      lugares: []
+    };
+    guardarRanchos([nuevoRancho, ...ranchos]);
+    establecerFormularioLugar((actual) => ({ ...actual, ranchoId: String(nuevoRancho.id) }));
+    establecerFormularioRancho({ nombre: '', propietario: '', telefono: '', direccion: '', lat: '', lng: '' });
+    mostrarMensaje('Rancho registrado correctamente.');
   }
 
-  function createPlace(event) {
-    event.preventDefault()
-    if (!placeForm.ranchoId || !placeForm.nombre.trim() || !placeForm.tipo.trim()) {
-      showError('El lugar requiere rancho, nombre y tipo.')
-      return
+  function crearLugar(evento) {
+    evento.preventDefault();
+    if (!formularioLugar.ranchoId || !formularioLugar.nombre.trim() || !formularioLugar.tipo.trim()) {
+      mostrarError('El lugar requiere rancho, nombre y tipo.');
+      return;
     }
 
-    if (!placeTypes.includes(placeForm.tipo)) {
-      showError('Selecciona un tipo válido para el lugar.')
-      return
+    if (!tiposLugar.includes(formularioLugar.tipo)) {
+      mostrarError('Selecciona un tipo válido para el lugar.');
+      return;
     }
 
-    const capacity = Number(placeForm.capacidad)
-    if (!placeForm.capacidad || !Number.isFinite(capacity) || capacity < 1) {
-      showError('La capacidad debe ser un número mayor a cero.')
-      return
+    const capacidadNumerica = Number(formularioLugar.capacidad);
+    if (!formularioLugar.capacidad || !Number.isFinite(capacidadNumerica) || capacidadNumerica < 1) {
+      mostrarError('La capacidad debe ser un número mayor a cero.');
+      return;
     }
 
-    const targetRanch = ranches.find((ranch) => ranch.id === Number(placeForm.ranchoId))
-    if (!targetRanch) {
-      showError('Selecciona un rancho válido.')
-      return
+    const ranchoObjetivo = ranchos.find((rancho) => rancho.id === Number(formularioLugar.ranchoId));
+    if (!ranchoObjetivo) {
+      mostrarError('Selecciona un rancho válido.');
+      return;
     }
 
-    if (targetRanch.lugares?.some((place) => place.nombre.trim().toLowerCase() === placeForm.nombre.trim().toLowerCase())) {
-      showError('Ese rancho ya tiene un lugar con ese nombre.')
-      return
+    if (ranchoObjetivo.lugares?.some((lugar) => lugar.nombre.trim().toLowerCase() === formularioLugar.nombre.trim().toLowerCase())) {
+      mostrarError('Ese rancho ya tiene un lugar con ese nombre.');
+      return;
     }
 
-    const nextRanches = ranches.map((ranch) => {
-      if (ranch.id !== Number(placeForm.ranchoId)) return ranch
+    const ranchosSiguientes = ranchos.map((rancho) => {
+      if (rancho.id !== Number(formularioLugar.ranchoId)) return rancho;
       return {
-        ...ranch,
+        ...rancho,
         lugares: [
-          ...(ranch.lugares ?? []),
-          {
-            id: Date.now(),
-            nombre: placeForm.nombre.trim(),
-            tipo: placeForm.tipo.trim(),
-            capacidad: capacity,
-            descripcion: placeForm.descripcion.trim(),
-          },
-        ],
-      }
-    })
-    saveRanches(nextRanches)
-    setPlaceForm({ ranchoId: placeForm.ranchoId, nombre: '', tipo: 'Corral', capacidad: '', descripcion: '' })
-    showMessage('Lugar del rancho registrado correctamente.')
+        ...(rancho.lugares ?? []),
+        {
+          id: Date.now(),
+          nombre: formularioLugar.nombre.trim(),
+          tipo: formularioLugar.tipo.trim(),
+          capacidad: capacidadNumerica,
+          descripcion: formularioLugar.descripcion.trim()
+        }]
+
+      };
+    });
+    guardarRanchos(ranchosSiguientes);
+    establecerFormularioLugar({ ranchoId: formularioLugar.ranchoId, nombre: '', tipo: 'Corral', capacidad: '', descripcion: '' });
+    mostrarMensaje('Lugar del rancho registrado correctamente.');
   }
 
   return (
@@ -371,106 +371,106 @@ function SettingsPage() {
           </p>
         </div>
 
-        {message ? <div className="rounded-2xl border border-[#4CAF50]/20 bg-[#4CAF50]/10 p-4 text-sm font-bold text-[#2f8f36]">{message}</div> : null}
+        {mensaje ? <div className="rounded-2xl border border-[#4CAF50]/20 bg-[#4CAF50]/10 p-4 text-sm font-bold text-[#2f8f36]">{mensaje}</div> : null}
         {error ? <div className="rounded-2xl border border-[#D32F2F]/20 bg-[#D32F2F]/10 p-4 text-sm font-bold text-[#D32F2F]">{error}</div> : null}
-        {isProtectedAdmin && isCurrentUser ? (
-          <div className="rounded-2xl border border-[#FFA000]/25 bg-[#FFA000]/12 p-4 text-sm font-bold text-[#9b6300]">
+        {esAdministradorProtegido && esUsuarioActual ?
+        <div className="rounded-2xl border border-[#FFA000]/25 bg-[#FFA000]/12 p-4 text-sm font-bold text-[#9b6300]">
             Estás editando al administrador principal. Por seguridad no puede quitarse permisos, cambiar a otro rol ni bloquearse.
-          </div>
-        ) : null}
+          </div> :
+        null}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {stats.map((stat) => (
-            <StatCard key={stat.title} {...stat} />
-          ))}
+          {estadisticas.map((estadistica) =>
+          <TarjetaEstadistica key={estadistica.title} {...estadistica} />
+          )}
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <section className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5">
             <h2 className="text-xl font-bold text-[#07612d]">Usuarios</h2>
             <div className="mt-4 grid gap-3">
-              {isLoading ? <div className="min-h-28 animate-pulse rounded-2xl bg-[#F4F4F4]" /> : null}
-              {!isLoading &&
-                users.map((user) => (
-                  <button
-                    className={`rounded-2xl border p-4 text-left transition ${selectedUser?.id === user.id ? 'border-[#07612d] bg-[#07612d]/8' : 'border-[#98a287]/18 bg-[#F4F4F4] hover:border-[#07612d]/30'}`}
-                    key={user.id}
-                    onClick={() => setSelectedUserId(user.id)}
-                    type="button"
-                  >
+              {cargando ? <div className="min-h-28 animate-pulse rounded-2xl bg-[#F4F4F4]" /> : null}
+              {!cargando &&
+              usuarios.map((usuario) =>
+              <button
+                className={`rounded-2xl border p-4 text-left transition ${usuarioSeleccionado?.id === usuario.id ? 'border-[#07612d] bg-[#07612d]/8' : 'border-[#98a287]/18 bg-[#F4F4F4] hover:border-[#07612d]/30'}`}
+                key={usuario.id}
+                onClick={() => establecerIdUsuarioSeleccionado(usuario.id)}
+                type="button">
+                
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <strong className="break-words text-[#1d1d1b]">{user.nombre}</strong>
-                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${user.activo ? 'bg-[#4CAF50]/12 text-[#2f8f36]' : 'bg-[#D32F2F]/10 text-[#D32F2F]'}`}>
-                        {user.activo ? 'Activo' : 'Bloqueado'}
+                      <strong className="break-words text-[#1d1d1b]">{usuario.nombre}</strong>
+                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${usuario.activo ? 'bg-[#4CAF50]/12 text-[#2f8f36]' : 'bg-[#D32F2F]/10 text-[#D32F2F]'}`}>
+                        {usuario.activo ? 'Activo' : 'Bloqueado'}
                       </span>
                     </div>
-                    <p className="mt-1 break-words text-sm text-[#1d1d1b]/65">{user.correo}</p>
-                    <p className="mt-2 text-xs font-bold uppercase text-[#98a287]">{user.rol}</p>
+                    <p className="mt-1 break-words text-sm text-[#1d1d1b]/65">{usuario.correo}</p>
+                    <p className="mt-2 text-xs font-bold uppercase text-[#98a287]">{usuario.rol}</p>
                   </button>
-                ))}
+              )}
             </div>
           </section>
 
-          {selectedUser ? (
-            <section className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5">
+          {usuarioSeleccionado ?
+          <section className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <h2 className="break-words text-xl font-bold text-[#07612d]">{selectedUser.nombre}</h2>
-                  <p className="mt-1 break-words text-sm text-[#1d1d1b]/65">{selectedUser.correo}</p>
+                  <h2 className="break-words text-xl font-bold text-[#07612d]">{usuarioSeleccionado.nombre}</h2>
+                  <p className="mt-1 break-words text-sm text-[#1d1d1b]/65">{usuarioSeleccionado.correo}</p>
                 </div>
-                <button className="min-h-11 rounded-2xl border border-[#07612d]/25 bg-white px-4 text-sm font-bold text-[#07612d] disabled:cursor-not-allowed disabled:border-[#98a287]/25 disabled:text-[#98a287]" disabled={isProtectedAdmin} onClick={toggleUserStatus} type="button">
-                  {selectedUser.activo ? 'Bloquear acceso' : 'Activar usuario'}
+                <button className="min-h-11 rounded-2xl border border-[#07612d]/25 bg-white px-4 text-sm font-bold text-[#07612d] disabled:cursor-not-allowed disabled:border-[#98a287]/25 disabled:text-[#98a287]" disabled={esAdministradorProtegido} onClick={alternarEstadoUsuario} type="button">
+                  {usuarioSeleccionado.activo ? 'Bloquear acceso' : 'Activar usuario'}
                 </button>
               </div>
 
               <label className="mt-5 block">
                 <span className="text-sm font-bold text-[#1d1d1b]">Rol del usuario</span>
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-[#07612d] focus:bg-white" disabled={isProtectedAdmin} onChange={updateRole} value={selectedUser.rol}>
-                  {['Administrador', 'Ganadero', 'Veterinario', 'Finanzas', 'Consulta'].map((role) => (
-                    <option key={role} value={role}>
-                      {role}
+                <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-[#07612d] focus:bg-white" disabled={esAdministradorProtegido} onChange={actualizarRol} value={usuarioSeleccionado.rol}>
+                  {['Administrador', 'Ganadero', 'Veterinario', 'Finanzas', 'Consulta'].map((rol) =>
+                <option key={rol} value={rol}>
+                      {rol}
                     </option>
-                  ))}
+                )}
                 </select>
               </label>
 
               <div className="mt-5">
                 <h3 className="text-base font-bold text-[#1d1d1b]">Permisos del sistema</h3>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {permissions.map((permission) => {
-                    const checked = selectedUser.permisos.includes(permission.key)
-                    return (
-                      <label className="flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl bg-[#F4F4F4] px-4 text-sm font-bold text-[#1d1d1b]" key={permission.key}>
-                        <span className="break-words">{permission.label}</span>
-                        <input checked={checked} className="size-5 accent-[#07612d] disabled:cursor-not-allowed" disabled={isProtectedAdmin && checked} onChange={() => togglePermission(permission.key)} type="checkbox" />
-                      </label>
-                    )
-                  })}
+                  {permisos.map((permiso) => {
+                  const marcado = usuarioSeleccionado.permisos.includes(permiso.key);
+                  return (
+                    <label className="flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl bg-[#F4F4F4] px-4 text-sm font-bold text-[#1d1d1b]" key={permiso.key}>
+                        <span className="break-words">{permiso.label}</span>
+                        <input checked={marcado} className="size-5 accent-[#07612d] disabled:cursor-not-allowed" disabled={esAdministradorProtegido && marcado} onChange={() => alternarPermiso(permiso.key)} type="checkbox" />
+                      </label>);
+
+                })}
                 </div>
               </div>
-            </section>
-          ) : null}
+            </section> :
+          null}
         </div>
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <form className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5" onSubmit={createRanch}>
+          <form className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5" onSubmit={crearRancho}>
             <h2 className="text-xl font-bold text-[#07612d]">Ranchos</h2>
             <p className="mt-1 text-sm text-[#1d1d1b]/65">Registra uno o más ranchos para asignar animales por ubicación real.</p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               {[
-                ['nombre', 'Nombre del rancho'],
-                ['propietario', 'Propietario o responsable'],
-                ['telefono', 'Teléfono'],
-              ].map(([name, label]) => (
-                <label className="block" key={name}>
-                  <span className="text-sm font-bold text-[#1d1d1b]">{label}</span>
-                  <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" name={name} onChange={updateRanchForm} value={ranchForm[name]} />
+              ['nombre', 'Nombre del rancho'],
+              ['propietario', 'Propietario o responsable'],
+              ['telefono', 'Teléfono']].
+              map(([name, etiqueta]) =>
+              <label className="block" key={name}>
+                  <span className="text-sm font-bold text-[#1d1d1b]">{etiqueta}</span>
+                  <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" name={name} onChange={actualizarFormularioRancho} value={formularioRancho[name]} />
                 </label>
-              ))}
+              )}
               <label className="block md:col-span-2">
                 <span className="text-sm font-bold text-[#1d1d1b]">Dirección general</span>
-                <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" name="direccion" onChange={updateRanchForm} placeholder="Se autocompleta al seleccionar una ubicación" value={ranchForm.direccion} />
-                {isResolvingAddress ? <span className="mt-2 block text-xs font-bold text-[#1f7a8c]">Buscando dirección de la ubicación seleccionada...</span> : null}
+                <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" name="direccion" onChange={actualizarFormularioRancho} placeholder="Se autocompleta al seleccionar una ubicación" value={formularioRancho.direccion} />
+                {resolviendoDireccion ? <span className="mt-2 block text-xs font-bold text-[#1f7a8c]">Buscando dirección de la ubicación seleccionada...</span> : null}
               </label>
             </div>
             <div className="mt-5">
@@ -482,16 +482,16 @@ function SettingsPage() {
                   </span>
                   <p className="mt-1 text-sm text-[#1d1d1b]/65">Selecciona el punto exacto en el mapa para guardar sus coordenadas.</p>
                 </div>
-                <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[#07612d]/25 bg-white px-4 text-sm font-bold text-[#07612d] disabled:cursor-wait disabled:opacity-65" disabled={isLocating} onClick={useCurrentLocation} type="button">
-                  <Navigation size={17} /> {isLocating ? 'Detectando...' : 'Usar mi ubicación'}
+                <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[#07612d]/25 bg-white px-4 text-sm font-bold text-[#07612d] disabled:cursor-wait disabled:opacity-65" disabled={localizando} onClick={usarUbicacionActual} type="button">
+                  <Navigation size={17} /> {localizando ? 'Detectando...' : 'Usar mi ubicación'}
                 </button>
               </div>
-              <RanchLocationMap accuracy={locationAccuracy} onChange={updateRanchLocation} value={{ lat: ranchForm.lat, lng: ranchForm.lng }} />
-              {locationAccuracy ? (
-                <p className="mt-2 rounded-2xl bg-[#1f7a8c]/10 px-4 py-3 text-sm font-semibold text-[#1f7a8c]">
-                  Precisión aproximada del navegador: {Math.round(locationAccuracy)} m. Para dejarlo exacto, arrastra el marcador hasta la entrada o centro del rancho.
-                </p>
-              ) : null}
+              <MapaUbicacionRancho accuracy={precisionUbicacion} onChange={actualizarUbicacionRancho} value={{ lat: formularioRancho.lat, lng: formularioRancho.lng }} />
+              {precisionUbicacion ?
+              <p className="mt-2 rounded-2xl bg-[#1f7a8c]/10 px-4 py-3 text-sm font-semibold text-[#1f7a8c]">
+                  Precisión aproximada del navegador: {Math.round(precisionUbicacion)} m. Para dejarlo exacto, arrastra el marcador hasta la entrada o centro del rancho.
+                </p> :
+              null}
             </div>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <button className="min-h-11 rounded-2xl bg-[#07612d] px-4 text-sm font-bold text-white" type="submit">
@@ -502,57 +502,57 @@ function SettingsPage() {
 
           <section className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5">
             <h2 className="text-xl font-bold text-[#07612d]">Lugares del rancho</h2>
-            <form className="mt-5 grid gap-4 md:grid-cols-2" onSubmit={createPlace}>
+            <form className="mt-5 grid gap-4 md:grid-cols-2" onSubmit={crearLugar}>
               <label className="block md:col-span-2">
                 <span className="text-sm font-bold text-[#1d1d1b]">Rancho</span>
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white" name="ranchoId" onChange={updatePlaceForm} value={placeForm.ranchoId}>
+                <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white" name="ranchoId" onChange={actualizarFormularioLugar} value={formularioLugar.ranchoId}>
                   <option value="">Selecciona rancho</option>
-                  {ranches.map((ranch) => (
-                    <option key={ranch.id} value={ranch.id}>
-                      {ranch.nombre}
+                  {ranchos.map((rancho) =>
+                  <option key={rancho.id} value={rancho.id}>
+                      {rancho.nombre}
                     </option>
-                  ))}
+                  )}
                 </select>
               </label>
               {[
-                ['nombre', 'Nombre del lugar'],
-              ].map(([name, label]) => (
-                <label className="block" key={name}>
-                  <span className="text-sm font-bold text-[#1d1d1b]">{label}</span>
-                  <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" name={name} onChange={updatePlaceForm} value={placeForm[name]} />
+              ['nombre', 'Nombre del lugar']].
+              map(([name, etiqueta]) =>
+              <label className="block" key={name}>
+                  <span className="text-sm font-bold text-[#1d1d1b]">{etiqueta}</span>
+                  <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" name={name} onChange={actualizarFormularioLugar} value={formularioLugar[name]} />
                 </label>
-              ))}
+              )}
               <label className="block">
                 <span className="text-sm font-bold text-[#1d1d1b]">Tipo</span>
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white" name="tipo" onChange={updatePlaceForm} value={placeForm.tipo}>
-                  {placeTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
+                <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white" name="tipo" onChange={actualizarFormularioLugar} value={formularioLugar.tipo}>
+                  {tiposLugar.map((tipo) =>
+                  <option key={tipo} value={tipo}>
+                      {tipo}
                     </option>
-                  ))}
+                  )}
                 </select>
               </label>
               <label className="block">
                 <span className="text-sm font-bold text-[#1d1d1b]">Capacidad</span>
-                <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" inputMode="numeric" min="1" name="capacidad" onChange={updatePlaceForm} placeholder="Ej. 25" type="number" value={placeForm.capacidad} />
+                <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" inputMode="numeric" min="1" name="capacidad" onChange={actualizarFormularioLugar} placeholder="Ej. 25" type="number" value={formularioLugar.capacidad} />
               </label>
               <label className="block md:col-span-2">
                 <span className="text-sm font-bold text-[#1d1d1b]">Descripción</span>
-                <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" name="descripcion" onChange={updatePlaceForm} placeholder="Uso, observaciones o ubicación interna" value={placeForm.descripcion} />
+                <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white" name="descripcion" onChange={actualizarFormularioLugar} placeholder="Uso, observaciones o ubicación interna" value={formularioLugar.descripcion} />
               </label>
               <button className="min-h-11 rounded-2xl bg-[#07612d] px-4 text-sm font-bold text-white md:col-span-2" type="submit">
                 Guardar lugar
               </button>
             </form>
             <div className="mt-5 grid gap-3">
-              {ranches.map((ranch) => (
-                <button className="rounded-2xl bg-[#F4F4F4] p-4 text-left transition hover:bg-[#07612d]/8 focus:outline-none focus:ring-4 focus:ring-[#07612d]/12" key={ranch.id} onClick={() => setSelectedRanchDetails(ranch)} type="button">
+              {ranchos.map((rancho) =>
+              <button className="rounded-2xl bg-[#F4F4F4] p-4 text-left transition hover:bg-[#07612d]/8 focus:outline-none focus:ring-4 focus:ring-[#07612d]/12" key={rancho.id} onClick={() => establecerDetalleRanchoSeleccionado(rancho)} type="button">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="break-words font-bold text-[#1d1d1b]">{ranch.nombre}</h3>
-                      <p className="mt-1 break-words text-sm text-[#1d1d1b]/65">{ranch.direccion} · {ranch.coordenadas?.lat}, {ranch.coordenadas?.lng}</p>
+                      <h3 className="break-words font-bold text-[#1d1d1b]">{rancho.nombre}</h3>
+                      <p className="mt-1 break-words text-sm text-[#1d1d1b]/65">{rancho.direccion} · {rancho.coordenadas?.lat}, {rancho.coordenadas?.lng}</p>
                       <p className="mt-2 text-xs font-bold uppercase text-[#98a287]">
-                        {ranch.lugares?.length ?? 0} lugares · Capacidad total {(ranch.lugares ?? []).reduce((sum, place) => sum + Number(place.capacidad || 0), 0)}
+                        {rancho.lugares?.length ?? 0} lugares · Capacidad total {(rancho.lugares ?? []).reduce((suma, lugar) => suma + Number(lugar.capacidad || 0), 0)}
                       </p>
                     </div>
                     <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-bold text-[#07612d]">
@@ -560,21 +560,21 @@ function SettingsPage() {
                     </span>
                   </div>
                 </button>
-              ))}
+              )}
             </div>
           </section>
         </section>
       </section>
-      {selectedRanchDetails ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-[#1d1d1b]/45 p-4">
+      {detalleRanchoSeleccionado ?
+      <div className="fixed inset-0 z-50 grid place-items-center bg-[#1d1d1b]/45 p-4">
           <section className="max-h-[88vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white p-5 shadow-[0_24px_60px_rgba(29,29,27,0.22)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <p className="text-xs font-bold uppercase text-[#98a287]">Detalle del rancho</p>
-                <h2 className="mt-1 break-words text-2xl font-bold text-[#07612d]">{selectedRanchDetails.nombre}</h2>
-                <p className="mt-2 break-words text-sm leading-6 text-[#1d1d1b]/68">{selectedRanchDetails.direccion}</p>
+                <h2 className="mt-1 break-words text-2xl font-bold text-[#07612d]">{detalleRanchoSeleccionado.nombre}</h2>
+                <p className="mt-2 break-words text-sm leading-6 text-[#1d1d1b]/68">{detalleRanchoSeleccionado.direccion}</p>
               </div>
-              <button className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[#F4F4F4] text-[#1d1d1b]" onClick={() => setSelectedRanchDetails(null)} type="button" aria-label="Cerrar detalle de rancho">
+              <button className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[#F4F4F4] text-[#1d1d1b]" onClick={() => establecerDetalleRanchoSeleccionado(null)} type="button" aria-label="Cerrar detalle de rancho">
                 <X size={20} />
               </button>
             </div>
@@ -582,43 +582,43 @@ function SettingsPage() {
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl bg-[#F4F4F4] p-4">
                 <p className="text-xs font-bold uppercase text-[#98a287]">Lugares</p>
-                <p className="mt-2 text-2xl font-bold text-[#1d1d1b]">{selectedRanchDetails.lugares?.length ?? 0}</p>
+                <p className="mt-2 text-2xl font-bold text-[#1d1d1b]">{detalleRanchoSeleccionado.lugares?.length ?? 0}</p>
               </div>
               <div className="rounded-2xl bg-[#F4F4F4] p-4">
                 <p className="text-xs font-bold uppercase text-[#98a287]">Capacidad total</p>
-                <p className="mt-2 text-2xl font-bold text-[#1d1d1b]">{(selectedRanchDetails.lugares ?? []).reduce((sum, place) => sum + Number(place.capacidad || 0), 0)}</p>
+                <p className="mt-2 text-2xl font-bold text-[#1d1d1b]">{(detalleRanchoSeleccionado.lugares ?? []).reduce((suma, lugar) => suma + Number(lugar.capacidad || 0), 0)}</p>
               </div>
               <div className="rounded-2xl bg-[#F4F4F4] p-4">
                 <p className="text-xs font-bold uppercase text-[#98a287]">Coordenadas</p>
-                <p className="mt-2 break-words text-sm font-bold text-[#1d1d1b]">{selectedRanchDetails.coordenadas?.lat}, {selectedRanchDetails.coordenadas?.lng}</p>
+                <p className="mt-2 break-words text-sm font-bold text-[#1d1d1b]">{detalleRanchoSeleccionado.coordenadas?.lat}, {detalleRanchoSeleccionado.coordenadas?.lng}</p>
               </div>
             </div>
 
             <div className="mt-5 grid gap-3">
-              {(selectedRanchDetails.lugares ?? []).length ? (
-                selectedRanchDetails.lugares.map((place) => (
-                  <article className="rounded-2xl border border-[#98a287]/18 bg-[#F4F4F4] p-4" key={place.id}>
+              {(detalleRanchoSeleccionado.lugares ?? []).length ?
+            detalleRanchoSeleccionado.lugares.map((lugar) =>
+            <article className="rounded-2xl border border-[#98a287]/18 bg-[#F4F4F4] p-4" key={lugar.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-bold text-[#1d1d1b]">{place.nombre}</h3>
-                        <p className="mt-1 text-sm text-[#1d1d1b]/65">{place.descripcion || 'Sin descripción registrada.'}</p>
+                        <h3 className="font-bold text-[#1d1d1b]">{lugar.nombre}</h3>
+                        <p className="mt-1 text-sm text-[#1d1d1b]/65">{lugar.descripcion || 'Sin descripción registrada.'}</p>
                       </div>
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#07612d]">{place.tipo}</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#07612d]">{lugar.tipo}</span>
                     </div>
-                    <p className="mt-3 text-sm font-bold text-[#1d1d1b]/75">Capacidad: {place.capacidad}</p>
+                    <p className="mt-3 text-sm font-bold text-[#1d1d1b]/75">Capacidad: {lugar.capacidad}</p>
                   </article>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-[#98a287]/35 bg-[#F4F4F4] p-5 text-sm font-semibold text-[#1d1d1b]/65">
+            ) :
+
+            <div className="rounded-2xl border border-dashed border-[#98a287]/35 bg-[#F4F4F4] p-5 text-sm font-semibold text-[#1d1d1b]/65">
                   Este rancho todavía no tiene lugares registrados.
                 </div>
-              )}
+            }
             </div>
           </section>
-        </div>
-      ) : null}
-    </div>
-  )
+        </div> :
+      null}
+    </div>);
+
 }
 
-export default SettingsPage
+export default PaginaConfiguracion;

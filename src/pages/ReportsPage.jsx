@@ -1,107 +1,107 @@
-import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, Beef, CircleDollarSign, FileBarChart, PackageCheck, RefreshCw, TrendingDown, TrendingUp, WalletCards } from 'lucide-react'
-import StatCard from '../components/StatCard'
-import AnimalInvestmentTable from '../components/reports/AnimalInvestmentTable'
-import CategoryExpenseSummary from '../components/reports/CategoryExpenseSummary'
-import ExportReportButton from '../components/reports/ExportReportButton'
-import MonthlyReport from '../components/reports/MonthlyReport'
-import ProfitLossSummary from '../components/reports/ProfitLossSummary'
-import ReportCard from '../components/reports/ReportCard'
-import ReportFilters from '../components/reports/ReportFilters'
-import { mxn } from '../components/expenses/expenseUtils'
-import { animals as mockAnimals } from '../data/animals'
-import { expenses as mockExpenses } from '../data/expenses'
-import { feeding as mockFeeding } from '../data/feeding'
-import { healthEvents as mockHealthEvents } from '../data/healthEvents'
-import { income as mockIncome } from '../data/income'
-import { readStorage } from '../utils/storage'
+import { useEffect, useMemo, useState } from 'react';
+import { BarChart3, Beef, CircleDollarSign, FileBarChart, PackageCheck, RefreshCw, TrendingDown, TrendingUp, WalletCards } from 'lucide-react';
+import TarjetaEstadistica from '../components/StatCard';
+import TablaInversionAnimal from '../components/reports/AnimalInvestmentTable';
+import ResumenGastoCategoria from '../components/reports/CategoryExpenseSummary';
+import BotonExportarReporte from '../components/reports/ExportReportButton';
+import ReporteMensual from '../components/reports/MonthlyReport';
+import ResumenGananciasPerdidas from '../components/reports/ProfitLossSummary';
+import TarjetaReporte from '../components/reports/ReportCard';
+import FiltrosReporte from '../components/reports/ReportFilters';
+import { mxn } from '../components/expenses/expenseUtils';
+import { animales as mockAnimals } from '../data/animals';
+import { gastos as mockExpenses } from '../data/expenses';
+import { alimentacion as mockFeeding } from '../data/feeding';
+import { eventosSanitarios as mockHealthEvents } from '../data/healthEvents';
+import { ingresos as mockIncome } from '../data/income';
+import { leerAlmacenamiento } from '../utils/storage';
 
-const initialFilters = {
+const filtrosIniciales = {
   tipoReporte: 'general',
   animalId: 'Todos',
   desde: '',
-  hasta: '',
+  hasta: ''
+};
+
+const hoy = new Date().toISOString().slice(0, 10);
+
+function validarFiltrosReporte(filtros) {
+  const errors = {};
+
+  if (filtros.tipoReporte !== 'animal' && filtros.animalId !== 'Todos') {
+    errors.animal = 'Solo se puede seleccionar un animal cuando el reporte es “Por animal”.';
+  }
+
+  if (filtros.tipoReporte === 'animal' && filtros.animalId === 'Todos') {
+    errors.animal = 'Selecciona un animal para generar el reporte por animal.';
+  }
+
+  if (filtros.desde && filtros.desde > hoy) {
+    errors.desde = 'La fecha inicial no puede ser futura.';
+  }
+
+  if (filtros.hasta && filtros.hasta > hoy) {
+    errors.hasta = 'La fecha final no puede ser futura.';
+  }
+
+  if (filtros.hasta && !filtros.desde) {
+    errors.hasta = 'Selecciona primero una fecha inicial.';
+  }
+
+  if (filtros.desde && filtros.hasta && filtros.hasta < filtros.desde) {
+    errors.rango = 'La fecha final no puede ser menor que la fecha inicial.';
+  }
+
+  return errors;
 }
 
-const today = new Date().toISOString().slice(0, 10)
-
-function validateReportFilters(filters) {
-  const errors = {}
-
-  if (filters.tipoReporte !== 'animal' && filters.animalId !== 'Todos') {
-    errors.animal = 'Solo se puede seleccionar un animal cuando el reporte es “Por animal”.'
-  }
-
-  if (filters.tipoReporte === 'animal' && filters.animalId === 'Todos') {
-    errors.animal = 'Selecciona un animal para generar el reporte por animal.'
-  }
-
-  if (filters.desde && filters.desde > today) {
-    errors.desde = 'La fecha inicial no puede ser futura.'
-  }
-
-  if (filters.hasta && filters.hasta > today) {
-    errors.hasta = 'La fecha final no puede ser futura.'
-  }
-
-  if (filters.hasta && !filters.desde) {
-    errors.hasta = 'Selecciona primero una fecha inicial.'
-  }
-
-  if (filters.desde && filters.hasta && filters.hasta < filters.desde) {
-    errors.rango = 'La fecha final no puede ser menor que la fecha inicial.'
-  }
-
-  return errors
+function enRangoFechas(fecha, filtros) {
+  if (filtros.desde && fecha < filtros.desde) return false;
+  if (filtros.hasta && fecha > filtros.hasta) return false;
+  return true;
 }
 
-function inDateRange(date, filters) {
-  if (filters.desde && date < filters.desde) return false
-  if (filters.hasta && date > filters.hasta) return false
-  return true
+function coincideAnimal(elemento, filtros) {
+  if (filtros.tipoReporte !== 'animal') return true;
+  if (filtros.animalId === 'Todos') return true;
+  if (filtros.animalId === 'general') return elemento.animalId === null;
+  return elemento.animalId === Number(filtros.animalId);
 }
 
-function matchesAnimal(item, filters) {
-  if (filters.tipoReporte !== 'animal') return true
-  if (filters.animalId === 'Todos') return true
-  if (filters.animalId === 'general') return item.animalId === null
-  return item.animalId === Number(filters.animalId)
+function claveMes(fecha) {
+  return fecha?.slice(0, 7) ?? 'Sin fecha';
 }
 
-function monthKey(date) {
-  return date?.slice(0, 7) ?? 'Sin fecha'
-}
+function crearFilasMensuales(gastos, alimentacion, ingresos) {
+  const meses = new Map();
 
-function buildMonthlyRows(expenses, feeding, income) {
-  const months = new Map()
-
-  function ensure(month) {
-    if (!months.has(month)) months.set(month, { month, gastos: 0, alimentacion: 0, ingresos: 0, balance: 0 })
-    return months.get(month)
+  function ensure(mes) {
+    if (!meses.has(mes)) meses.set(mes, { month: mes, gastos: 0, alimentacion: 0, ingresos: 0, balance: 0 });
+    return meses.get(mes);
   }
 
-  expenses.forEach((expense) => {
-    ensure(monthKey(expense.fecha)).gastos += Number(expense.precio)
-  })
+  gastos.forEach((gasto) => {
+    ensure(claveMes(gasto.fecha)).gastos += Number(gasto.precio);
+  });
 
-  feeding.forEach((item) => {
-    ensure(monthKey(item.fecha)).alimentacion += Number(item.costo ?? item.costoAproximado ?? 0)
-  })
+  alimentacion.forEach((elemento) => {
+    ensure(claveMes(elemento.fecha)).alimentacion += Number(elemento.costo ?? elemento.costoAproximado ?? 0);
+  });
 
-  income.forEach((item) => {
-    ensure(monthKey(item.fecha)).ingresos += Number(item.monto)
-  })
+  ingresos.forEach((elemento) => {
+    ensure(claveMes(elemento.fecha)).ingresos += Number(elemento.monto);
+  });
 
-  return [...months.values()]
-    .map((row) => ({ ...row, balance: row.ingresos - row.gastos - row.alimentacion }))
-    .sort((a, b) => b.month.localeCompare(a.month))
+  return [...meses.values()].
+  map((fila) => ({ ...fila, balance: fila.ingresos - fila.gastos - fila.alimentacion })).
+  sort((a, b) => b.month.localeCompare(a.month));
 }
 
-function buildAnimalRows(animals, expenses, feeding, income) {
-  return animals.map((animal) => {
-    const gastos = expenses.filter((expense) => expense.animalId === animal.id).reduce((sum, expense) => sum + Number(expense.precio), 0)
-    const alimentacion = feeding.filter((item) => item.animalId === animal.id).reduce((sum, item) => sum + Number(item.costo ?? item.costoAproximado ?? 0), 0)
-    const ingresos = income.filter((item) => item.animalId === animal.id).reduce((sum, item) => sum + Number(item.monto), 0)
+function crearFilasAnimales(animales, listaGastos, listaAlimentacion, listaIngresos) {
+  return animales.map((animal) => {
+    const gastos = listaGastos.filter((gasto) => gasto.animalId === animal.id).reduce((suma, gasto) => suma + Number(gasto.precio), 0);
+    const alimentacion = listaAlimentacion.filter((elemento) => elemento.animalId === animal.id).reduce((suma, elemento) => suma + Number(elemento.costo ?? elemento.costoAproximado ?? 0), 0);
+    const ingresos = listaIngresos.filter((elemento) => elemento.animalId === animal.id).reduce((suma, elemento) => suma + Number(elemento.monto), 0);
 
     return {
       id: animal.id,
@@ -110,27 +110,27 @@ function buildAnimalRows(animals, expenses, feeding, income) {
       gastos,
       alimentacion,
       ingresos,
-      balance: ingresos - gastos - alimentacion,
-    }
-  })
+      balance: ingresos - gastos - alimentacion
+    };
+  });
 }
 
-function buildPrintableReport({ analytics, animals, filters, healthEvents }) {
-  const generatedAt = new Date().toLocaleString('es-MX')
-  const rows = analytics.animalRows
-    .map(
-      (row) => `
+function crearReporteImprimible({ analytics: analitica, animals: animales, filters: filtros, healthEvents: eventosSanitarios }) {
+  const generadoEn = new Date().toLocaleString('es-MX');
+  const filas = analitica.animalRows.
+  map(
+    (fila) => `
         <tr>
-          <td>${row.identificador}</td>
-          <td>${row.estado}</td>
-          <td>${mxn.format(row.gastos)}</td>
-          <td>${mxn.format(row.alimentacion)}</td>
-          <td>${mxn.format(row.ingresos)}</td>
-          <td>${mxn.format(row.balance)}</td>
+          <td>${fila.identificador}</td>
+          <td>${fila.estado}</td>
+          <td>${mxn.format(fila.gastos)}</td>
+          <td>${mxn.format(fila.alimentacion)}</td>
+          <td>${mxn.format(fila.ingresos)}</td>
+          <td>${mxn.format(fila.balance)}</td>
         </tr>
-      `,
-    )
-    .join('')
+      `
+  ).
+  join('');
 
   return `
     <!doctype html>
@@ -155,17 +155,17 @@ function buildPrintableReport({ analytics, animals, filters, healthEvents }) {
       <body>
         <button onclick="window.print()">Guardar como PDF</button>
         <h1>Reporte de Inversión AgroWeb</h1>
-        <p class="meta">Generado: ${generatedAt}</p>
-        <p class="meta">Tipo: ${filters.tipoReporte} | Desde: ${filters.desde || 'sin inicio'} | Hasta: ${filters.hasta || 'sin fin'}</p>
+        <p class="meta">Generado: ${generadoEn}</p>
+        <p class="meta">Tipo: ${filtros.tipoReporte} | Desde: ${filtros.desde || 'sin inicio'} | Hasta: ${filtros.hasta || 'sin fin'}</p>
         <div class="grid">
-          <div class="card"><div class="label">Animales registrados</div><div class="value">${animals.length}</div></div>
-          <div class="card"><div class="label">Total ingresos</div><div class="value">${mxn.format(analytics.totalIngresos)}</div></div>
-          <div class="card"><div class="label">Total pérdidas</div><div class="value">${mxn.format(analytics.perdidas)}</div></div>
-          <div class="card"><div class="label">Balance</div><div class="value">${mxn.format(analytics.balance)}</div></div>
-          <div class="card"><div class="label">Gastos</div><div class="value">${mxn.format(analytics.totalGastos)}</div></div>
-          <div class="card"><div class="label">Alimentación</div><div class="value">${mxn.format(analytics.totalAlimentacion)}</div></div>
-          <div class="card"><div class="label">Ganancias</div><div class="value">${mxn.format(analytics.ganancias)}</div></div>
-          <div class="card"><div class="label">Eventos sanitarios</div><div class="value">${healthEvents.length}</div></div>
+          <div class="card"><div class="label">Animales registrados</div><div class="value">${animales.length}</div></div>
+          <div class="card"><div class="label">Total ingresos</div><div class="value">${mxn.format(analitica.totalIngresos)}</div></div>
+          <div class="card"><div class="label">Total pérdidas</div><div class="value">${mxn.format(analitica.perdidas)}</div></div>
+          <div class="card"><div class="label">Balance</div><div class="value">${mxn.format(analitica.balance)}</div></div>
+          <div class="card"><div class="label">Gastos</div><div class="value">${mxn.format(analitica.totalGastos)}</div></div>
+          <div class="card"><div class="label">Alimentación</div><div class="value">${mxn.format(analitica.totalAlimentacion)}</div></div>
+          <div class="card"><div class="label">Ganancias</div><div class="value">${mxn.format(analitica.ganancias)}</div></div>
+          <div class="card"><div class="label">Eventos sanitarios</div><div class="value">${eventosSanitarios.length}</div></div>
         </div>
         <h2>Inversión por animal</h2>
         <table>
@@ -179,138 +179,138 @@ function buildPrintableReport({ analytics, animals, filters, healthEvents }) {
               <th>Balance</th>
             </tr>
           </thead>
-          <tbody>${rows || '<tr><td colspan="6">Sin datos</td></tr>'}</tbody>
+          <tbody>${filas || '<tr><td colspan="6">Sin datos</td></tr>'}</tbody>
         </table>
       </body>
     </html>
-  `
+  `;
 }
 
-function ReportsPage() {
-  const [animals, setAnimals] = useState([])
-  const [expenses, setExpenses] = useState([])
-  const [feeding, setFeeding] = useState([])
-  const [healthEvents, setHealthEvents] = useState([])
-  const [income, setIncome] = useState([])
-  const [filters, setFilters] = useState(initialFilters)
-  const [isLoading, setIsLoading] = useState(true)
-  const [message, setMessage] = useState('')
-  const [generatedReport, setGeneratedReport] = useState(null)
-  const filterErrors = useMemo(() => validateReportFilters(filters), [filters])
-  const hasFilterErrors = Object.keys(filterErrors).length > 0
+function PaginaReportes() {
+  const [animales, establecerAnimales] = useState([]);
+  const [gastos, establecerGastos] = useState([]);
+  const [alimentacion, setFeeding] = useState([]);
+  const [eventosSanitarios, setHealthEvents] = useState([]);
+  const [ingresos, establecerIngresos] = useState([]);
+  const [filtros, setFilters] = useState(filtrosIniciales);
+  const [cargando, establecerCargando] = useState(true);
+  const [mensaje, establecerMensaje] = useState('');
+  const [generatedReport, setGeneratedReport] = useState(null);
+  const erroresFiltro = useMemo(() => validarFiltrosReporte(filtros), [filtros]);
+  const hasFilterErrors = Object.keys(erroresFiltro).length > 0;
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setAnimals(readStorage('agroweb.animals', mockAnimals))
-      setExpenses(readStorage('agroweb.expenses', mockExpenses))
-      setFeeding(readStorage('agroweb.feeding', mockFeeding))
-      setHealthEvents(readStorage('agroweb.healthEvents', mockHealthEvents))
-      setIncome(readStorage('agroweb.income', mockIncome))
-      setIsLoading(false)
-    }, 350)
+    const temporizador = window.setTimeout(() => {
+      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
+      establecerGastos(leerAlmacenamiento('agroweb.expenses', mockExpenses));
+      setFeeding(leerAlmacenamiento('agroweb.feeding', mockFeeding));
+      setHealthEvents(leerAlmacenamiento('agroweb.healthEvents', mockHealthEvents));
+      establecerIngresos(leerAlmacenamiento('agroweb.income', mockIncome));
+      establecerCargando(false);
+    }, 350);
 
-    return () => window.clearTimeout(timer)
-  }, [])
+    return () => window.clearTimeout(temporizador);
+  }, []);
 
-  const filteredData = useMemo(() => {
-    const filteredExpenses = expenses.filter((expense) => !expense.esVenta && inDateRange(expense.fecha, filters) && matchesAnimal(expense, filters))
-    const filteredIncome = income.filter((item) => inDateRange(item.fecha, filters) && matchesAnimal(item, filters))
-    const filteredFeeding = feeding.filter((item) => matchesAnimal(item, filters))
-    const filteredAnimals =
-      filters.tipoReporte !== 'animal' || filters.animalId === 'Todos'
-        ? animals
-        : animals.filter((animal) => animal.id === Number(filters.animalId))
+  const datosFiltrados = useMemo(() => {
+    const gastosFiltrados = gastos.filter((gasto) => !gasto.esVenta && enRangoFechas(gasto.fecha, filtros) && coincideAnimal(gasto, filtros));
+    const ingresosFiltrados = ingresos.filter((elemento) => enRangoFechas(elemento.fecha, filtros) && coincideAnimal(elemento, filtros));
+    const alimentacionFiltrada = alimentacion.filter((elemento) => coincideAnimal(elemento, filtros));
+    const animalesFiltrados =
+    filtros.tipoReporte !== 'animal' || filtros.animalId === 'Todos' ?
+    animales :
+    animales.filter((animal) => animal.id === Number(filtros.animalId));
 
-    return { filteredExpenses, filteredIncome, filteredFeeding, filteredAnimals }
-  }, [animals, expenses, feeding, filters, income])
+    return { filteredExpenses: gastosFiltrados, filteredIncome: ingresosFiltrados, filteredFeeding: alimentacionFiltrada, filteredAnimals: animalesFiltrados };
+  }, [animales, gastos, alimentacion, filtros, ingresos]);
 
-  const analytics = useMemo(() => {
-    const totalGastos = filteredData.filteredExpenses.reduce((acc, item) => acc + Number(item.precio), 0)
-    const totalAlimentacion = filteredData.filteredFeeding.reduce((acc, item) => acc + Number(item.costo ?? item.costoAproximado ?? 0), 0)
-    const totalIngresos = filteredData.filteredIncome.reduce((acc, item) => acc + Number(item.monto), 0)
-    const perdidas = totalGastos + totalAlimentacion
-    const ganancias = Math.max(totalIngresos - perdidas, 0)
-    const balance = totalIngresos - perdidas
-    const inversionPromedio = filteredData.filteredAnimals.length ? perdidas / filteredData.filteredAnimals.length : 0
-    const animalRows = buildAnimalRows(filteredData.filteredAnimals, filteredData.filteredExpenses, filteredData.filteredFeeding, filteredData.filteredIncome)
-    const monthlyRows = buildMonthlyRows(filteredData.filteredExpenses, filteredData.filteredFeeding, filteredData.filteredIncome)
+  const analitica = useMemo(() => {
+    const totalGastos = datosFiltrados.filteredExpenses.reduce((acc, elemento) => acc + Number(elemento.precio), 0);
+    const totalAlimentacion = datosFiltrados.filteredFeeding.reduce((acc, elemento) => acc + Number(elemento.costo ?? elemento.costoAproximado ?? 0), 0);
+    const totalIngresos = datosFiltrados.filteredIncome.reduce((acc, elemento) => acc + Number(elemento.monto), 0);
+    const perdidas = totalGastos + totalAlimentacion;
+    const ganancias = Math.max(totalIngresos - perdidas, 0);
+    const balance = totalIngresos - perdidas;
+    const inversionPromedio = datosFiltrados.filteredAnimals.length ? perdidas / datosFiltrados.filteredAnimals.length : 0;
+    const animalRows = crearFilasAnimales(datosFiltrados.filteredAnimals, datosFiltrados.filteredExpenses, datosFiltrados.filteredFeeding, datosFiltrados.filteredIncome);
+    const monthlyRows = crearFilasMensuales(datosFiltrados.filteredExpenses, datosFiltrados.filteredFeeding, datosFiltrados.filteredIncome);
 
     return {
-      totalGastos,
+      totalGastos: totalGastos,
       totalAlimentacion,
-      totalIngresos,
+      totalIngresos: totalIngresos,
       perdidas,
       ganancias,
-      balance,
+      balance: balance,
       inversionPromedio,
       animalRows,
-      monthlyRows,
-    }
-  }, [filteredData])
+      monthlyRows
+    };
+  }, [datosFiltrados]);
 
-  const stats = useMemo(
+  const estadisticas = useMemo(
     () => [
-      { title: 'Total de animales', value: animals.length, detail: 'Animales registrados en inventario', icon: PackageCheck, tone: 'primary' },
-      { title: 'Animales activos', value: animals.filter((animal) => animal.estado === 'Activo').length, detail: 'Disponibles en operación', icon: Beef, tone: 'success' },
-      { title: 'Animales vendidos', value: animals.filter((animal) => animal.estado === 'Vendido').length, detail: 'Con ingreso o historial de venta', icon: TrendingUp, tone: 'info' },
-      { title: 'Animales fallecidos', value: animals.filter((animal) => animal.estado === 'Fallecido').length, detail: 'Registrados como pérdida operativa', icon: TrendingDown, tone: 'danger' },
-      { title: 'Total de gastos', value: mxn.format(analytics.perdidas), detail: 'Gastos más alimentación', icon: WalletCards, tone: 'warning' },
-      { title: 'Total de ingresos', value: mxn.format(analytics.totalIngresos), detail: 'Ventas e ingresos simulados', icon: CircleDollarSign, tone: 'success' },
-      { title: 'Ganancias', value: mxn.format(analytics.ganancias), detail: 'Ingresos menos pérdidas si es positivo', icon: TrendingUp, tone: 'success' },
-      { title: 'Balance general', value: mxn.format(analytics.balance), detail: 'Resultado económico del periodo', icon: BarChart3, tone: analytics.balance >= 0 ? 'primary' : 'danger' },
-    ],
-    [analytics, animals],
-  )
+    { title: 'Total de animales', value: animales.length, detail: 'Animales registrados en inventario', icon: PackageCheck, tone: 'primary' },
+    { title: 'Animales activos', value: animales.filter((animal) => animal.estado === 'Activo').length, detail: 'Disponibles en operación', icon: Beef, tone: 'success' },
+    { title: 'Animales vendidos', value: animales.filter((animal) => animal.estado === 'Vendido').length, detail: 'Con ingreso o historial de venta', icon: TrendingUp, tone: 'info' },
+    { title: 'Animales fallecidos', value: animales.filter((animal) => animal.estado === 'Fallecido').length, detail: 'Registrados como pérdida operativa', icon: TrendingDown, tone: 'danger' },
+    { title: 'Total de gastos', value: mxn.format(analitica.perdidas), detail: 'Gastos más alimentación', icon: WalletCards, tone: 'warning' },
+    { title: 'Total de ingresos', value: mxn.format(analitica.totalIngresos), detail: 'Ventas e ingresos simulados', icon: CircleDollarSign, tone: 'success' },
+    { title: 'Ganancias', value: mxn.format(analitica.ganancias), detail: 'Ingresos menos pérdidas si es positivo', icon: TrendingUp, tone: 'success' },
+    { title: 'Balance general', value: mxn.format(analitica.balance), detail: 'Resultado económico del periodo', icon: BarChart3, tone: analitica.balance >= 0 ? 'primary' : 'danger' }],
 
-  function exportReport() {
+    [analitica, animales]
+  );
+
+  function exportarReporte() {
     if (hasFilterErrors) {
-      setMessage('Corrige las validaciones de filtros antes de exportar.')
-      window.setTimeout(() => setMessage(''), 3500)
-      return
+      establecerMensaje('Corrige las validaciones de filtros antes de exportar.');
+      window.setTimeout(() => establecerMensaje(''), 3500);
+      return;
     }
 
-    const popup = window.open('', '_blank')
+    const popup = window.open('', '_blank');
     if (!popup) {
-      setMessage('No se pudo abrir la ventana de exportación. Revisa si el navegador bloqueó ventanas emergentes.')
-      return
+      establecerMensaje('No se pudo abrir la ventana de exportación. Revisa si el navegador bloqueó ventanas emergentes.');
+      return;
     }
 
-    popup.document.write(buildPrintableReport({ analytics, animals, filters, healthEvents }))
-    popup.document.close()
-    popup.focus()
-    popup.print()
-    setMessage(`Reporte "${filters.tipoReporte}" generado. Usa "Guardar como PDF" en la ventana de impresión.`)
-    window.setTimeout(() => setMessage(''), 4500)
+    popup.document.write(crearReporteImprimible({ analytics: analitica, animals: animales, filters: filtros, healthEvents: eventosSanitarios }));
+    popup.document.close();
+    popup.focus();
+    popup.print();
+    establecerMensaje(`Reporte "${filtros.tipoReporte}" generado. Usa "Guardar como PDF" en la ventana de impresión.`);
+    window.setTimeout(() => establecerMensaje(''), 4500);
   }
 
   function generateReport() {
     if (hasFilterErrors) {
-      setMessage('Corrige las validaciones de filtros antes de generar el reporte.')
-      window.setTimeout(() => setMessage(''), 3500)
-      return
+      establecerMensaje('Corrige las validaciones de filtros antes de generar el reporte.');
+      window.setTimeout(() => establecerMensaje(''), 3500);
+      return;
     }
 
-    const selectedAnimal =
-      filters.animalId === 'Todos'
-        ? 'Todos los animales'
-        : filters.animalId === 'general'
-          ? 'Rancho general'
-          : animals.find((animal) => animal.id === Number(filters.animalId))?.identificador ?? 'Animal seleccionado'
+    const animalSeleccionado =
+    filtros.animalId === 'Todos' ?
+    'Todos los animales' :
+    filtros.animalId === 'general' ?
+    'Rancho general' :
+    animales.find((animal) => animal.id === Number(filtros.animalId))?.identificador ?? 'Animal seleccionado';
 
     setGeneratedReport({
       generatedAt: new Date().toLocaleString('es-MX'),
-      filters: { ...filters },
-      selectedAnimal,
-      analytics,
+      filters: { ...filtros },
+      selectedAnimal: animalSeleccionado,
+      analytics: analitica,
       records: {
-        animals: filteredData.filteredAnimals.length,
-        expenses: filteredData.filteredExpenses.length,
-        feeding: filteredData.filteredFeeding.length,
-        income: filteredData.filteredIncome.length,
-      },
-    })
-    setMessage('Reporte generado en pantalla con los filtros seleccionados.')
-    window.setTimeout(() => setMessage(''), 3500)
+        animals: datosFiltrados.filteredAnimals.length,
+        expenses: datosFiltrados.filteredExpenses.length,
+        feeding: datosFiltrados.filteredFeeding.length,
+        income: datosFiltrados.filteredIncome.length
+      }
+    });
+    establecerMensaje('Reporte generado en pantalla con los filtros seleccionados.');
+    window.setTimeout(() => establecerMensaje(''), 3500);
   }
 
   return (
@@ -332,16 +332,16 @@ function ReportsPage() {
               <button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#07612d] px-5 text-sm font-bold text-white shadow-[0_10px_22px_rgba(7,97,45,0.2)] disabled:cursor-not-allowed disabled:bg-[#98a287] sm:w-auto" disabled={hasFilterErrors} onClick={generateReport} type="button">
                 <RefreshCw size={18} /> Generar Reporte
               </button>
-              <ExportReportButton disabled={hasFilterErrors} onExport={exportReport} />
+              <BotonExportarReporte disabled={hasFilterErrors} onExport={exportarReporte} />
             </div>
           </div>
 
-          {message ? <div className="rounded-2xl border border-[#4CAF50]/20 bg-[#4CAF50]/10 p-4 text-sm font-bold text-[#2f8f36]">{message}</div> : null}
+          {mensaje ? <div className="rounded-2xl border border-[#4CAF50]/20 bg-[#4CAF50]/10 p-4 text-sm font-bold text-[#2f8f36]">{mensaje}</div> : null}
 
-          <ReportFilters animals={animals} errors={filterErrors} filters={filters} onChange={setFilters} />
+          <FiltrosReporte animals={animales} errors={erroresFiltro} filters={filtros} onChange={setFilters} />
 
-          {generatedReport ? (
-            <ReportCard title="Reporte generado" subtitle={`Generado el ${generatedReport.generatedAt}`}>
+          {generatedReport ?
+        <TarjetaReporte title="Reporte generado" subtitle={`Generado el ${generatedReport.generatedAt}`}>
               <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
                 <div className="rounded-2xl bg-[#F4F4F4] p-4">
                   <p className="text-xs font-bold uppercase text-[#98a287]">Filtros aplicados</p>
@@ -354,92 +354,92 @@ function ReportsPage() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   {[
-                    ['Ingresos', mxn.format(generatedReport.analytics.totalIngresos)],
-                    ['Pérdidas', mxn.format(generatedReport.analytics.perdidas)],
-                    ['Ganancias', mxn.format(generatedReport.analytics.ganancias)],
-                    ['Balance', mxn.format(generatedReport.analytics.balance)],
-                  ].map(([label, value]) => (
-                    <div className="rounded-2xl bg-[#F4F4F4] p-4" key={label}>
-                      <p className="text-xs font-bold uppercase text-[#98a287]">{label}</p>
-                      <p className="mt-2 break-words text-lg font-bold text-[#07612d]">{value}</p>
+              ['Ingresos', mxn.format(generatedReport.analytics.totalIngresos)],
+              ['Pérdidas', mxn.format(generatedReport.analytics.perdidas)],
+              ['Ganancias', mxn.format(generatedReport.analytics.ganancias)],
+              ['Balance', mxn.format(generatedReport.analytics.balance)]].
+              map(([etiqueta, valor]) =>
+              <div className="rounded-2xl bg-[#F4F4F4] p-4" key={etiqueta}>
+                      <p className="text-xs font-bold uppercase text-[#98a287]">{etiqueta}</p>
+                      <p className="mt-2 break-words text-lg font-bold text-[#07612d]">{valor}</p>
                     </div>
-                  ))}
+              )}
                 </div>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {[
-                  ['Animales incluidos', generatedReport.records.animals],
-                  ['Gastos encontrados', generatedReport.records.expenses],
-                  ['Registros de alimentación', generatedReport.records.feeding],
-                  ['Ingresos encontrados', generatedReport.records.income],
-                ].map(([label, value]) => (
-                  <div className="rounded-2xl border border-[#98a287]/18 bg-white p-4" key={label}>
-                    <p className="text-xs font-bold uppercase text-[#98a287]">{label}</p>
-                    <p className="mt-2 text-2xl font-bold text-[#1d1d1b]">{value}</p>
+            ['Animales incluidos', generatedReport.records.animals],
+            ['Gastos encontrados', generatedReport.records.expenses],
+            ['Registros de alimentación', generatedReport.records.feeding],
+            ['Ingresos encontrados', generatedReport.records.income]].
+            map(([etiqueta, valor]) =>
+            <div className="rounded-2xl border border-[#98a287]/18 bg-white p-4" key={etiqueta}>
+                    <p className="text-xs font-bold uppercase text-[#98a287]">{etiqueta}</p>
+                    <p className="mt-2 text-2xl font-bold text-[#1d1d1b]">{valor}</p>
                   </div>
-                ))}
+            )}
               </div>
-            </ReportCard>
-          ) : null}
+            </TarjetaReporte> :
+        null}
 
-          {isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {[1, 2, 3, 4].map((item) => (
-                <div className="min-h-40 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" key={item} />
-              ))}
-            </div>
-          ) : null}
+          {cargando ?
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {[1, 2, 3, 4].map((elemento) =>
+          <div className="min-h-40 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" key={elemento} />
+          )}
+            </div> :
+        null}
 
-          {!isLoading ? (
-            <>
+          {!cargando ?
+        <>
               <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {stats.map((stat) => (
-                  <StatCard key={stat.title} {...stat} />
-                ))}
+                {estadisticas.map((estadistica) =>
+            <TarjetaEstadistica key={estadistica.title} {...estadistica} />
+            )}
               </div>
 
               <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
-                <ProfitLossSummary totalGastos={analytics.perdidas} totalIngresos={analytics.totalIngresos} balance={analytics.balance} />
-                <ReportCard title="Estado del rancho" subtitle="Indicadores adicionales para toma de decisiones.">
+                <ResumenGananciasPerdidas totalGastos={analitica.perdidas} totalIngresos={analitica.totalIngresos} balance={analitica.balance} />
+                <TarjetaReporte title="Estado del rancho" subtitle="Indicadores adicionales para toma de decisiones.">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="rounded-2xl bg-[#F4F4F4] p-4">
                       <p className="text-xs font-bold uppercase text-[#98a287]">Inversión promedio por animal</p>
-                      <p className="mt-2 break-words text-xl font-bold text-[#07612d] md:text-2xl">{mxn.format(analytics.inversionPromedio)}</p>
+                      <p className="mt-2 break-words text-xl font-bold text-[#07612d] md:text-2xl">{mxn.format(analitica.inversionPromedio)}</p>
                     </div>
                     <div className="rounded-2xl bg-[#F4F4F4] p-4">
                       <p className="text-xs font-bold uppercase text-[#98a287]">Eventos sanitarios</p>
-                      <p className="mt-2 text-2xl font-bold text-[#07612d]">{healthEvents.length}</p>
+                      <p className="mt-2 text-2xl font-bold text-[#07612d]">{eventosSanitarios.length}</p>
                     </div>
                     <div className="rounded-2xl bg-[#F4F4F4] p-4">
                       <p className="text-xs font-bold uppercase text-[#98a287]">Pérdidas</p>
-                      <p className="mt-2 break-words text-xl font-bold text-[#D32F2F] md:text-2xl">{mxn.format(analytics.perdidas)}</p>
+                      <p className="mt-2 break-words text-xl font-bold text-[#D32F2F] md:text-2xl">{mxn.format(analitica.perdidas)}</p>
                     </div>
                     <div className="rounded-2xl bg-[#F4F4F4] p-4">
                       <p className="text-xs font-bold uppercase text-[#98a287]">Ganancias netas</p>
-                      <p className="mt-2 break-words text-xl font-bold text-[#2f8f36] md:text-2xl">{mxn.format(analytics.ganancias)}</p>
+                      <p className="mt-2 break-words text-xl font-bold text-[#2f8f36] md:text-2xl">{mxn.format(analitica.ganancias)}</p>
                     </div>
                   </div>
-                </ReportCard>
+                </TarjetaReporte>
               </div>
 
               <div className="grid min-w-0 gap-6 xl:grid-cols-2">
-                <CategoryExpenseSummary expenses={filteredData.filteredExpenses} />
-                <MonthlyReport rows={analytics.monthlyRows} />
+                <ResumenGastoCategoria expenses={datosFiltrados.filteredExpenses} />
+                <ReporteMensual rows={analitica.monthlyRows} />
               </div>
 
-              <AnimalInvestmentTable rows={analytics.animalRows} />
+              <TablaInversionAnimal rows={analitica.animalRows} />
 
-              {filteredData.filteredExpenses.length === 0 && filteredData.filteredIncome.length === 0 ? (
-                <section className="rounded-2xl border border-[#98a287]/18 bg-white p-8 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
+              {datosFiltrados.filteredExpenses.length === 0 && datosFiltrados.filteredIncome.length === 0 ?
+          <section className="rounded-2xl border border-[#98a287]/18 bg-white p-8 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
                   <h2 className="text-2xl font-bold text-[#07612d]">No hay datos para el reporte</h2>
                   <p className="mt-2 text-sm text-[#1d1d1b]/70">Ajusta el periodo o selecciona otro animal para generar resultados.</p>
-                </section>
-              ) : null}
-            </>
-          ) : null}
+                </section> :
+          null}
+            </> :
+        null}
         </section>
-    </div>
-  )
+    </div>);
+
 }
 
-export default ReportsPage
+export default PaginaReportes;

@@ -1,8 +1,8 @@
-import { Search } from 'lucide-react'
+import { Search } from 'lucide-react';
 
-function AnimalFilters({ filters, onChange, options }) {
-  function updateField(event) {
-    onChange({ ...filters, [event.target.name]: event.target.value })
+function FiltrosAnimal({ filters: filtros, onChange: alCambiar, options: opciones }) {
+  function actualizarCampo(evento) {
+    alCambiar({ ...filtros, [evento.target.name]: evento.target.value });
   }
 
   return (
@@ -13,38 +13,38 @@ function AnimalFilters({ filters, onChange, options }) {
           <input
             className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] pl-10 pr-4 text-sm outline-none transition placeholder:text-[#98a287] focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10"
             name="query"
-            onChange={updateField}
+            onChange={actualizarCampo}
             placeholder="Buscar por identificador..."
-            value={filters.query}
-          />
+            value={filtros.query} />
+          
         </label>
 
         {[
-          ['estado', 'Estado', options.estados],
-          ['especie', 'Especie', options.especies],
-          ['raza', 'Raza', options.razas],
-          ['ubicacion', 'Ubicación', options.ubicaciones],
-        ].map(([name, label, values]) => (
-          <label className="block" key={name}>
+        ['estado', 'Estado', opciones.estados],
+        ['especie', 'Especie', opciones.especies],
+        ['raza', 'Raza', opciones.razas],
+        ['ubicacion', 'Ubicación', opciones.ubicaciones]].
+        map(([name, etiqueta, valores]) =>
+        <label className="block" key={name}>
             <select
-              className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold text-[#1d1d1b] outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10"
-              name={name}
-              onChange={updateField}
-              value={filters[name]}
-              aria-label={label}
-            >
-              <option value="Todos">{label}: Todos</option>
-              {values.map((value) => (
-                <option key={value} value={value}>
-                  {value}
+            className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold text-[#1d1d1b] outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10"
+            name={name}
+            onChange={actualizarCampo}
+            value={filtros[name]}
+            aria-label={etiqueta}>
+            
+              <option value="Todos">{etiqueta}: Todos</option>
+              {valores.map((valor) =>
+            <option key={valor} value={valor}>
+                  {valor}
                 </option>
-              ))}
+            )}
             </select>
           </label>
-        ))}
+        )}
       </div>
-    </section>
-  )
+    </section>);
+
 }
 
-export default AnimalFilters
+export default FiltrosAnimal;

@@ -1,16 +1,16 @@
-import { useEffect } from 'react'
-import { fetchDashboard } from '../store/dashboardSlice'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { useEffect } from 'react';
+import { cargarPanel } from '../store/dashboardSlice';
+import { useDespachoAplicacion, useSelectorAplicacion } from '../store/hooks';
 
 export function useDashboard() {
-  const dispatch = useAppDispatch()
-  const dashboard = useAppSelector((state) => state.dashboard)
+  const despachar = useDespachoAplicacion();
+  const panel = useSelectorAplicacion((estado) => estado.dashboard);
 
   useEffect(() => {
-    if (dashboard.status === 'idle') {
-      void dispatch(fetchDashboard())
+    if (panel.status === 'idle') {
+      void despachar(cargarPanel());
     }
-  }, [dashboard.status, dispatch])
+  }, [panel.status, despachar]);
 
-  return dashboard
+  return panel;
 }

@@ -1,8 +1,8 @@
-import { AlertTriangle } from 'lucide-react'
-import FeedingStatusBadge from './FeedingStatusBadge'
+import { AlertTriangle } from 'lucide-react';
+import InsigniaEstadoAlimentacion from './FeedingStatusBadge';
 
-function FeedingAlert({ records }) {
-  const alerts = records.filter((record) => record.estado === 'Pendiente' || record.estado === 'Atrasado')
+function AlertaAlimentacion({ records: registros }) {
+  const alerts = registros.filter((registro) => registro.estado === 'Pendiente' || registro.estado === 'Atrasado');
 
   return (
     <section className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5">
@@ -17,24 +17,24 @@ function FeedingAlert({ records }) {
       </div>
 
       <div className="mt-4 grid gap-3">
-        {alerts.length ? (
-          alerts.map((record) => (
-            <article className={`rounded-2xl p-4 ${record.estado === 'Atrasado' ? 'bg-[#D32F2F]/8' : 'bg-[#F4F4F4]'}`} key={record.id}>
+        {alerts.length ?
+        alerts.map((registro) =>
+        <article className={`rounded-2xl p-4 ${registro.estado === 'Atrasado' ? 'bg-[#D32F2F]/8' : 'bg-[#F4F4F4]'}`} key={registro.id}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-bold text-[#1d1d1b]">{record.animalIdentificador}</p>
-                  <p className="text-xs text-[#98a287]">{record.tipoAlimento} - {record.fecha} {record.hora}</p>
+                  <p className="text-sm font-bold text-[#1d1d1b]">{registro.animalIdentificador}</p>
+                  <p className="text-xs text-[#98a287]">{registro.tipoAlimento} - {registro.fecha} {registro.hora}</p>
                 </div>
-                <FeedingStatusBadge estado={record.estado} />
+                <InsigniaEstadoAlimentacion estado={registro.estado} />
               </div>
             </article>
-          ))
-        ) : (
-          <p className="rounded-2xl bg-[#F4F4F4] p-4 text-sm font-semibold text-[#1d1d1b]/70">No hay alimentación pendiente.</p>
-        )}
+        ) :
+
+        <p className="rounded-2xl bg-[#F4F4F4] p-4 text-sm font-semibold text-[#1d1d1b]/70">No hay alimentación pendiente.</p>
+        }
       </div>
-    </section>
-  )
+    </section>);
+
 }
 
-export default FeedingAlert
+export default AlertaAlimentacion;

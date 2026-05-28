@@ -1,4 +1,4 @@
-export const expenses = [
+export const gastos = [
   { id: 1, tipoCompra: 'Vacuna respiratoria', precio: 350, fecha: '2026-05-22', animalId: 1, animalIdentificador: 'MX011400000001', categoria: 'Vacunas', descripcion: 'Aplicación de vacuna respiratoria.', comprobante: '' },
   { id: 2, tipoCompra: 'Antibiótico LA', precio: 1200, fecha: '2026-05-21', animalId: 2, animalIdentificador: 'MX010500000002', categoria: 'Medicamento', descripcion: 'Tratamiento veterinario para seguimiento sanitario.', comprobante: '' },
   { id: 3, tipoCompra: 'Forraje de alfalfa', precio: 3200, fecha: '2026-05-18', animalId: null, animalIdentificador: 'Rancho general', categoria: 'Alimentación', descripcion: 'Compra de forraje para lote activo.', comprobante: '' },

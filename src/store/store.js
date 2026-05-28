@@ -1,8 +1,8 @@
-import { configureStore } from '@reduxjs/toolkit'
-import dashboardReducer from './dashboardSlice'
+import { configureStore } from '@reduxjs/toolkit';
+import reductorPanel from './dashboardSlice';
 
-export const store = configureStore({
+export const almacen = configureStore({
   reducer: {
-    dashboard: dashboardReducer,
-  },
-})
+    dashboard: reductorPanel
+  }
+});

@@ -1,4 +1,4 @@
-export const animals = [
+export const animales = [
   {
     id: 1,
     identificador: 'MX011400000001',

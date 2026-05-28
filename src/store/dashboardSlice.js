@@ -1,53 +1,53 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import { apiRequest } from '../services/api'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { solicitudApi } from '../services/api';
 
-const initialState = {
+const estadoInicial = {
   stats: [],
   animals: [],
   tasks: [],
   costs: [],
   healthSummary: [],
   status: 'idle',
-  error: null,
-}
+  error: null
+};
 
-export const fetchDashboard = createAsyncThunk('dashboard/fetchDashboard', async () => {
-  return apiRequest('/dashboard')
-})
+export const cargarPanel = createAsyncThunk('dashboard/fetchDashboard', async () => {
+  return solicitudApi('/dashboard');
+});
 
-export const toggleTaskStatus = createAsyncThunk('dashboard/toggleTaskStatus', async (taskId) => {
-  return apiRequest(`/tasks/${taskId}/toggle`, { method: 'PATCH' })
-})
+export const alternarEstadoTarea = createAsyncThunk('dashboard/toggleTaskStatus', async (idTarea) => {
+  return solicitudApi(`/tasks/${idTarea}/toggle`, { method: 'PATCH' });
+});
 
-const dashboardSlice = createSlice({
+const segmentoPanel = createSlice({
   name: 'dashboard',
-  initialState,
+  initialState: estadoInicial,
   reducers: {},
   extraReducers: (builder) => {
-    builder
-      .addCase(fetchDashboard.pending, (state) => {
-        state.status = 'loading'
-        state.error = null
-      })
-      .addCase(fetchDashboard.fulfilled, (state, action) => {
-        state.status = 'succeeded'
-        state.stats = action.payload.stats
-        state.animals = action.payload.animals
-        state.tasks = action.payload.tasks
-        state.costs = action.payload.costs
-        state.healthSummary = action.payload.healthSummary
-      })
-      .addCase(fetchDashboard.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.error.message ?? 'No se pudo cargar el dashboard.'
-      })
-      .addCase(toggleTaskStatus.fulfilled, (state, action) => {
-        const taskIndex = state.tasks.findIndex((task) => task.id === action.payload.id)
-        if (taskIndex >= 0) {
-          state.tasks[taskIndex] = action.payload
-        }
-      })
-  },
-})
+    builder.
+    addCase(cargarPanel.pending, (estado) => {
+      estado.status = 'loading';
+      estado.error = null;
+    }).
+    addCase(cargarPanel.fulfilled, (estado, accion) => {
+      estado.status = 'succeeded';
+      estado.stats = accion.payload.stats;
+      estado.animals = accion.payload.animals;
+      estado.tasks = accion.payload.tasks;
+      estado.costs = accion.payload.costs;
+      estado.healthSummary = accion.payload.healthSummary;
+    }).
+    addCase(cargarPanel.rejected, (estado, accion) => {
+      estado.status = 'failed';
+      estado.error = accion.error.message ?? 'No se pudo cargar el dashboard.';
+    }).
+    addCase(alternarEstadoTarea.fulfilled, (estado, accion) => {
+      const indiceTarea = estado.tasks.findIndex((tarea) => tarea.id === accion.payload.id);
+      if (indiceTarea >= 0) {
+        estado.tasks[indiceTarea] = accion.payload;
+      }
+    });
+  }
+});
 
-export default dashboardSlice.reducer
+export default segmentoPanel.reducer;

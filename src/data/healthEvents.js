@@ -1,4 +1,4 @@
-export const healthEvents = [
+export const eventosSanitarios = [
   { id: 1, animalId: 1, animalIdentificador: 'MX011400000001', tipo: 'Vacuna', fecha: '2026-05-10', producto: 'Vacuna Triple', dosis: '5 ml', responsable: 'Veterinario Juan Perez', proximaAplicacion: '2026-08-10', observaciones: 'Aplicación sin complicaciones.', estado: 'Completado' },
   { id: 2, animalId: 2, animalIdentificador: 'MX010500000002', tipo: 'Tratamiento', fecha: '2026-05-21', producto: 'Antibiótico LA', dosis: '10 ml', responsable: 'Dra. Morales', proximaAplicacion: '2026-05-24', observaciones: 'Segunda dosis pendiente y monitoreo de apetito.', estado: 'Pendiente' },
   { id: 3, animalId: 4, animalIdentificador: 'MX031400000008', tipo: 'Desparasitante', fecha: '2026-05-12', producto: 'Ivermectina', dosis: '2 ml', responsable: 'Encargado de corral', proximaAplicacion: '2026-05-20', observaciones: 'Reprogramar aplicación por fecha vencida.', estado: 'Vencido' },

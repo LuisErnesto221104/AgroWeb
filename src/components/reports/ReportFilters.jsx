@@ -1,57 +1,57 @@
-const today = new Date().toISOString().slice(0, 10)
+const hoy = new Date().toISOString().slice(0, 10);
 
-function ReportFilters({ filters, animals, onChange, errors = {} }) {
-  const isAnimalReport = filters.tipoReporte === 'animal'
+function FiltrosReporte({ filters: filtros, animals: animales, onChange: alCambiar, errors = {} }) {
+  const isAnimalReport = filtros.tipoReporte === 'animal';
 
-  function updateField(event) {
-    const { name, value } = event.target
-    const nextFilters = { ...filters, [name]: value }
+  function actualizarCampo(evento) {
+    const { name, value: valor } = evento.target;
+    const filtrosSiguientes = { ...filtros, [name]: valor };
 
-    if (name === 'tipoReporte' && value !== 'animal') {
-      nextFilters.animalId = 'Todos'
+    if (name === 'tipoReporte' && valor !== 'animal') {
+      filtrosSiguientes.animalId = 'Todos';
     }
 
-    if (name === 'tipoReporte' && value === 'animal' && filters.animalId === 'general') {
-      nextFilters.animalId = 'Todos'
+    if (name === 'tipoReporte' && valor === 'animal' && filtros.animalId === 'general') {
+      filtrosSiguientes.animalId = 'Todos';
     }
 
-    if (name === 'desde' && filters.hasta && value && filters.hasta < value) {
-      nextFilters.hasta = ''
+    if (name === 'desde' && filtros.hasta && valor && filtros.hasta < valor) {
+      filtrosSiguientes.hasta = '';
     }
 
-    onChange(nextFilters)
+    alCambiar(filtrosSiguientes);
   }
 
   return (
     <section className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-5">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <select className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="tipoReporte" onChange={updateField} value={filters.tipoReporte}>
+        <select className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="tipoReporte" onChange={actualizarCampo} value={filtros.tipoReporte}>
           <option value="general">Reporte general</option>
           <option value="animal">Por animal</option>
           <option value="mensual">Mensual</option>
           <option value="categoria">Por categoría</option>
         </select>
-        <select className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" disabled={!isAnimalReport} name="animalId" onChange={updateField} value={isAnimalReport ? filters.animalId : 'Todos'}>
+        <select className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" disabled={!isAnimalReport} name="animalId" onChange={actualizarCampo} value={isAnimalReport ? filtros.animalId : 'Todos'}>
           <option value="Todos">Selecciona animal</option>
-          {animals.map((animal) => (
-            <option key={animal.id} value={animal.id}>
+          {animales.map((animal) =>
+          <option key={animal.id} value={animal.id}>
               {animal.identificador}
             </option>
-          ))}
+          )}
         </select>
-        <input className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" max={today} name="desde" onChange={updateField} type="date" value={filters.desde} />
-        <input className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" disabled={!filters.desde} max={today} min={filters.desde || undefined} name="hasta" onChange={updateField} type="date" value={filters.hasta} />
+        <input className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" max={hoy} name="desde" onChange={actualizarCampo} type="date" value={filtros.desde} />
+        <input className="h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" disabled={!filtros.desde} max={hoy} min={filtros.desde || undefined} name="hasta" onChange={actualizarCampo} type="date" value={filtros.hasta} />
       </div>
       <div className="mt-3 grid gap-2 text-sm font-semibold">
         {!isAnimalReport ? <p className="text-[#98a287]">El selector de animal solo se habilita cuando el tipo de reporte es “Por animal”.</p> : null}
-        {Object.values(errors).map((error) => (
-          <p className="text-[#D32F2F]" key={error}>
+        {Object.values(errors).map((error) =>
+        <p className="text-[#D32F2F]" key={error}>
             {error}
           </p>
-        ))}
+        )}
       </div>
-    </section>
-  )
+    </section>);
+
 }
 
-export default ReportFilters
+export default FiltrosReporte;

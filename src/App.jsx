@@ -1,41 +1,41 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import AnimalsPage from './pages/AnimalsPage'
-import ExpensesPage from './pages/ExpensesPage'
-import FeedingPage from './pages/FeedingPage'
-import HealthPage from './pages/HealthPage'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import NotFound from './pages/NotFound'
-import ReportsPage from './pages/ReportsPage'
-import SettingsPage from './pages/SettingsPage'
-import ProtectedRoute from './routes/ProtectedRoute'
-import Layout from './components/Layout'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import PaginaAnimales from './pages/AnimalsPage';
+import PaginaGastos from './pages/ExpensesPage';
+import PaginaAlimentacion from './pages/FeedingPage';
+import PaginaSanidad from './pages/HealthPage';
+import Inicio from './pages/Home';
+import Ingreso from './pages/Login';
+import NoEncontrado from './pages/NotFound';
+import PaginaReportes from './pages/ReportsPage';
+import PaginaConfiguracion from './pages/SettingsPage';
+import RutaProtegida from './routes/ProtectedRoute';
+import Estructura from './components/Layout';
 
-function App() {
+function Aplicacion() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Home />} />
-            <Route path="/animales/*" element={<AnimalsPage />} />
-            <Route path="/sanidad/*" element={<HealthPage />} />
-            <Route path="/calendario-sanitario" element={<HealthPage calendarOnly />} />
+        <Route path="/login" element={<Ingreso />} />
+        <Route element={<RutaProtegida />}>
+          <Route element={<Estructura />}>
+            <Route path="/" element={<Inicio />} />
+            <Route path="/dashboard" element={<Inicio />} />
+            <Route path="/animales/*" element={<PaginaAnimales />} />
+            <Route path="/sanidad/*" element={<PaginaSanidad />} />
+            <Route path="/calendario-sanitario" element={<PaginaSanidad calendarOnly />} />
             <Route path="/sanitario" element={<Navigate to="/sanidad" replace />} />
-            <Route path="/gastos/*" element={<ExpensesPage />} />
+            <Route path="/gastos/*" element={<PaginaGastos />} />
             <Route path="/costos" element={<Navigate to="/gastos" replace />} />
-            <Route path="/reportes" element={<ReportsPage />} />
-            <Route path="/alimentacion/*" element={<FeedingPage />} />
-            <Route path="/configuracion" element={<SettingsPage />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/reportes" element={<PaginaReportes />} />
+            <Route path="/alimentacion/*" element={<PaginaAlimentacion />} />
+            <Route path="/configuracion" element={<PaginaConfiguracion />} />
+            <Route path="*" element={<NoEncontrado />} />
           </Route>
         </Route>
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NoEncontrado />} />
       </Routes>
-    </BrowserRouter>
-  )
+    </BrowserRouter>);
+
 }
 
-export default App
+export default Aplicacion;

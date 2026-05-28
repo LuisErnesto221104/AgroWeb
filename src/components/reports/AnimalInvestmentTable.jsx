@@ -1,37 +1,37 @@
-import ReportCard from './ReportCard'
-import { mxn } from '../expenses/expenseUtils'
+import TarjetaReporte from './ReportCard';
+import { mxn } from '../expenses/expenseUtils';
 
-function AnimalInvestmentTable({ rows }) {
+function TablaInversionAnimal({ rows: filas }) {
   return (
-    <ReportCard title="Resumen por animal" subtitle="Inversión, ingresos y balance individual.">
-      {rows.length ? (
-        <>
+    <TarjetaReporte title="Resumen por animal" subtitle="Inversión, ingresos y balance individual.">
+      {filas.length ?
+      <>
           <div className="grid gap-3 md:hidden">
-            {rows.map((row) => (
-              <article className="rounded-2xl bg-[#F4F4F4] p-4" key={row.id}>
+            {filas.map((fila) =>
+          <article className="rounded-2xl bg-[#F4F4F4] p-4" key={fila.id}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-base font-bold text-[#07612d]">{row.identificador}</p>
-                    <p className="mt-1 text-xs font-bold uppercase text-[#98a287]">{row.estado}</p>
+                    <p className="text-base font-bold text-[#07612d]">{fila.identificador}</p>
+                    <p className="mt-1 text-xs font-bold uppercase text-[#98a287]">{fila.estado}</p>
                   </div>
-                  <strong className={`break-words text-sm ${row.balance >= 0 ? 'text-[#2f8f36]' : 'text-[#D32F2F]'}`}>{mxn.format(row.balance)}</strong>
+                  <strong className={`break-words text-sm ${fila.balance >= 0 ? 'text-[#2f8f36]' : 'text-[#D32F2F]'}`}>{mxn.format(fila.balance)}</strong>
                 </div>
                 <div className="mt-4 grid gap-2 text-sm">
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-[#1d1d1b]/70">Gastos</span>
-                    <strong>{mxn.format(row.gastos)}</strong>
+                    <strong>{mxn.format(fila.gastos)}</strong>
                   </div>
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-[#1d1d1b]/70">Alimentación</span>
-                    <strong>{mxn.format(row.alimentacion)}</strong>
+                    <strong>{mxn.format(fila.alimentacion)}</strong>
                   </div>
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-[#1d1d1b]/70">Ingresos</span>
-                    <strong>{mxn.format(row.ingresos)}</strong>
+                    <strong>{mxn.format(fila.ingresos)}</strong>
                   </div>
                 </div>
               </article>
-            ))}
+          )}
           </div>
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[760px] border-separate border-spacing-y-2 text-left text-sm">
@@ -46,25 +46,25 @@ function AnimalInvestmentTable({ rows }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
-                  <tr className="bg-[#F4F4F4]" key={row.id}>
-                    <td className="rounded-l-2xl px-3 py-3 font-bold text-[#07612d]">{row.identificador}</td>
-                    <td className="px-3 py-3">{row.estado}</td>
-                    <td className="px-3 py-3">{mxn.format(row.gastos)}</td>
-                    <td className="px-3 py-3">{mxn.format(row.alimentacion)}</td>
-                    <td className="px-3 py-3">{mxn.format(row.ingresos)}</td>
-                    <td className={`rounded-r-2xl px-3 py-3 font-bold ${row.balance >= 0 ? 'text-[#2f8f36]' : 'text-[#D32F2F]'}`}>{mxn.format(row.balance)}</td>
+                {filas.map((fila) =>
+              <tr className="bg-[#F4F4F4]" key={fila.id}>
+                    <td className="rounded-l-2xl px-3 py-3 font-bold text-[#07612d]">{fila.identificador}</td>
+                    <td className="px-3 py-3">{fila.estado}</td>
+                    <td className="px-3 py-3">{mxn.format(fila.gastos)}</td>
+                    <td className="px-3 py-3">{mxn.format(fila.alimentacion)}</td>
+                    <td className="px-3 py-3">{mxn.format(fila.ingresos)}</td>
+                    <td className={`rounded-r-2xl px-3 py-3 font-bold ${fila.balance >= 0 ? 'text-[#2f8f36]' : 'text-[#D32F2F]'}`}>{mxn.format(fila.balance)}</td>
                   </tr>
-                ))}
+              )}
               </tbody>
             </table>
           </div>
-        </>
-      ) : (
-        <p className="text-sm font-semibold text-[#1d1d1b]/70">No hay animales para el filtro seleccionado.</p>
-      )}
-    </ReportCard>
-  )
+        </> :
+
+      <p className="text-sm font-semibold text-[#1d1d1b]/70">No hay animales para el filtro seleccionado.</p>
+      }
+    </TarjetaReporte>);
+
 }
 
-export default AnimalInvestmentTable
+export default TablaInversionAnimal;

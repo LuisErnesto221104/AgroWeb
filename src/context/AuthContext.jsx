@@ -1,76 +1,76 @@
-import { useCallback, useMemo, useReducer } from 'react'
-import { apiRequest } from '../services/api'
-import { AuthContext } from './authContextValue'
+import { useCallback, useMemo, useReducer } from 'react';
+import { solicitudApi } from '../services/api';
+import { ContextoAutenticacion } from './authContextValue';
 
-const storedSession = JSON.parse(localStorage.getItem('agroweb-session') ?? 'null')
+const sesionGuardada = JSON.parse(localStorage.getItem('agroweb-session') ?? 'null');
 
-const initialState = {
-  user: storedSession?.user ?? null,
-  session: storedSession?.session ?? null,
+const estadoInicial = {
+  user: sesionGuardada?.user ?? null,
+  session: sesionGuardada?.session ?? null,
   status: 'idle',
-  error: null,
-}
+  error: null
+};
 
-function authReducer(state, action) {
-  switch (action.type) {
+function reductorAutenticacion(estado, accion) {
+  switch (accion.type) {
     case 'request':
-      return { ...state, status: 'loading', error: null }
+      return { ...estado, status: 'loading', error: null };
     case 'success':
-      return { user: action.payload.user, session: action.payload.session, status: 'authenticated', error: null }
+      return { user: accion.payload.user, session: accion.payload.session, status: 'authenticated', error: null };
     case 'failure':
-      return { ...state, status: 'failed', error: action.payload }
+      return { ...estado, status: 'failed', error: accion.payload };
     case 'logout':
-      return { user: null, session: null, status: 'idle', error: null }
+      return { user: null, session: null, status: 'idle', error: null };
     default:
-      return state
+      return estado;
   }
 }
 
-export function AuthProvider({ children }) {
-  const [state, dispatch] = useReducer(authReducer, initialState)
+export function ProveedorAutenticacion({ children: hijos }) {
+  const [estado, despachar] = useReducer(reductorAutenticacion, estadoInicial);
 
-  const authenticate = useCallback(async (path, credentials) => {
-    dispatch({ type: 'request' })
+  const autenticar = useCallback(async (ruta, credenciales) => {
+    despachar({ type: 'request' });
     try {
-      const payload = await apiRequest(path, {
+      const datos = await solicitudApi(ruta, {
         method: 'POST',
-        body: JSON.stringify(credentials),
-      })
+        body: JSON.stringify(credenciales)
+      });
 
-      localStorage.setItem('agroweb-session', JSON.stringify(payload))
-      dispatch({ type: 'success', payload })
-      return payload
+      localStorage.setItem('agroweb-session', JSON.stringify(datos));
+      despachar({ type: 'success', payload: datos });
+      return datos;
     } catch (error) {
-      dispatch({ type: 'failure', payload: error.message })
-      throw error
+      despachar({ type: 'failure', payload: error.message });
+      throw error;
     }
-  }, [])
+  }, []);
 
-  const logout = useCallback(async () => {
-    const sessionId = state.session?.id
-    localStorage.removeItem('agroweb-session')
-    dispatch({ type: 'logout' })
+  const cerrarSesion = useCallback(async () => {
+    const idSesion = estado.session?.id;
+    localStorage.removeItem('agroweb-session');
+    despachar({ type: 'logout' });
 
-    if (sessionId) {
-      await apiRequest('/auth/logout', {
+    if (idSesion) {
+      await solicitudApi('/auth/logout', {
         method: 'POST',
-        body: JSON.stringify({ sessionId }),
-      }).catch(() => null)
+        body: JSON.stringify({ sessionId: idSesion })
+      }).catch(() => null);
     }
-  }, [state.session?.id])
+  }, [estado.session?.id]);
 
-  const value = useMemo(
+  const valor = useMemo(
     () => ({
-      user: state.user,
-      session: state.session,
-      status: state.status,
-      error: state.error,
-      login: (credentials) => authenticate('/auth/login', credentials),
-      register: (credentials) => authenticate('/auth/register', credentials),
-      logout,
+      user: estado.user,
+      session: estado.session,
+      status: estado.status,
+      error: estado.error,
+      login: (credenciales) => autenticar('/auth/login', credenciales),
+      register: (credenciales) => autenticar('/auth/register', credenciales),
+      logout: cerrarSesion
     }),
-    [authenticate, logout, state],
-  )
+    [autenticar, cerrarSesion, estado]
+  );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <ContextoAutenticacion.Provider value={valor}>{hijos}</ContextoAutenticacion.Provider>;
 }

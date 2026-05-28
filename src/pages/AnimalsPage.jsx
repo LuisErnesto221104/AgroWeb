@@ -1,51 +1,51 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import { LayoutGrid, List, Plus, Sprout } from 'lucide-react'
-import AnimalCard from '../components/animals/AnimalCard'
-import AnimalDetail from '../components/animals/AnimalDetail'
-import AnimalFilters from '../components/animals/AnimalFilters'
-import AnimalForm from '../components/animals/AnimalForm'
-import AnimalTable from '../components/animals/AnimalTable'
-import ConfirmDeleteModal from '../components/animals/ConfirmDeleteModal'
-import { animals as mockAnimals } from '../data/animals'
-import { readStorage, writeStorage } from '../utils/storage'
+import { useEffect, useMemo, useState } from 'react';
+import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { LayoutGrid, List, Plus, Sprout } from 'lucide-react';
+import TarjetaAnimal from '../components/animals/AnimalCard';
+import DetalleAnimal from '../components/animals/AnimalDetail';
+import FiltrosAnimal from '../components/animals/AnimalFilters';
+import FormularioAnimal from '../components/animals/AnimalForm';
+import TablaAnimal from '../components/animals/AnimalTable';
+import ModalConfirmarBaja from '../components/animals/ConfirmDeleteModal';
+import { animales as mockAnimals } from '../data/animals';
+import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
 
-const initialFilters = {
+const filtrosIniciales = {
   query: '',
   estado: 'Todos',
   especie: 'Todos',
   raza: 'Todos',
-  ubicacion: 'Todos',
+  ubicacion: 'Todos'
+};
+
+function valoresUnicos(elementos, clave) {
+  return [...new Set(elementos.map((elemento) => elemento[clave]).filter(Boolean))].toSorted((a, b) => a.localeCompare(b));
 }
 
-function uniqueValues(items, key) {
-  return [...new Set(items.map((item) => item[key]).filter(Boolean))].toSorted((a, b) => a.localeCompare(b))
-}
+function ListaAnimales({ animals: animales, filters: filtros, onFiltersChange: alCambiarFiltros, isLoading: cargando }) {
+  const [modoVista, setViewMode] = useState('cards');
 
-function AnimalsList({ animals, filters, onFiltersChange, isLoading }) {
-  const [viewMode, setViewMode] = useState('cards')
-
-  const options = useMemo(
+  const opciones = useMemo(
     () => ({
-      estados: uniqueValues(animals, 'estado'),
-      especies: uniqueValues(animals, 'especie'),
-      razas: uniqueValues(animals, 'raza'),
-      ubicaciones: uniqueValues(animals, 'ubicacion'),
+      estados: valoresUnicos(animales, 'estado'),
+      especies: valoresUnicos(animales, 'especie'),
+      razas: valoresUnicos(animales, 'raza'),
+      ubicaciones: valoresUnicos(animales, 'ubicacion')
     }),
-    [animals],
-  )
+    [animales]
+  );
 
-  const filteredAnimals = useMemo(() => {
-    const query = filters.query.trim().toLowerCase()
-    return animals.filter((animal) => {
-      const matchesQuery = !query || animal.identificador.toLowerCase().includes(query)
-      const matchesEstado = filters.estado === 'Todos' || animal.estado === filters.estado
-      const matchesEspecie = filters.especie === 'Todos' || animal.especie === filters.especie
-      const matchesRaza = filters.raza === 'Todos' || animal.raza === filters.raza
-      const matchesUbicacion = filters.ubicacion === 'Todos' || animal.ubicacion === filters.ubicacion
-      return matchesQuery && matchesEstado && matchesEspecie && matchesRaza && matchesUbicacion
-    })
-  }, [animals, filters])
+  const animalesFiltrados = useMemo(() => {
+    const consulta = filtros.query.trim().toLowerCase();
+    return animales.filter((animal) => {
+      const coincideConsulta = !consulta || animal.identificador.toLowerCase().includes(consulta);
+      const coincideEstado = filtros.estado === 'Todos' || animal.estado === filtros.estado;
+      const coincideEspecie = filtros.especie === 'Todos' || animal.especie === filtros.especie;
+      const coincideRaza = filtros.raza === 'Todos' || animal.raza === filtros.raza;
+      const coincideUbicacion = filtros.ubicacion === 'Todos' || animal.ubicacion === filtros.ubicacion;
+      return coincideConsulta && coincideEstado && coincideEspecie && coincideRaza && coincideUbicacion;
+    });
+  }, [animales, filtros]);
 
   return (
     <section className="grid gap-6">
@@ -63,10 +63,10 @@ function AnimalsList({ animals, filters, onFiltersChange, isLoading }) {
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
           <div className="grid w-full grid-cols-2 gap-2 rounded-2xl bg-white p-1 shadow-[0_10px_24px_rgba(29,29,27,0.06)] sm:w-auto">
-            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${viewMode === 'cards' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('cards')} type="button">
+            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${modoVista === 'cards' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('cards')} type="button">
               <LayoutGrid size={17} /> Tarjetas
             </button>
-            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${viewMode === 'table' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('table')} type="button">
+            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${modoVista === 'table' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('table')} type="button">
               <List size={17} /> Tabla
             </button>
           </div>
@@ -76,56 +76,56 @@ function AnimalsList({ animals, filters, onFiltersChange, isLoading }) {
         </div>
       </div>
 
-      <AnimalFilters filters={filters} onChange={onFiltersChange} options={options} />
+      <FiltrosAnimal filters={filtros} onChange={alCambiarFiltros} options={opciones} />
 
-      {isLoading ? (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {[1, 2, 3].map((item) => (
-            <div className="min-h-80 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" key={item} />
-          ))}
-        </div>
-      ) : null}
+      {cargando ?
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((elemento) =>
+        <div className="min-h-80 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" key={elemento} />
+        )}
+        </div> :
+      null}
 
-      {!isLoading && filteredAnimals.length > 0 && viewMode === 'cards' ? (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {filteredAnimals.map((animal) => (
-            <AnimalCard animal={animal} key={animal.id} />
-          ))}
-        </div>
-      ) : null}
+      {!cargando && animalesFiltrados.length > 0 && modoVista === 'cards' ?
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {animalesFiltrados.map((animal) =>
+        <TarjetaAnimal animal={animal} key={animal.id} />
+        )}
+        </div> :
+      null}
 
-      {!isLoading && filteredAnimals.length > 0 && viewMode === 'table' ? <AnimalTable animals={filteredAnimals} /> : null}
+      {!cargando && animalesFiltrados.length > 0 && modoVista === 'table' ? <TablaAnimal animals={animalesFiltrados} /> : null}
 
-      {!isLoading && filteredAnimals.length === 0 ? (
-        <section className="rounded-2xl border border-[#98a287]/18 bg-white p-8 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
+      {!cargando && animalesFiltrados.length === 0 ?
+      <section className="rounded-2xl border border-[#98a287]/18 bg-white p-8 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
           <h2 className="text-2xl font-bold text-[#07612d]">Sin animales registrados</h2>
           <p className="mt-2 text-sm text-[#1d1d1b]/70">No hay animales que coincidan con la búsqueda o filtros actuales.</p>
           <Link className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-[#07612d] px-5 text-sm font-bold text-white" to="/animales/nuevo">
             Registrar Animal
           </Link>
-        </section>
-      ) : null}
-    </section>
-  )
+        </section> :
+      null}
+    </section>);
+
 }
 
-function NewAnimal({ onCreate }) {
-  const navigate = useNavigate()
-  const [error, setError] = useState('')
+function NuevoAnimal({ onCreate: alCrear }) {
+  const navigate = useNavigate();
+  const [error, establecerError] = useState('');
 
-  function handleSubmit(payload) {
-    const newAnimal = {
-      ...payload,
+  function manejarEnvio(datos) {
+    const animalNuevo = {
+      ...datos,
       id: Date.now(),
       estado: 'Activo',
-      nombre: payload.nombre || payload.identificador,
+      nombre: datos.nombre || datos.identificador
+    };
+    const creado = alCrear(animalNuevo);
+    if (!creado) {
+      establecerError('Ya existe un animal con ese arete SINIIGA/SINIDA. No puede estar registrado en dos ranchos.');
+      return;
     }
-    const created = onCreate(newAnimal)
-    if (!created) {
-      setError('Ya existe un animal con ese arete SINIIGA/SINIDA. No puede estar registrado en dos ranchos.')
-      return
-    }
-    navigate(`/animales/${newAnimal.id}`, { replace: true })
+    navigate(`/animales/${animalNuevo.id}`, { replace: true });
   }
 
   return (
@@ -135,15 +135,15 @@ function NewAnimal({ onCreate }) {
         <p className="mt-2 text-sm text-[#1d1d1b]/70">Captura la información principal del animal para integrarlo al inventario ganadero.</p>
       </div>
       {error ? <div className="rounded-2xl border border-[#D32F2F]/20 bg-[#D32F2F]/10 p-4 text-sm font-bold text-[#D32F2F]">{error}</div> : null}
-      <AnimalForm onSubmit={handleSubmit} submitLabel="Registrar Animal" />
-    </section>
-  )
+      <FormularioAnimal onSubmit={manejarEnvio} submitLabel="Registrar Animal" />
+    </section>);
+
 }
 
-function EditAnimal({ animals, onUpdate }) {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const animal = animals.find((item) => item.id === Number(id))
+function EditarAnimal({ animals: animales, onUpdate: alActualizar }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const animal = animales.find((elemento) => elemento.id === Number(id));
 
   if (!animal) {
     return (
@@ -152,15 +152,15 @@ function EditAnimal({ animals, onUpdate }) {
         <button className="mt-5 rounded-2xl bg-[#07612d] px-5 py-3 text-sm font-bold text-white" onClick={() => navigate('/animales')} type="button">
           Volver
         </button>
-      </section>
-    )
+      </section>);
+
   }
 
-  function handleSubmit(payload) {
-    const lockedStatus = ['Vendido', 'Fallecido'].includes(animal.estado)
-    const updatedAnimal = { ...animal, ...payload, estado: lockedStatus ? animal.estado : payload.estado, nombre: payload.nombre || payload.identificador }
-    onUpdate(updatedAnimal)
-    navigate(`/animales/${animal.id}`, { replace: true })
+  function manejarEnvio(datos) {
+    const estadoBloqueado = ['Vendido', 'Fallecido'].includes(animal.estado);
+    const animalActualizado = { ...animal, ...datos, estado: estadoBloqueado ? animal.estado : datos.estado, nombre: datos.nombre || datos.identificador };
+    alActualizar(animalActualizado);
+    navigate(`/animales/${animal.id}`, { replace: true });
   }
 
   return (
@@ -169,72 +169,72 @@ function EditAnimal({ animals, onUpdate }) {
         <h1 className="text-3xl font-bold text-[#07612d]">Editar Animal</h1>
         <p className="mt-2 text-sm text-[#1d1d1b]/70">Actualiza los datos de {animal.identificador} sin perder su historial.</p>
       </div>
-      <AnimalForm initialAnimal={animal} onSubmit={handleSubmit} submitLabel="Guardar cambios" />
-    </section>
-  )
+      <FormularioAnimal initialAnimal={animal} onSubmit={manejarEnvio} submitLabel="Guardar cambios" />
+    </section>);
+
 }
 
-function AnimalsPage() {
-  const [animals, setAnimals] = useState([])
-  const [filters, setFilters] = useState(initialFilters)
-  const [animalToDelete, setAnimalToDelete] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+function PaginaAnimales() {
+  const [animales, establecerAnimales] = useState([]);
+  const [filtros, setFilters] = useState(filtrosIniciales);
+  const [animalABaja, setAnimalToDelete] = useState(null);
+  const [cargando, establecerCargando] = useState(true);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setAnimals(readStorage('agroweb.animals', mockAnimals))
-      setIsLoading(false)
-    }, 350)
+    const temporizador = window.setTimeout(() => {
+      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
+      establecerCargando(false);
+    }, 350);
 
-    return () => window.clearTimeout(timer)
-  }, [])
+    return () => window.clearTimeout(temporizador);
+  }, []);
 
-  function createAnimal(animal) {
-    if (animals.some((item) => item.identificador === animal.identificador)) return false
-    setAnimals((current) => {
-      const nextAnimals = [animal, ...current]
-      writeStorage('agroweb.animals', nextAnimals)
-      return nextAnimals
-    })
-    return true
+  function crearAnimal(animal) {
+    if (animales.some((elemento) => elemento.identificador === animal.identificador)) return false;
+    establecerAnimales((actual) => {
+      const animalesSiguientes = [animal, ...actual];
+      escribirAlmacenamiento('agroweb.animals', animalesSiguientes);
+      return animalesSiguientes;
+    });
+    return true;
   }
 
-  function updateAnimal(updatedAnimal) {
-    setAnimals((current) => {
-      const nextAnimals = current.map((animal) => (animal.id === updatedAnimal.id ? { ...animal, ...updatedAnimal } : animal))
-      writeStorage('agroweb.animals', nextAnimals)
-      return nextAnimals
-    })
+  function actualizarAnimal(animalActualizado) {
+    establecerAnimales((actual) => {
+      const animalesSiguientes = actual.map((animal) => animal.id === animalActualizado.id ? { ...animal, ...animalActualizado } : animal);
+      escribirAlmacenamiento('agroweb.animals', animalesSiguientes);
+      return animalesSiguientes;
+    });
   }
 
-  function changeAnimalStatus(estado) {
-    if (!animalToDelete) return
-    if (animalToDelete.estado !== 'Activo') {
-      setAnimalToDelete(null)
-      return
+  function cambiarEstadoAnimal(estado) {
+    if (!animalABaja) return;
+    if (animalABaja.estado !== 'Activo') {
+      setAnimalToDelete(null);
+      return;
     }
-    setAnimals((current) => {
-      const nextAnimals = current.map((animal) => (animal.id === animalToDelete.id ? { ...animal, estado } : animal))
-      writeStorage('agroweb.animals', nextAnimals)
-      return nextAnimals
-    })
-    setAnimalToDelete(null)
+    establecerAnimales((actual) => {
+      const animalesSiguientes = actual.map((animal) => animal.id === animalABaja.id ? { ...animal, estado } : animal);
+      escribirAlmacenamiento('agroweb.animals', animalesSiguientes);
+      return animalesSiguientes;
+    });
+    setAnimalToDelete(null);
   }
 
   return (
     <>
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
         <Routes>
-          <Route index element={<AnimalsList animals={animals} filters={filters} isLoading={isLoading} onFiltersChange={setFilters} />} />
-          <Route path="nuevo" element={<NewAnimal onCreate={createAnimal} />} />
-          <Route path=":id" element={<AnimalDetail animals={animals} onRequestDelete={setAnimalToDelete} />} />
-          <Route path=":id/editar" element={<EditAnimal animals={animals} onUpdate={updateAnimal} />} />
+          <Route index element={<ListaAnimales animals={animales} filters={filtros} isLoading={cargando} onFiltersChange={setFilters} />} />
+          <Route path="nuevo" element={<NuevoAnimal onCreate={crearAnimal} />} />
+          <Route path=":id" element={<DetalleAnimal animals={animales} onRequestDelete={setAnimalToDelete} />} />
+          <Route path=":id/editar" element={<EditarAnimal animals={animales} onUpdate={actualizarAnimal} />} />
         </Routes>
       </div>
 
-      <ConfirmDeleteModal animal={animalToDelete} onClose={() => setAnimalToDelete(null)} onConfirm={changeAnimalStatus} />
-    </>
-  )
+      <ModalConfirmarBaja animal={animalABaja} onClose={() => setAnimalToDelete(null)} onConfirm={cambiarEstadoAnimal} />
+    </>);
+
 }
 
-export default AnimalsPage
+export default PaginaAnimales;

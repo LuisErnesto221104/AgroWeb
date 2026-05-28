@@ -1,57 +1,57 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import { CalendarClock, LayoutGrid, List, PackageCheck, Plus, Scale, Utensils, WalletCards } from 'lucide-react'
-import StatCard from '../components/StatCard'
-import FeedingAlert from '../components/feeding/FeedingAlert'
-import FeedingFilters from '../components/feeding/FeedingFilters'
-import FeedingForm from '../components/feeding/FeedingForm'
-import FeedingHistory from '../components/feeding/FeedingHistory'
-import FeedingStatusBadge from '../components/feeding/FeedingStatusBadge'
-import FeedingSummary from '../components/feeding/FeedingSummary'
-import { normalizeFeedingStatus } from '../components/feeding/feedingUtils'
-import { mxn } from '../components/expenses/expenseUtils'
-import { animals as mockAnimals } from '../data/animals'
-import { feeding as mockFeeding } from '../data/feeding'
-import { readStorage, writeStorage } from '../utils/storage'
+import { useEffect, useMemo, useState } from 'react';
+import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { CalendarClock, LayoutGrid, List, PackageCheck, Plus, Scale, Utensils, WalletCards } from 'lucide-react';
+import TarjetaEstadistica from '../components/StatCard';
+import AlertaAlimentacion from '../components/feeding/FeedingAlert';
+import FiltrosAlimentacion from '../components/feeding/FeedingFilters';
+import FormularioAlimentacion from '../components/feeding/FeedingForm';
+import HistorialAlimentacion from '../components/feeding/FeedingHistory';
+import InsigniaEstadoAlimentacion from '../components/feeding/FeedingStatusBadge';
+import ResumenAlimentacion from '../components/feeding/FeedingSummary';
+import { normalizarEstadoAlimentacion } from '../components/feeding/feedingUtils';
+import { mxn } from '../components/expenses/expenseUtils';
+import { animales as mockAnimals } from '../data/animals';
+import { alimentacion as mockFeeding } from '../data/feeding';
+import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
 
-const initialFilters = {
+const filtrosIniciales = {
   query: '',
   animalId: 'Todos',
   fecha: '',
-  tipoAlimento: 'Todos',
-}
+  tipoAlimento: 'Todos'
+};
 
-const feedingStatusOptions = ['Registrado', 'Pendiente', 'Atrasado', 'Completado']
+const opcionesEstadoAlimentacion = ['Registrado', 'Pendiente', 'Atrasado', 'Completado'];
 
-function FeedingDashboard({ animals, records, filters, onFiltersChange, isLoading, onStatusChange }) {
-  const [viewMode, setViewMode] = useState('cards')
+function PanelAlimentacion({ animals: animales, records: registros, filters: filtros, onFiltersChange: alCambiarFiltros, isLoading: cargando, onStatusChange: alCambiarEstado }) {
+  const [modoVista, setViewMode] = useState('cards');
 
-  const filteredRecords = useMemo(() => {
-    const query = filters.query.trim().toLowerCase()
-    return records.filter((record) => {
-      const matchesQuery =
-        !query ||
-        [record.animalIdentificador, record.responsable, record.observaciones, record.grupo].some((value) => String(value ?? '').toLowerCase().includes(query))
-      const matchesAnimal =
-        filters.animalId === 'Todos' ||
-        (filters.animalId === 'grupo' && record.animalId === null) ||
-        record.animalId === Number(filters.animalId)
-      const matchesFecha = !filters.fecha || record.fecha === filters.fecha
-      const matchesFood = filters.tipoAlimento === 'Todos' || record.tipoAlimento === filters.tipoAlimento
-      return matchesQuery && matchesAnimal && matchesFecha && matchesFood
-    })
-  }, [filters, records])
+  const registrosFiltrados = useMemo(() => {
+    const consulta = filtros.query.trim().toLowerCase();
+    return registros.filter((registro) => {
+      const coincideConsulta =
+      !consulta ||
+      [registro.animalIdentificador, registro.responsable, registro.observaciones, registro.grupo].some((valor) => String(valor ?? '').toLowerCase().includes(consulta));
+      const coincideAnimal =
+      filtros.animalId === 'Todos' ||
+      filtros.animalId === 'grupo' && registro.animalId === null ||
+      registro.animalId === Number(filtros.animalId);
+      const coincideFecha = !filtros.fecha || registro.fecha === filtros.fecha;
+      const coincideAlimento = filtros.tipoAlimento === 'Todos' || registro.tipoAlimento === filtros.tipoAlimento;
+      return coincideConsulta && coincideAnimal && coincideFecha && coincideAlimento;
+    });
+  }, [filtros, registros]);
 
-  const totalConsumption = records.reduce((sum, record) => sum + Number(record.cantidad), 0)
-  const totalCost = records.reduce((sum, record) => sum + Number(record.costoAproximado), 0)
-  const pending = records.filter((record) => record.estado === 'Pendiente' || record.estado === 'Atrasado')
+  const consumoTotal = registros.reduce((suma, registro) => suma + Number(registro.cantidad), 0);
+  const costoTotal = registros.reduce((suma, registro) => suma + Number(registro.costoAproximado), 0);
+  const pendientes = registros.filter((registro) => registro.estado === 'Pendiente' || registro.estado === 'Atrasado');
 
-  const stats = [
-    { title: 'Total de registros', value: records.length, detail: 'Historial de alimentación', icon: PackageCheck, tone: 'primary' },
-    { title: 'Consumo total', value: `${totalConsumption} unidades`, detail: 'Suma general de cantidades', icon: Scale, tone: 'success' },
-    { title: 'Costo total de alimentación', value: mxn.format(totalCost), detail: 'Costo aproximado acumulado', icon: WalletCards, tone: 'warning' },
-    { title: 'Alimentaciones pendientes', value: pending.length, detail: 'Pendientes o atrasadas', icon: CalendarClock, tone: pending.length ? 'danger' : 'success' },
-  ]
+  const estadisticas = [
+  { title: 'Total de registros', value: registros.length, detail: 'Historial de alimentación', icon: PackageCheck, tone: 'primary' },
+  { title: 'Consumo total', value: `${consumoTotal} unidades`, detail: 'Suma general de cantidades', icon: Scale, tone: 'success' },
+  { title: 'Costo total de alimentación', value: mxn.format(costoTotal), detail: 'Costo aproximado acumulado', icon: WalletCards, tone: 'warning' },
+  { title: 'Alimentaciones pendientes', value: pendientes.length, detail: 'Pendientes o atrasadas', icon: CalendarClock, tone: pendientes.length ? 'danger' : 'success' }];
+
 
   return (
     <section className="grid gap-6">
@@ -67,10 +67,10 @@ function FeedingDashboard({ animals, records, filters, onFiltersChange, isLoadin
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
           <div className="grid w-full grid-cols-2 gap-2 rounded-2xl bg-white p-1 shadow-[0_10px_24px_rgba(29,29,27,0.06)] sm:w-auto">
-            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${viewMode === 'cards' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('cards')} type="button">
+            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${modoVista === 'cards' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('cards')} type="button">
               <LayoutGrid size={17} /> Tarjetas
             </button>
-            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${viewMode === 'table' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('table')} type="button">
+            <button className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold ${modoVista === 'table' ? 'bg-[#07612d] text-white' : 'text-[#1d1d1b]/65'}`} onClick={() => setViewMode('table')} type="button">
               <List size={17} /> Tabla
             </button>
           </div>
@@ -81,32 +81,32 @@ function FeedingDashboard({ animals, records, filters, onFiltersChange, isLoadin
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.title} {...stat} />
-        ))}
+        {estadisticas.map((estadistica) =>
+        <TarjetaEstadistica key={estadistica.title} {...estadistica} />
+        )}
       </div>
 
-      <FeedingFilters animals={animals} filters={filters} onChange={onFiltersChange} />
+      <FiltrosAlimentacion animals={animales} filters={filtros} onChange={alCambiarFiltros} />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
         <div className="grid gap-5">
-          {isLoading ? <div className="min-h-80 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" /> : null}
-          {!isLoading ? <FeedingHistory onStatusChange={onStatusChange} records={filteredRecords} viewMode={viewMode} /> : null}
+          {cargando ? <div className="min-h-80 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" /> : null}
+          {!cargando ? <HistorialAlimentacion onStatusChange={alCambiarEstado} records={registrosFiltrados} viewMode={modoVista} /> : null}
         </div>
-        <FeedingAlert records={records} />
+        <AlertaAlimentacion records={registros} />
       </div>
 
-      <FeedingSummary records={records} />
-    </section>
-  )
+      <ResumenAlimentacion records={registros} />
+    </section>);
+
 }
 
-function NewFeeding({ animals, onCreate }) {
-  const navigate = useNavigate()
+function NuevaAlimentacion({ animals: animales, onCreate: alCrear }) {
+  const navigate = useNavigate();
 
-  function handleSubmit(record) {
-    onCreate(record)
-    navigate(`/alimentacion/${record.id}`, { replace: true })
+  function manejarEnvio(registro) {
+    alCrear(registro);
+    navigate(`/alimentacion/${registro.id}`, { replace: true });
   }
 
   return (
@@ -115,25 +115,25 @@ function NewFeeding({ animals, onCreate }) {
         <h1 className="text-3xl font-bold text-[#07612d]">Registrar Alimentación</h1>
         <p className="mt-2 text-sm text-[#1d1d1b]/70">Captura alimento, cantidad, horario, responsable y costo aproximado.</p>
       </div>
-      <FeedingForm animals={animals} onSubmit={handleSubmit} />
-    </section>
-  )
+      <FormularioAlimentacion animals={animales} onSubmit={manejarEnvio} />
+    </section>);
+
 }
 
-function FeedingDetail({ records, onStatusChange }) {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const record = records.find((item) => item.id === Number(id))
+function DetalleAlimentacion({ records: registros, onStatusChange: alCambiarEstado }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const registro = registros.find((elemento) => elemento.id === Number(id));
 
-  if (!record) {
+  if (!registro) {
     return (
       <section className="rounded-2xl border border-[#98a287]/18 bg-white p-6 text-center shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
         <h1 className="text-2xl font-bold text-[#07612d]">Registro no encontrado</h1>
         <button className="mt-5 rounded-2xl bg-[#07612d] px-5 py-3 text-sm font-bold text-white" onClick={() => navigate('/alimentacion')} type="button">
           Volver a Alimentación
         </button>
-      </section>
-    )
+      </section>);
+
   }
 
   return (
@@ -144,120 +144,120 @@ function FeedingDetail({ records, onStatusChange }) {
       <article className="rounded-2xl border border-[#98a287]/18 bg-white p-4 shadow-[0_12px_28px_rgba(29,29,27,0.07)] md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-bold text-[#4CAF50]">Registro #{record.id}</p>
-            <h1 className="mt-2 break-words text-2xl font-bold text-[#07612d] md:text-3xl">{record.tipoAlimento}</h1>
-            <p className="mt-2 text-sm text-[#1d1d1b]/70">{record.animalIdentificador}</p>
+            <p className="text-sm font-bold text-[#4CAF50]">Registro #{registro.id}</p>
+            <h1 className="mt-2 break-words text-2xl font-bold text-[#07612d] md:text-3xl">{registro.tipoAlimento}</h1>
+            <p className="mt-2 text-sm text-[#1d1d1b]/70">{registro.animalIdentificador}</p>
           </div>
           <div className="flex flex-col gap-2 sm:items-end">
-            <FeedingStatusBadge estado={record.estado} />
-            <select className="h-11 rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-bold text-[#1d1d1b] outline-none focus:border-[#07612d]" onChange={(item) => onStatusChange(record.id, item.target.value)} value={record.estado}>
-              {feedingStatusOptions.map((status) => (
-                <option key={status} value={status}>
+            <InsigniaEstadoAlimentacion estado={registro.estado} />
+            <select className="h-11 rounded-2xl border border-[#98a287]/25 bg-white px-4 text-sm font-bold text-[#1d1d1b] outline-none focus:border-[#07612d]" onChange={(elemento) => alCambiarEstado(registro.id, elemento.target.value)} value={registro.estado}>
+              {opcionesEstadoAlimentacion.map((status) =>
+              <option key={status} value={status}>
                   {status}
                 </option>
-              ))}
+              )}
             </select>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[
-            ['Cantidad', `${record.cantidad} ${record.unidad}`],
-            ['Fecha y hora', `${record.fecha} ${record.hora}`],
-            ['Responsable', record.responsable],
-            ['Costo aproximado', mxn.format(record.costoAproximado)],
-            ['Animal o grupo', record.animalIdentificador],
-            ['Estado', record.estado],
-          ].map(([label, value]) => (
-            <div className="rounded-2xl bg-[#F4F4F4] p-4" key={label}>
-              <p className="text-xs font-bold uppercase text-[#98a287]">{label}</p>
-              <p className="mt-2 break-words text-sm font-semibold text-[#1d1d1b]">{value}</p>
+          ['Cantidad', `${registro.cantidad} ${registro.unidad}`],
+          ['Fecha y hora', `${registro.fecha} ${registro.hora}`],
+          ['Responsable', registro.responsable],
+          ['Costo aproximado', mxn.format(registro.costoAproximado)],
+          ['Animal o grupo', registro.animalIdentificador],
+          ['Estado', registro.estado]].
+          map(([etiqueta, valor]) =>
+          <div className="rounded-2xl bg-[#F4F4F4] p-4" key={etiqueta}>
+              <p className="text-xs font-bold uppercase text-[#98a287]">{etiqueta}</p>
+              <p className="mt-2 break-words text-sm font-semibold text-[#1d1d1b]">{valor}</p>
             </div>
-          ))}
+          )}
         </div>
 
-        {record.nutricion ? (
-          <section className="mt-5 rounded-2xl bg-[#F4F4F4] p-4">
+        {registro.nutricion ?
+        <section className="mt-5 rounded-2xl bg-[#F4F4F4] p-4">
             <div>
               <p className="text-xs font-bold uppercase text-[#98a287]">Datos nutricionales</p>
               <h2 className="mt-1 text-xl font-bold text-[#07612d]">Perfil del alimento</h2>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {[
-                ['Proteína', `${record.nutricion.proteina}%`],
-                ['Fibra', `${record.nutricion.fibra}%`],
-                ['Energía', `${record.nutricion.energia} Mcal/kg`],
-                ['Materia seca', `${record.nutricion.materiaSeca}%`],
-              ].map(([label, value]) => (
-                <div className="rounded-2xl bg-white p-4" key={label}>
-                  <p className="text-xs font-bold uppercase text-[#98a287]">{label}</p>
-                  <p className="mt-2 break-words text-sm font-semibold text-[#1d1d1b]">{value}</p>
+            ['Proteína', `${registro.nutricion.proteina}%`],
+            ['Fibra', `${registro.nutricion.fibra}%`],
+            ['Energía', `${registro.nutricion.energia} Mcal/kg`],
+            ['Materia seca', `${registro.nutricion.materiaSeca}%`]].
+            map(([etiqueta, valor]) =>
+            <div className="rounded-2xl bg-white p-4" key={etiqueta}>
+                  <p className="text-xs font-bold uppercase text-[#98a287]">{etiqueta}</p>
+                  <p className="mt-2 break-words text-sm font-semibold text-[#1d1d1b]">{valor}</p>
                 </div>
-              ))}
+            )}
             </div>
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
               <div className="rounded-2xl bg-white p-4">
                 <p className="text-xs font-bold uppercase text-[#98a287]">Minerales / vitaminas</p>
-                <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{record.nutricion.minerales || 'Sin datos registrados.'}</p>
+                <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{registro.nutricion.minerales || 'Sin datos registrados.'}</p>
               </div>
               <div className="rounded-2xl bg-white p-4">
                 <p className="text-xs font-bold uppercase text-[#98a287]">Notas nutricionales</p>
-                <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{record.nutricion.notas || 'Sin notas registradas.'}</p>
+                <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{registro.nutricion.notas || 'Sin notas registradas.'}</p>
               </div>
             </div>
-          </section>
-        ) : null}
+          </section> :
+        null}
 
         <div className="mt-5 rounded-2xl bg-[#F4F4F4] p-4">
           <p className="text-xs font-bold uppercase text-[#98a287]">Observaciones</p>
-          <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{record.observaciones || 'Sin observaciones registradas.'}</p>
+          <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{registro.observaciones || 'Sin observaciones registradas.'}</p>
         </div>
       </article>
-    </section>
-  )
+    </section>);
+
 }
 
-function FeedingPage() {
-  const [animals, setAnimals] = useState([])
-  const [records, setRecords] = useState([])
-  const [filters, setFilters] = useState(initialFilters)
-  const [isLoading, setIsLoading] = useState(true)
+function PaginaAlimentacion() {
+  const [animales, establecerAnimales] = useState([]);
+  const [registros, establecerRegistros] = useState([]);
+  const [filtros, setFilters] = useState(filtrosIniciales);
+  const [cargando, establecerCargando] = useState(true);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setAnimals(readStorage('agroweb.animals', mockAnimals))
-      setRecords(readStorage('agroweb.feeding', mockFeeding).map((record) => normalizeFeedingStatus(record)))
-      setIsLoading(false)
-    }, 350)
+    const temporizador = window.setTimeout(() => {
+      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
+      establecerRegistros(leerAlmacenamiento('agroweb.feeding', mockFeeding).map((registro) => normalizarEstadoAlimentacion(registro)));
+      establecerCargando(false);
+    }, 350);
 
-    return () => window.clearTimeout(timer)
-  }, [])
+    return () => window.clearTimeout(temporizador);
+  }, []);
 
-  function createRecord(record) {
-    setRecords((current) => {
-      const nextRecords = [normalizeFeedingStatus(record), ...current]
-      writeStorage('agroweb.feeding', nextRecords)
-      return nextRecords
-    })
+  function crearRegistro(registro) {
+    establecerRegistros((actual) => {
+      const registrosSiguientes = [normalizarEstadoAlimentacion(registro), ...actual];
+      escribirAlmacenamiento('agroweb.feeding', registrosSiguientes);
+      return registrosSiguientes;
+    });
   }
 
-  function updateRecordStatus(recordId, estado) {
-    setRecords((current) => {
-      const nextRecords = current.map((record) => (record.id === recordId ? { ...record, estado } : record))
-      writeStorage('agroweb.feeding', nextRecords)
-      return nextRecords
-    })
+  function actualizarEstadoRegistro(idRegistro, estado) {
+    establecerRegistros((actual) => {
+      const registrosSiguientes = actual.map((registro) => registro.id === idRegistro ? { ...registro, estado } : registro);
+      escribirAlmacenamiento('agroweb.feeding', registrosSiguientes);
+      return registrosSiguientes;
+    });
   }
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-5 sm:px-4 md:px-6 md:py-6">
         <Routes>
-          <Route index element={<FeedingDashboard animals={animals} filters={filters} isLoading={isLoading} onFiltersChange={setFilters} onStatusChange={updateRecordStatus} records={records} />} />
-          <Route path="nuevo" element={<NewFeeding animals={animals} onCreate={createRecord} />} />
-          <Route path=":id" element={<FeedingDetail onStatusChange={updateRecordStatus} records={records} />} />
+          <Route index element={<PanelAlimentacion animals={animales} filters={filtros} isLoading={cargando} onFiltersChange={setFilters} onStatusChange={actualizarEstadoRegistro} records={registros} />} />
+          <Route path="nuevo" element={<NuevaAlimentacion animals={animales} onCreate={crearRegistro} />} />
+          <Route path=":id" element={<DetalleAlimentacion onStatusChange={actualizarEstadoRegistro} records={registros} />} />
         </Routes>
-    </div>
-  )
+    </div>);
+
 }
 
-export default FeedingPage
+export default PaginaAlimentacion;

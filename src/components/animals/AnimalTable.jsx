@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom'
-import { Edit3, Eye } from 'lucide-react'
-import AnimalStatusBadge from './AnimalStatusBadge'
+import { Link } from 'react-router-dom';
+import { Edit3, Eye } from 'lucide-react';
+import InsigniaEstadoAnimal from './AnimalStatusBadge';
 
-function AnimalTable({ animals }) {
+function TablaAnimal({ animals: animales }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-[#98a287]/18 bg-white shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
       <table className="w-full min-w-[920px] border-separate border-spacing-y-2 p-3 text-left text-sm">
@@ -18,15 +18,15 @@ function AnimalTable({ animals }) {
           </tr>
         </thead>
         <tbody>
-          {animals.map((animal) => (
-            <tr className="bg-[#F4F4F4]" key={animal.id}>
+          {animales.map((animal) =>
+          <tr className="bg-[#F4F4F4]" key={animal.id}>
               <td className="rounded-l-2xl px-3 py-3 font-bold text-[#07612d]">{animal.identificador}</td>
               <td className="px-3 py-3 font-semibold">{animal.especie}</td>
               <td className="px-3 py-3">{animal.raza}</td>
               <td className="px-3 py-3">{animal.peso} kg</td>
               <td className="px-3 py-3">{animal.ubicacion}</td>
               <td className="px-3 py-3">
-                <AnimalStatusBadge estado={animal.estado} />
+                <InsigniaEstadoAnimal estado={animal.estado} />
               </td>
               <td className="rounded-r-2xl px-3 py-3">
                 <div className="flex gap-2">
@@ -39,11 +39,11 @@ function AnimalTable({ animals }) {
                 </div>
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
-    </div>
-  )
+    </div>);
+
 }
 
-export default AnimalTable
+export default TablaAnimal;
