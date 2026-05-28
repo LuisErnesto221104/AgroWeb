@@ -1,15 +1,67 @@
 import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
+import { animals as frontendAnimals } from '../src/data/animals.js'
+import { expenses as frontendExpenses } from '../src/data/expenses.js'
+import { feeding as frontendFeeding } from '../src/data/feeding.js'
+import { healthEvents as frontendHealthEvents } from '../src/data/healthEvents.js'
+import { income as frontendIncome } from '../src/data/income.js'
 
 dotenv.config()
 
 const app = express()
 const port = process.env.PORT ?? 4000
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const projectRoot = path.resolve(__dirname, '..')
+const dataDirectory = path.join(__dirname, 'data')
+const uploadsDirectory = path.join(__dirname, 'uploads')
+const imagesDirectory = path.join(uploadsDirectory, 'images')
+const documentsDirectory = path.join(uploadsDirectory, 'documents')
+const localStorePath = path.join(dataDirectory, 'local-store.json')
 
 app.use(cors())
 app.use(express.json({ limit: '8mb' }))
+app.use('/uploads', express.static(uploadsDirectory))
+
+for (const directory of [dataDirectory, uploadsDirectory, imagesDirectory, documentsDirectory]) {
+  fs.mkdirSync(directory, { recursive: true })
+}
+
+const animalImageSeeds = [
+  { id: 1, source: 'src/img/Animales/Bovino/vaca.webp', target: 'animals/luna-bovino.webp' },
+  { id: 2, source: 'src/img/Animales/Bovino/brahman.jpeg', target: 'animals/titan-brahman.jpeg' },
+  { id: 3, source: 'src/img/Animales/Ovino/borrego1.jpg', target: 'animals/mora-ovino.jpg' },
+  { id: 4, source: 'src/img/Animales/Cabrino/cabra.jpg', target: 'animals/nube-caprino.jpg' },
+  { id: 5, source: 'src/img/Animales/Bovino/hereford.jpg', target: 'animals/canela-hereford.jpg' },
+  { id: 6, source: 'src/img/Animales/Bovino/vaca lechera.webp', target: 'animals/estrella-holstein.webp' },
+  { id: 7, source: 'src/img/Animales/Equino/descarga.webp', target: 'animals/relampago-equino.webp' },
+  { id: 8, source: 'src/img/Animales/Porcino/Cerdo1.jpg', target: 'animals/bruno-porcino.jpg' },
+]
+
+const animalPhotoById = Object.fromEntries(animalImageSeeds.map((image) => [image.id, `/uploads/images/${image.target}`]))
+
+function ensureSeedAnimalImages() {
+  for (const image of animalImageSeeds) {
+    const sourcePath = path.join(projectRoot, image.source)
+    const targetPath = path.join(imagesDirectory, image.target)
+    if (!fs.existsSync(sourcePath)) continue
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true })
+    if (!fs.existsSync(targetPath)) fs.copyFileSync(sourcePath, targetPath)
+  }
+}
+
+function addDefaultAnimalPhotos(animalList = []) {
+  return animalList.map((animal) => ({
+    ...animal,
+    fotografia: animal.fotografia || animalPhotoById[animal.id] || '',
+  }))
+}
+
+ensureSeedAnimalImages()
 
 function createSalt() {
   return crypto.randomBytes(16).toString('hex')
@@ -31,6 +83,145 @@ function sanitizeUser(user) {
 const adminSalt = 'agroweb_admin_salt'
 
 const systemPermissions = ['animales', 'sanidad', 'gastos', 'reportes', 'alimentacion', 'configuracion']
+
+const defaultRanches = [
+  {
+    id: 1,
+    nombre: 'Rancho AgroWeb',
+    propietario: 'Administrador AgroWeb',
+    telefono: '3330000000',
+    direccion: 'Tepatitlan, Jalisco',
+    coordenadas: { lat: 20.8169, lng: -102.7635 },
+    lugares: [
+      { id: 1, nombre: 'Corral 1', tipo: 'Corral', capacidad: 25, descripcion: 'Área principal para bovinos activos.' },
+      { id: 2, nombre: 'Corral Lechero', tipo: 'Corral', capacidad: 18, descripcion: 'Zona para vacas lecheras.' },
+      { id: 3, nombre: 'Caballerizas', tipo: 'Caballeriza', capacidad: 8, descripcion: 'Espacio para equinos de trabajo.' },
+    ],
+  },
+]
+
+const defaultConfigUsers = [
+  {
+    id: 1,
+    usuario_id: 1,
+    nombre: 'Administrador AgroWeb',
+    correo: 'admin@agroweb.mx',
+    rol: 'Administrador',
+    activo: true,
+    permisos: systemPermissions,
+    protegido: true,
+  },
+  {
+    id: 2,
+    usuario_id: null,
+    nombre: 'Encargado del Rancho',
+    correo: 'rancho@agroweb.mx',
+    rol: 'Ganadero',
+    activo: true,
+    permisos: ['animales', 'sanidad', 'alimentacion'],
+    protegido: false,
+  },
+  {
+    id: 3,
+    usuario_id: null,
+    nombre: 'Contabilidad',
+    correo: 'finanzas@agroweb.mx',
+    rol: 'Finanzas',
+    activo: true,
+    permisos: ['gastos', 'reportes'],
+    protegido: false,
+  },
+]
+
+function readJsonFile(filePath, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'))
+  } catch {
+    return fallback
+  }
+}
+
+function writeJsonFile(filePath, payload) {
+  fs.writeFileSync(filePath, JSON.stringify(payload, null, 2))
+}
+
+function getDefaultLocalStore() {
+  return {
+    'agroweb.animals': addDefaultAnimalPhotos(frontendAnimals),
+    'agroweb.expenses': frontendExpenses,
+    'agroweb.feeding': frontendFeeding,
+    'agroweb.healthEvents': frontendHealthEvents,
+    'agroweb.income': frontendIncome,
+    'agroweb.settings.users': defaultConfigUsers,
+    'agroweb.ranches': defaultRanches,
+  }
+}
+
+let localStore = { ...getDefaultLocalStore(), ...readJsonFile(localStorePath, {}) }
+localStore['agroweb.animals'] = addDefaultAnimalPhotos(localStore['agroweb.animals'] ?? frontendAnimals)
+
+function dataUrlToBuffer(dataUrl) {
+  const match = String(dataUrl).match(/^data:([^;]+);base64,(.+)$/)
+  if (!match) return null
+  return {
+    mimeType: match[1],
+    buffer: Buffer.from(match[2], 'base64'),
+  }
+}
+
+function extensionFromMime(mimeType, fallbackName = '') {
+  if (mimeType === 'application/pdf') return '.pdf'
+  if (mimeType === 'image/jpeg') return '.jpg'
+  if (mimeType === 'image/png') return '.png'
+  if (mimeType === 'image/webp') return '.webp'
+  return path.extname(fallbackName) || '.bin'
+}
+
+function safeFileName(fileName) {
+  return String(fileName || 'archivo').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '-')
+}
+
+function persistDataUrl(dataUrl, fileName, storeKey) {
+  const parsed = dataUrlToBuffer(dataUrl)
+  if (!parsed) return dataUrl
+  const isImage = parsed.mimeType.startsWith('image/')
+  const baseDirectory = isImage ? imagesDirectory : path.join(documentsDirectory, safeFileName(storeKey))
+  fs.mkdirSync(baseDirectory, { recursive: true })
+  const finalName = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}-${safeFileName(fileName).replace(/\.[^.]+$/, '')}${extensionFromMime(parsed.mimeType, fileName)}`
+  const finalPath = path.join(baseDirectory, finalName)
+  fs.writeFileSync(finalPath, parsed.buffer)
+  const publicPath = path.relative(uploadsDirectory, finalPath).split(path.sep).join('/')
+  return `/uploads/${publicPath}`
+}
+
+function persistUploads(value, storeKey) {
+  if (Array.isArray(value)) return value.map((item) => persistUploads(item, storeKey))
+  if (!value || typeof value !== 'object') {
+    if (typeof value === 'string' && value.startsWith('data:image/')) return persistDataUrl(value, 'imagen-subida', storeKey)
+    return value
+  }
+
+  const next = { ...value }
+  if (typeof next.dataUrl === 'string' && next.dataUrl.startsWith('data:')) {
+    next.dataUrl = persistDataUrl(next.dataUrl, next.name, storeKey)
+  }
+
+  if (typeof next.fotografia === 'string' && next.fotografia.startsWith('data:image/')) {
+    next.fotografia = persistDataUrl(next.fotografia, `${next.identificador || next.id || 'animal'}.jpg`, storeKey)
+  }
+
+  for (const [key, nestedValue] of Object.entries(next)) {
+    if (key !== 'dataUrl' && key !== 'fotografia') next[key] = persistUploads(nestedValue, storeKey)
+  }
+
+  return next
+}
+
+function saveLocalStore() {
+  writeJsonFile(localStorePath, localStore)
+}
+
+saveLocalStore()
 
 const db = {
   animales: [
@@ -126,38 +317,7 @@ const db = {
       ultimo_acceso: '2026-05-16T08:00:00.000Z',
     },
   ],
-  configuracion_usuarios: [
-    {
-      id: 1,
-      usuario_id: 1,
-      nombre: 'Administrador AgroWeb',
-      correo: 'admin@agroweb.mx',
-      rol: 'Administrador',
-      activo: true,
-      permisos: systemPermissions,
-      protegido: true,
-    },
-    {
-      id: 2,
-      usuario_id: null,
-      nombre: 'Encargado del Rancho',
-      correo: 'rancho@agroweb.mx',
-      rol: 'Ganadero',
-      activo: true,
-      permisos: ['animales', 'sanidad', 'alimentacion'],
-      protegido: false,
-    },
-    {
-      id: 3,
-      usuario_id: null,
-      nombre: 'Contabilidad',
-      correo: 'finanzas@agroweb.mx',
-      rol: 'Finanzas',
-      activo: true,
-      permisos: ['gastos', 'reportes'],
-      protegido: false,
-    },
-  ],
+  configuracion_usuarios: localStore['agroweb.settings.users'] ?? defaultConfigUsers,
   session_manager: [
     {
       id: 1,
@@ -397,6 +557,25 @@ app.get('/api/db', (_request, response) => {
   response.json(db)
 })
 
+app.get('/api/local-store', (_request, response) => {
+  response.json(localStore)
+})
+
+app.get('/api/local-store/:key', (request, response) => {
+  const key = decodeURIComponent(request.params.key)
+  response.json(localStore[key] ?? null)
+})
+
+app.put('/api/local-store/:key', (request, response) => {
+  const key = decodeURIComponent(request.params.key)
+  const value = persistUploads(request.body?.value, key)
+  localStore[key] = value
+
+  if (key === 'agroweb.settings.users') db.configuracion_usuarios = value
+  saveLocalStore()
+  response.json({ key, value })
+})
+
 app.post('/api/auth/login', (request, response) => {
   const { nombre, pin } = request.body
   if (!nombre || !pin) {
@@ -576,6 +755,8 @@ app.put('/api/configuracion/usuarios/:id/rol', (request, response) => {
   }
 
   user.rol = rol
+  localStore['agroweb.settings.users'] = db.configuracion_usuarios
+  saveLocalStore()
   response.json(sanitizeConfigUser(user))
 })
 
@@ -592,6 +773,8 @@ app.patch('/api/configuracion/usuarios/:id/estado', (request, response) => {
   }
 
   user.activo = Boolean(request.body?.activo)
+  localStore['agroweb.settings.users'] = db.configuracion_usuarios
+  saveLocalStore()
   response.json(sanitizeConfigUser(user))
 })
 
@@ -617,6 +800,8 @@ app.put('/api/configuracion/usuarios/:id/permisos', (request, response) => {
   }
 
   user.permisos = [...new Set(request.body.permisos)]
+  localStore['agroweb.settings.users'] = db.configuracion_usuarios
+  saveLocalStore()
   response.json(sanitizeConfigUser(user))
 })
 

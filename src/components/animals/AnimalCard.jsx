@@ -7,7 +7,7 @@ function AnimalCard({ animal }) {
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#98a287]/18 bg-white shadow-[0_12px_28px_rgba(29,29,27,0.07)]">
       <div className="flex min-h-40 items-center justify-center bg-[#07612d]/8">
         {animal.fotografia ? (
-          <img alt={`Fotografía de ${animal.identificador}`} className="h-40 w-full object-cover" src={animal.fotografia} />
+          <img alt={`Fotografía de ${animal.identificador}`} className="h-40 w-full object-contain p-2" src={animal.fotografia} />
         ) : (
           <span className="text-5xl font-bold text-[#07612d]/25">{animal.especie.slice(0, 1)}</span>
         )}

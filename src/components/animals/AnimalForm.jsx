@@ -1,19 +1,10 @@
 import { useMemo, useState } from 'react'
 import { FileText, ImagePlus, Save, Upload } from 'lucide-react'
 import FilePreview from '../FilePreview'
+import { animalCatalog, speciesOptions } from '../../data/animalCatalog'
+import { readStorage } from '../../utils/storage'
 
 const identificationDocuments = ['INE', 'Pasaporte', 'Licencia de conducir', 'Cédula profesional', 'Cartilla militar', 'Documento interno']
-
-const speciesOptions = [
-  { label: 'Bovino', code: '01' },
-  { label: 'Ovino', code: '02' },
-  { label: 'Caprino', code: '03' },
-  { label: 'Porcino', code: '04' },
-  { label: 'Equino', code: '05' },
-  { label: 'Aves', code: '06' },
-  { label: 'Colmenas', code: '07' },
-  { label: 'Conejos', code: '08' },
-]
 
 const mexicanStates = [
   { name: 'Aguascalientes', code: '01' },
@@ -115,7 +106,9 @@ const emptyAnimal = {
   nombre: '',
   especie: 'Bovino',
   sexo: 'Macho',
-  raza: '',
+  raza: 'Angus',
+  ranchoId: 1,
+  lugarId: 1,
   peso: '',
   duenosAnteriores: emptyPreviousOwner,
   fechaIngreso: '',
@@ -156,14 +149,18 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
   const isNewAnimal = !initialAnimal
   const initialStatus = initialAnimal?.estado ?? 'Activo'
   const [form, setForm] = useState({ ...normalizeAnimal(initialAnimal), estado: isNewAnimal ? 'Activo' : initialStatus })
+  const [ranches] = useState(() => readStorage('agroweb.ranches', []))
   const [preview, setPreview] = useState(initialAnimal?.fotografia ?? '')
   const [pdfName, setPdfName] = useState(form.duenosAnteriores.documentoPdf?.name ?? '')
   const statusOptions = getStatusOptions(initialStatus)
   const hasValidSinidaId = /^MX\d{4}(\d{6}|\d{8})$/.test(form.identificador)
+  const breedOptions = animalCatalog[form.especie]?.razas ?? []
+  const selectedRanch = ranches.find((ranch) => ranch.id === Number(form.ranchoId))
+  const selectedPlace = selectedRanch?.lugares?.find((place) => place.id === Number(form.lugarId))
 
   const canSubmit = useMemo(() => {
-    return Boolean(hasValidSinidaId && form.especie.trim() && form.sexo && form.raza.trim() && Number(form.peso) > 0 && form.fechaIngreso && form.fechaIngreso <= today && form.estado && form.ubicacion.trim())
-  }, [form, hasValidSinidaId])
+    return Boolean(hasValidSinidaId && form.especie.trim() && form.sexo && form.raza.trim() && Number(form.peso) > 0 && form.fechaIngreso && form.fechaIngreso <= today && form.estado && selectedRanch && selectedPlace)
+  }, [form, hasValidSinidaId, selectedPlace, selectedRanch])
 
   function updateField(event) {
     const { name, value } = event.target
@@ -174,8 +171,10 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
       if (['especie', 'entidadFederativa', 'identificacionUnica'].includes(name)) {
         const cleanUniqueId = name === 'identificacionUnica' ? value.replace(/\D/g, '').slice(0, 8) : next.identificacionUnica
         next.identificacionUnica = cleanUniqueId
+        if (name === 'especie') next.raza = animalCatalog[value]?.razas?.[0] ?? ''
         next.identificador = buildSinidaId(next)
       }
+      if (name === 'ranchoId') next.lugarId = ranches.find((ranch) => ranch.id === Number(value))?.lugares?.[0]?.id ?? ''
       return next
     })
   }
@@ -221,7 +220,16 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
   function handleSubmit(event) {
     event.preventDefault()
     if (!canSubmit) return
-    onSubmit({ ...form, peso: Number(form.peso), arete: form.identificador })
+    onSubmit({
+      ...form,
+      ranchoId: Number(form.ranchoId),
+      lugarId: Number(form.lugarId),
+      ranchoNombre: selectedRanch?.nombre,
+      lugarNombre: selectedPlace?.nombre,
+      ubicacion: selectedRanch && selectedPlace ? `${selectedRanch.nombre} / ${selectedPlace.nombre}` : '',
+      peso: Number(form.peso),
+      arete: form.identificador,
+    })
   }
 
   return (
@@ -289,9 +297,7 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
 
         {[
           ['nombre', 'Nombre del animal', 'Luna'],
-          ['raza', 'Raza', 'Angus'],
           ['peso', 'Peso (kg)', '450'],
-          ['ubicacion', 'Ubicación', 'Corral 1'],
         ].map(([name, label, placeholder]) => (
           <label className="block" key={name}>
             <span className="text-sm font-bold text-[#1d1d1b]">{label} {name !== 'nombre' ? <span className="text-[#D32F2F]">*</span> : null}</span>
@@ -308,6 +314,18 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
             {name === 'raza' ? <p className="mt-2 text-xs font-semibold text-[#98a287]">La raza es el tipo genético, por ejemplo Angus, Holstein o Brahman. El género se selecciona aparte.</p> : null}
           </label>
         ))}
+
+        <label className="block">
+          <span className="text-sm font-bold text-[#1d1d1b]">Raza <span className="text-[#D32F2F]">*</span></span>
+          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="raza" onChange={updateField} value={form.raza}>
+            {breedOptions.map((breed) => (
+              <option key={breed} value={breed}>
+                {breed}
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-xs font-semibold text-[#98a287]">Las razas cambian según la especie seleccionada.</p>
+        </label>
 
         <label className="block">
           <span className="text-sm font-bold text-[#1d1d1b]">Género <span className="text-[#D32F2F]">*</span></span>
@@ -340,6 +358,31 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
           <span className="text-sm font-bold text-[#1d1d1b]">Fecha de ingreso <span className="text-[#D32F2F]">*</span></span>
           <input className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm outline-none transition focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" max={today} name="fechaIngreso" onChange={updateField} type="date" value={form.fechaIngreso} />
           {form.fechaIngreso > today ? <p className="mt-2 text-xs font-semibold text-[#D32F2F]">La fecha de ingreso no puede ser futura.</p> : null}
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-[#1d1d1b]">Rancho <span className="text-[#D32F2F]">*</span></span>
+          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" name="ranchoId" onChange={updateField} value={form.ranchoId}>
+            <option value="">Selecciona un rancho</option>
+            {ranches.map((ranch) => (
+              <option key={ranch.id} value={ranch.id}>
+                {ranch.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-[#1d1d1b]">Lugar dentro del rancho <span className="text-[#D32F2F]">*</span></span>
+          <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none disabled:opacity-60 focus:border-[#07612d] focus:bg-white focus:ring-4 focus:ring-[#07612d]/10" disabled={!selectedRanch} name="lugarId" onChange={updateField} value={form.lugarId}>
+            <option value="">Selecciona un lugar</option>
+            {(selectedRanch?.lugares ?? []).map((place) => (
+              <option key={place.id} value={place.id}>
+                {place.nombre} - {place.tipo}
+              </option>
+            ))}
+          </select>
+          {!ranches.length ? <p className="mt-2 text-xs font-semibold text-[#D32F2F]">Primero registra un rancho en Configuración.</p> : null}
         </label>
       </section>
 
@@ -418,7 +461,7 @@ function AnimalForm({ initialAnimal, onSubmit, submitLabel = 'Guardar animal' })
           </div>
         </div>
         <div className="flex min-h-56 items-center justify-center overflow-hidden rounded-2xl border border-[#98a287]/18 bg-[#F4F4F4] text-sm font-semibold text-[#98a287]">
-          {preview ? <img alt="Vista previa del animal" className="h-56 w-full object-cover" src={preview} /> : 'Sin fotografía capturada'}
+          {preview ? <img alt="Vista previa del animal" className="h-56 w-full object-contain p-2" src={preview} /> : 'Sin fotografía capturada'}
         </div>
       </section>
 

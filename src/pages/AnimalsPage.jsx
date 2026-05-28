@@ -111,6 +111,7 @@ function AnimalsList({ animals, filters, onFiltersChange, isLoading }) {
 
 function NewAnimal({ onCreate }) {
   const navigate = useNavigate()
+  const [error, setError] = useState('')
 
   function handleSubmit(payload) {
     const newAnimal = {
@@ -119,7 +120,11 @@ function NewAnimal({ onCreate }) {
       estado: 'Activo',
       nombre: payload.nombre || payload.identificador,
     }
-    onCreate(newAnimal)
+    const created = onCreate(newAnimal)
+    if (!created) {
+      setError('Ya existe un animal con ese arete SINIIGA/SINIDA. No puede estar registrado en dos ranchos.')
+      return
+    }
     navigate(`/animales/${newAnimal.id}`, { replace: true })
   }
 
@@ -129,6 +134,7 @@ function NewAnimal({ onCreate }) {
         <h1 className="text-3xl font-bold text-[#07612d]">Registrar Animal</h1>
         <p className="mt-2 text-sm text-[#1d1d1b]/70">Captura la información principal del animal para integrarlo al inventario ganadero.</p>
       </div>
+      {error ? <div className="rounded-2xl border border-[#D32F2F]/20 bg-[#D32F2F]/10 p-4 text-sm font-bold text-[#D32F2F]">{error}</div> : null}
       <AnimalForm onSubmit={handleSubmit} submitLabel="Registrar Animal" />
     </section>
   )
@@ -184,11 +190,13 @@ function AnimalsPage() {
   }, [])
 
   function createAnimal(animal) {
+    if (animals.some((item) => item.identificador === animal.identificador)) return false
     setAnimals((current) => {
       const nextAnimals = [animal, ...current]
       writeStorage('agroweb.animals', nextAnimals)
       return nextAnimals
     })
+    return true
   }
 
   function updateAnimal(updatedAnimal) {

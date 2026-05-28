@@ -68,7 +68,7 @@ function AnimalDetail({ animals, onRequestDelete }) {
         <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
           <div className="flex min-h-56 items-center justify-center bg-[#07612d]/8 md:min-h-80">
             {animal.fotografia ? (
-              <img alt={`Fotografía de ${animal.identificador}`} className="h-full min-h-56 w-full object-cover md:min-h-80" src={animal.fotografia} />
+              <img alt={`Fotografía de ${animal.identificador}`} className="h-full min-h-56 w-full object-contain p-3 md:min-h-80" src={animal.fotografia} />
             ) : (
               <span className="text-7xl font-bold text-[#07612d]/25">{animal.especie.slice(0, 1)}</span>
             )}

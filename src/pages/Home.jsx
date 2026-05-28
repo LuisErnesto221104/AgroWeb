@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, Beef, CalendarClock, CircleDollarSign, HeartPulse, PackageCheck, Scale, Search, Settings, ShieldCheck, TrendingUp, WalletCards } from 'lucide-react'
+import { BarChart3, Beef, CircleDollarSign, HeartPulse, PackageCheck, Search, Settings, TrendingUp } from 'lucide-react'
 import DashboardCard from '../components/DashboardCard'
 import ModuleCard from '../components/ModuleCard'
-import StatCard from '../components/StatCard'
+import { animalCatalog } from '../data/animalCatalog'
 import { animals } from '../data/animals'
 import { expenses } from '../data/expenses'
 import { feeding } from '../data/feeding'
@@ -68,31 +68,35 @@ function Home() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedArea, setSelectedArea] = useState('Todos')
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedSpecies, setSelectedSpecies] = useState('Bovino')
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), 350)
     return () => window.clearTimeout(timer)
   }, [])
 
-  const stats = useMemo(() => {
+  const dashboardData = useMemo(() => {
     const currentAnimals = readStorage('agroweb.animals', animals)
     const currentExpenses = readStorage('agroweb.expenses', expenses)
     const currentFeeding = readStorage('agroweb.feeding', feeding)
     const currentHealthEvents = readStorage('agroweb.healthEvents', healthEvents)
-    const animalesActivos = currentAnimals.filter((animal) => animal.estado === 'Activo')
-    const totalGastos = currentExpenses.reduce((acc, gasto) => acc + gasto.precio, 0)
-    const totalAlimentacion = currentFeeding.reduce((acc, registro) => acc + Number(registro.costo ?? registro.costoAproximado ?? 0), 0)
-    const proximosEventos = currentHealthEvents.filter((event) => event.estado === 'Pendiente' || event.estado === 'Programado')
-    const balanceGeneral = 125000 - totalGastos - totalAlimentacion
-
-    return [
-      { title: 'Total de animales', value: currentAnimals.length, detail: 'Cabezas registradas en inventario', icon: PackageCheck, tone: 'primary' },
-      { title: 'Animales activos', value: animalesActivos.length, detail: 'Listos para producción o seguimiento', icon: ShieldCheck, tone: 'success' },
-      { title: 'Gastos totales', value: currency.format(totalGastos + totalAlimentacion), detail: 'Gastos operativos y alimentación', icon: WalletCards, tone: 'warning' },
-      { title: 'Próximos eventos sanitarios', value: proximosEventos.length, detail: 'Vacunas, revisiones y tratamientos', icon: CalendarClock, tone: 'danger' },
-      { title: 'Balance general del rancho', value: currency.format(balanceGeneral), detail: 'Estimación con ingresos simulados', icon: Scale, tone: 'info' },
-    ]
+    return { currentAnimals, currentExpenses, currentFeeding, currentHealthEvents }
   }, [])
+
+  const typeSummaries = useMemo(
+    () =>
+      Object.entries(animalCatalog).map(([species, catalog]) => {
+        const animalsBySpecies = dashboardData.currentAnimals.filter((animal) => animal.especie === species)
+        const ids = new Set(animalsBySpecies.map((animal) => animal.id))
+        const typeExpenses = dashboardData.currentExpenses.filter((expense) => ids.has(expense.animalId)).reduce((sum, expense) => sum + Number(expense.precio ?? 0), 0)
+        const typeFeeding = dashboardData.currentFeeding.filter((item) => ids.has(item.animalId)).reduce((sum, item) => sum + Number(item.costo ?? item.costoAproximado ?? 0), 0)
+        const typeHealth = dashboardData.currentHealthEvents.filter((event) => ids.has(event.animalId))
+        return { species, catalog, count: animalsBySpecies.length, active: animalsBySpecies.filter((animal) => animal.estado === 'Activo').length, costs: typeExpenses + typeFeeding, events: typeHealth.length }
+      }),
+    [dashboardData],
+  )
+
+  const selectedSummary = typeSummaries.find((summary) => summary.species === selectedSpecies) ?? typeSummaries[0]
 
   const filteredModules = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
@@ -156,12 +160,58 @@ function Home() {
           </section>
         </DashboardCard>
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          {isLoading
-            ? stats.map((stat) => (
-                <div className="min-h-40 animate-pulse rounded-2xl bg-white shadow-[0_12px_28px_rgba(29,29,27,0.05)]" key={stat.title} />
-              ))
-            : stats.map((stat) => <StatCard key={stat.title} {...stat} />)}
+        <section>
+          <div className="mb-5">
+            <h2 className="text-2xl font-bold text-[#07612d]">Tipos de animales del rancho</h2>
+            <p className="mt-1 text-sm text-[#98a287]">Selecciona una especie para ver inventario, sanidad, costos y recomendaciones.</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {isLoading
+              ? [1, 2, 3, 4].map((item) => <div className="min-h-56 animate-pulse rounded-2xl bg-white" key={item} />)
+              : typeSummaries.map((summary) => (
+                  <button className={`overflow-hidden rounded-2xl border bg-white text-left shadow-[0_12px_28px_rgba(29,29,27,0.07)] transition ${selectedSpecies === summary.species ? 'border-[#07612d]' : 'border-[#98a287]/18 hover:border-[#07612d]/35'}`} key={summary.species} onClick={() => setSelectedSpecies(summary.species)} type="button">
+                    <div className="flex h-40 w-full items-center justify-center bg-[#F4F4F4] p-3">
+                      <img alt={summary.species} className="max-h-full w-full object-contain" src={summary.catalog.image} />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-lg font-bold text-[#07612d]">{summary.species}</h3>
+                      <p className="mt-1 text-sm font-semibold text-[#1d1d1b]/70">{summary.count} registrados · {summary.active} activos</p>
+                    </div>
+                  </button>
+                ))}
+          </div>
+
+          {selectedSummary ? (
+            <DashboardCard className="mt-6 p-5">
+              <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+                <div className="flex min-h-72 items-center justify-center rounded-2xl bg-[#F4F4F4] p-4">
+                  <img alt={selectedSummary.species} className="max-h-72 w-full object-contain" src={selectedSummary.catalog.image} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-[#07612d]">{selectedSummary.species}</h2>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-[#F4F4F4] p-4"><p className="text-xs font-bold uppercase text-[#98a287]">Cantidad</p><p className="mt-2 text-2xl font-bold">{selectedSummary.count}</p></div>
+                    <div className="rounded-2xl bg-[#F4F4F4] p-4"><p className="text-xs font-bold uppercase text-[#98a287]">Eventos sanitarios</p><p className="mt-2 text-2xl font-bold">{selectedSummary.events}</p></div>
+                    <div className="rounded-2xl bg-[#F4F4F4] p-4"><p className="text-xs font-bold uppercase text-[#98a287]">Costos</p><p className="mt-2 break-words text-xl font-bold">{currency.format(selectedSummary.costs)}</p></div>
+                  </div>
+                  <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                    <div className="rounded-2xl bg-[#F4F4F4] p-4">
+                      <p className="text-xs font-bold uppercase text-[#98a287]">Razas comunes en México</p>
+                      <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{selectedSummary.catalog.razas.join(', ')}</p>
+                    </div>
+                    <div className="rounded-2xl bg-[#F4F4F4] p-4">
+                      <p className="text-xs font-bold uppercase text-[#98a287]">Nutrición recomendada</p>
+                      <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{selectedSummary.catalog.nutricion}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-[#07612d]/8 p-4">
+                    <p className="text-xs font-bold uppercase text-[#07612d]">Recomendación profesional</p>
+                    <p className="mt-2 text-sm leading-6 text-[#1d1d1b]/75">{selectedSummary.catalog.recomendaciones}</p>
+                  </div>
+                </div>
+              </div>
+            </DashboardCard>
+          ) : null}
         </section>
 
         <section>

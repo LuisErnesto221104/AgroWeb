@@ -1,0 +1,864 @@
+{
+  "agroweb.animals": [
+    {
+      "id": 1,
+      "identificador": "MX011400000001",
+      "arete": "MX011400000001",
+      "nombre": "Luna",
+      "especie": "Bovino",
+      "raza": "Angus",
+      "peso": 450,
+      "duenosAnteriores": {
+        "nombre": "Carlos Mendoza",
+        "documentoIdentificacion": "INE-MND-1028",
+        "rfc": "MECG780415K92",
+        "rancho": "Rancho La Esperanza",
+        "ciudad": "Tepatitlan",
+        "estado": "Jalisco",
+        "documentoPdf": null
+      },
+      "fechaIngreso": "2026-05-01",
+      "estado": "Activo",
+      "fotografia": "/uploads/images/animals/luna-bovino.webp",
+      "ubicacion": "Corral 1",
+      "observaciones": "Hembra en buen estado, apta para seguimiento productivo."
+    },
+    {
+      "id": 2,
+      "identificador": "MX010500000002",
+      "arete": "MX010500000002",
+      "nombre": "Titan",
+      "especie": "Bovino",
+      "raza": "Brahman",
+      "peso": 690,
+      "duenosAnteriores": {
+        "nombre": "Ganadera del Norte SA",
+        "documentoIdentificacion": "ACTA-GDN-044",
+        "rfc": "GNO180922AB4",
+        "rancho": "Rancho El Norte",
+        "ciudad": "Saltillo",
+        "estado": "Coahuila",
+        "documentoPdf": null
+      },
+      "fechaIngreso": "2026-04-18",
+      "estado": "Activo",
+      "fotografia": "/uploads/images/animals/titan-brahman.jpeg",
+      "ubicacion": "Potrero Norte",
+      "observaciones": "Toro reproductor con revisión sanitaria reciente."
+    },
+    {
+      "id": 3,
+      "identificador": "MX021100000014",
+      "arete": "MX021100000014",
+      "nombre": "Mora",
+      "especie": "Ovino",
+      "raza": "Dorper",
+      "peso": 74,
+      "duenosAnteriores": {
+        "nombre": "Mariana Ruiz",
+        "documentoIdentificacion": "INE-RZM-7812",
+        "rfc": "RUHM900221P18",
+        "rancho": "Rancho San Miguel",
+        "ciudad": "Leon",
+        "estado": "Guanajuato",
+        "documentoPdf": null
+      },
+      "fechaIngreso": "2026-03-12",
+      "estado": "Vendido",
+      "fotografia": "/uploads/images/animals/mora-ovino.jpg",
+      "ubicacion": "Historial de ventas",
+      "observaciones": "Venta registrada; conservar historial para reporte de inversión."
+    },
+    {
+      "id": 4,
+      "identificador": "MX031400000008",
+      "arete": "MX031400000008",
+      "nombre": "Nube",
+      "especie": "Caprino",
+      "raza": "Boer",
+      "peso": 58,
+      "duenosAnteriores": {
+        "nombre": "Ninguno",
+        "documentoIdentificacion": "",
+        "rfc": "",
+        "rancho": "Nació en AgroWeb",
+        "ciudad": "Tepatitlan",
+        "estado": "Jalisco",
+        "documentoPdf": null
+      },
+      "fechaIngreso": "2026-05-10",
+      "estado": "Activo",
+      "fotografia": "/uploads/images/animals/nube-caprino.jpg",
+      "ubicacion": "Corral 3",
+      "observaciones": "Requiere monitoreo de alimentación durante adaptación."
+    },
+    {
+      "id": 5,
+      "identificador": "MX010100000005",
+      "arete": "MX010100000005",
+      "nombre": "Canela",
+      "especie": "Bovino",
+      "raza": "Hereford",
+      "peso": 506,
+      "duenosAnteriores": {
+        "nombre": "Hector Alvarez",
+        "documentoIdentificacion": "INE-ALH-3305",
+        "rfc": "AAHH760130Q51",
+        "rancho": "Rancho El Roble",
+        "ciudad": "Aguascalientes",
+        "estado": "Aguascalientes",
+        "documentoPdf": null
+      },
+      "fechaIngreso": "2026-02-22",
+      "estado": "Fallecido",
+      "fotografia": "/uploads/images/animals/canela-hereford.jpg",
+      "ubicacion": "Historial",
+      "observaciones": "Baja lógica registrada para mantener trazabilidad del inventario."
+    },
+    {
+      "id": 6,
+      "identificador": "MX011400000006",
+      "arete": "MX011400000006",
+      "nombre": "Estrella",
+      "especie": "Bovino",
+      "raza": "Holstein",
+      "peso": 530,
+      "duenosAnteriores": {
+        "nombre": "Productora Lechera Los Altos",
+        "documentoIdentificacion": "FACT-PLA-2206",
+        "rfc": "PLA210430N22",
+        "rancho": "Rancho Los Altos",
+        "ciudad": "Lagos de Moreno",
+        "estado": "Jalisco",
+        "documentoPdf": null
+      },
+      "fechaIngreso": "2026-01-15",
+      "estado": "Activo",
+      "fotografia": "/uploads/images/animals/estrella-holstein.webp",
+      "ubicacion": "Corral Lechero",
+      "observaciones": "Vaca lechera con producción estable."
+    },
+    {
+      "id": 7,
+      "identificador": "MX051400000003",
+      "arete": "MX051400000003",
+      "nombre": "Relámpago",
+      "especie": "Equino",
+      "raza": "Cuarto de Milla",
+      "peso": 430,
+      "duenosAnteriores": {
+        "nombre": "Rancho La Herradura",
+        "documentoIdentificacion": "CERT-EQU-331",
+        "rfc": "RHE190712M80",
+        "rancho": "La Herradura",
+        "ciudad": "San Juan de los Lagos",
+        "estado": "Jalisco",
+        "documentoPdf": null
+      },
+      "fechaIngreso": "2026-04-03",
+      "estado": "Activo",
+      "fotografia": "/uploads/images/animals/relampago-equino.webp",
+      "ubicacion": "Caballerizas",
+      "observaciones": "Animal de trabajo para apoyo en manejo del rancho."
+    },
+    {
+      "id": 8,
+      "identificador": "MX041100000011",
+      "arete": "MX041100000011",
+      "nombre": "Bruno",
+      "especie": "Porcino",
+      "raza": "Yorkshire",
+      "peso": 118,
+      "duenosAnteriores": {
+        "nombre": "Granja San Pedro",
+        "documentoIdentificacion": "GSP-8891",
+        "rfc": "GSP160904HU2",
+        "rancho": "Granja San Pedro",
+        "ciudad": "Irapuato",
+        "estado": "Guanajuato",
+        "documentoPdf": null
+      },
+      "fechaIngreso": "2026-05-05",
+      "estado": "Activo",
+      "fotografia": "/uploads/images/animals/bruno-porcino.jpg",
+      "ubicacion": "Área Porcina",
+      "observaciones": "En etapa de engorda con dieta controlada."
+    }
+  ],
+  "agroweb.expenses": [
+    {
+      "id": 1,
+      "tipoCompra": "Vacuna respiratoria",
+      "precio": 350,
+      "fecha": "2026-05-22",
+      "animalId": 1,
+      "animalIdentificador": "MX011400000001",
+      "categoria": "Vacunas",
+      "descripcion": "Aplicación de vacuna respiratoria.",
+      "comprobante": ""
+    },
+    {
+      "id": 2,
+      "tipoCompra": "Antibiótico LA",
+      "precio": 1200,
+      "fecha": "2026-05-21",
+      "animalId": 2,
+      "animalIdentificador": "MX010500000002",
+      "categoria": "Medicamento",
+      "descripcion": "Tratamiento veterinario para seguimiento sanitario.",
+      "comprobante": ""
+    },
+    {
+      "id": 3,
+      "tipoCompra": "Forraje de alfalfa",
+      "precio": 3200,
+      "fecha": "2026-05-18",
+      "animalId": null,
+      "animalIdentificador": "Rancho general",
+      "categoria": "Alimentación",
+      "descripcion": "Compra de forraje para lote activo.",
+      "comprobante": ""
+    },
+    {
+      "id": 4,
+      "tipoCompra": "Traslado a clínica",
+      "precio": 950,
+      "fecha": "2026-05-20",
+      "animalId": 4,
+      "animalIdentificador": "MX031400000008",
+      "categoria": "Transporte",
+      "descripcion": "Traslado a revisión externa.",
+      "comprobante": ""
+    },
+    {
+      "id": 5,
+      "tipoCompra": "Reparación de bebederos",
+      "precio": 2100,
+      "fecha": "2026-05-09",
+      "animalId": null,
+      "animalIdentificador": "Rancho general",
+      "categoria": "Mantenimiento",
+      "descripcion": "Mantenimiento de corral y bebederos.",
+      "comprobante": ""
+    },
+    {
+      "id": 6,
+      "tipoCompra": "Minerales traza",
+      "precio": 880,
+      "fecha": "2026-05-11",
+      "animalId": 6,
+      "animalIdentificador": "MX011400000006",
+      "categoria": "Alimentación",
+      "descripcion": "Suplemento mineral para lote lechero.",
+      "comprobante": ""
+    },
+    {
+      "id": 7,
+      "tipoCompra": "Consulta veterinaria",
+      "precio": 1500,
+      "fecha": "2026-05-18",
+      "animalId": 7,
+      "animalIdentificador": "MX051400000003",
+      "categoria": "Veterinario",
+      "descripcion": "Revisión locomotora de equino.",
+      "comprobante": ""
+    },
+    {
+      "id": 8,
+      "tipoCompra": "Vacuna circovirus",
+      "precio": 620,
+      "fecha": "2026-05-16",
+      "animalId": 8,
+      "animalIdentificador": "MX041100000011",
+      "categoria": "Vacunas",
+      "descripcion": "Vacuna preventiva para porcino.",
+      "comprobante": ""
+    },
+    {
+      "id": 9,
+      "tipoCompra": "Desparasitante bovino",
+      "precio": 740,
+      "fecha": "2026-03-20",
+      "animalId": 2,
+      "animalIdentificador": "MX010500000002",
+      "categoria": "Desparasitantes",
+      "descripcion": "Aplicación de albendazol.",
+      "comprobante": ""
+    },
+    {
+      "id": 10,
+      "tipoCompra": "Concentrado lechero",
+      "precio": 2600,
+      "fecha": "2026-05-24",
+      "animalId": 6,
+      "animalIdentificador": "MX011400000006",
+      "categoria": "Alimentación",
+      "descripcion": "Alimento concentrado para producción de leche.",
+      "comprobante": ""
+    },
+    {
+      "id": 11,
+      "tipoCompra": "Medicamento antiinflamatorio",
+      "precio": 430,
+      "fecha": "2026-05-19",
+      "animalId": 7,
+      "animalIdentificador": "MX051400000003",
+      "categoria": "Medicamento",
+      "descripcion": "Antiinflamatorio por molestia en extremidad.",
+      "comprobante": ""
+    },
+    {
+      "id": 12,
+      "tipoCompra": "Flete de pacas",
+      "precio": 1350,
+      "fecha": "2026-05-25",
+      "animalId": null,
+      "animalIdentificador": "Rancho general",
+      "categoria": "Transporte",
+      "descripcion": "Flete de alimento hacia bodega.",
+      "comprobante": ""
+    }
+  ],
+  "agroweb.feeding": [
+    {
+      "id": 1,
+      "animalId": 1,
+      "animalIdentificador": "MX011400000001",
+      "grupo": "",
+      "tipoAlimento": "Concentrado",
+      "alimento": "Concentrado",
+      "cantidad": 18,
+      "unidad": "kg",
+      "fecha": "2026-05-22",
+      "hora": "17:30",
+      "responsable": "Encargado del rancho",
+      "costoAproximado": 680,
+      "costo": 680,
+      "nutricion": {
+        "proteina": 16,
+        "fibra": 12,
+        "energia": 3.1,
+        "materiaSeca": 90,
+        "minerales": "Mezcla mineral balanceada",
+        "notas": "Aporta energía y proteína para producción."
+      },
+      "observaciones": "Alimentación normal posterior a revisión.",
+      "estado": "Registrado"
+    },
+    {
+      "id": 2,
+      "animalId": 2,
+      "animalIdentificador": "MX010500000002",
+      "grupo": "",
+      "tipoAlimento": "Forraje",
+      "alimento": "Forraje",
+      "cantidad": 24,
+      "unidad": "kg",
+      "fecha": "2026-05-23",
+      "hora": "08:00",
+      "responsable": "Luis Campos",
+      "costoAproximado": 520,
+      "costo": 520,
+      "nutricion": {
+        "proteina": 9,
+        "fibra": 32,
+        "energia": 2.1,
+        "materiaSeca": 88,
+        "minerales": "Calcio y fosforo moderado",
+        "notas": "Base de fibra para rumia y mantenimiento."
+      },
+      "observaciones": "Ración matutina para toro reproductor.",
+      "estado": "Pendiente"
+    },
+    {
+      "id": 3,
+      "animalId": 3,
+      "animalIdentificador": "MX021100000014",
+      "grupo": "",
+      "tipoAlimento": "Minerales",
+      "alimento": "Minerales",
+      "cantidad": 4,
+      "unidad": "kg",
+      "fecha": "2026-05-21",
+      "hora": "16:00",
+      "responsable": "Encargado del rancho",
+      "costoAproximado": 380,
+      "costo": 380,
+      "nutricion": {
+        "proteina": 0,
+        "fibra": 0,
+        "energia": 0,
+        "materiaSeca": 96,
+        "minerales": "Calcio, fosforo, sal y microminerales",
+        "notas": "Complemento para balance mineral."
+      },
+      "observaciones": "Suplemento semanal registrado en historial.",
+      "estado": "Registrado"
+    },
+    {
+      "id": 4,
+      "animalId": 5,
+      "animalIdentificador": "MX010100000005",
+      "grupo": "",
+      "tipoAlimento": "Silo",
+      "alimento": "Silo",
+      "cantidad": 32,
+      "unidad": "kg",
+      "fecha": "2026-05-20",
+      "hora": "07:00",
+      "responsable": "Luis Campos",
+      "costoAproximado": 760,
+      "costo": 760,
+      "nutricion": {
+        "proteina": 8,
+        "fibra": 28,
+        "energia": 2.4,
+        "materiaSeca": 35,
+        "minerales": "Bajo en minerales, complementar",
+        "notas": "Buena fuente energética con alta humedad."
+      },
+      "observaciones": "Registro histórico previo a baja.",
+      "estado": "Atrasado"
+    },
+    {
+      "id": 5,
+      "animalId": null,
+      "animalIdentificador": "Grupo Corral 1",
+      "grupo": "Grupo Corral 1",
+      "tipoAlimento": "Forraje",
+      "alimento": "Forraje",
+      "cantidad": 120,
+      "unidad": "kg",
+      "fecha": "2026-05-23",
+      "hora": "18:00",
+      "responsable": "Encargado del rancho",
+      "costoAproximado": 1450,
+      "costo": 1450,
+      "nutricion": {
+        "proteina": 9,
+        "fibra": 32,
+        "energia": 2.1,
+        "materiaSeca": 88,
+        "minerales": "Calcio y fosforo moderado",
+        "notas": "Base de fibra para rumia y mantenimiento."
+      },
+      "observaciones": "Ración vespertina programada para animales activos.",
+      "estado": "Pendiente"
+    },
+    {
+      "id": 6,
+      "animalId": 6,
+      "animalIdentificador": "MX011400000006",
+      "grupo": "",
+      "tipoAlimento": "Concentrado",
+      "alimento": "Concentrado",
+      "cantidad": 22,
+      "unidad": "kg",
+      "fecha": "2026-05-24",
+      "hora": "06:30",
+      "responsable": "Ana Robles",
+      "costoAproximado": 840,
+      "costo": 840,
+      "nutricion": {
+        "proteina": 16,
+        "fibra": 12,
+        "energia": 3.1,
+        "materiaSeca": 90,
+        "minerales": "Mezcla mineral balanceada",
+        "notas": "Aporta energía y proteína para producción."
+      },
+      "observaciones": "Ración para vaca lechera.",
+      "estado": "Registrado"
+    },
+    {
+      "id": 7,
+      "animalId": 7,
+      "animalIdentificador": "MX051400000003",
+      "grupo": "",
+      "tipoAlimento": "Forraje",
+      "alimento": "Forraje",
+      "cantidad": 12,
+      "unidad": "kg",
+      "fecha": "2026-05-24",
+      "hora": "07:15",
+      "responsable": "Luis Campos",
+      "costoAproximado": 310,
+      "costo": 310,
+      "nutricion": {
+        "proteina": 9,
+        "fibra": 32,
+        "energia": 2.1,
+        "materiaSeca": 88,
+        "minerales": "Calcio y fosforo moderado",
+        "notas": "Base de fibra para rumia y mantenimiento."
+      },
+      "observaciones": "Ración ligera por reposo.",
+      "estado": "Registrado"
+    },
+    {
+      "id": 8,
+      "animalId": 8,
+      "animalIdentificador": "MX041100000011",
+      "grupo": "",
+      "tipoAlimento": "Suplemento",
+      "alimento": "Suplemento",
+      "cantidad": 6,
+      "unidad": "kg",
+      "fecha": "2026-05-24",
+      "hora": "09:00",
+      "responsable": "Encargado del rancho",
+      "costoAproximado": 460,
+      "costo": 460,
+      "nutricion": {
+        "proteina": 22,
+        "fibra": 8,
+        "energia": 2.8,
+        "materiaSeca": 92,
+        "minerales": "Vitaminas A, D, E y trazas",
+        "notas": "Usar según etapa productiva."
+      },
+      "observaciones": "Suplemento de engorda.",
+      "estado": "Pendiente"
+    },
+    {
+      "id": 9,
+      "animalId": 4,
+      "animalIdentificador": "MX031400000008",
+      "grupo": "",
+      "tipoAlimento": "Minerales",
+      "alimento": "Minerales",
+      "cantidad": 2,
+      "unidad": "kg",
+      "fecha": "2026-05-22",
+      "hora": "15:00",
+      "responsable": "Ana Robles",
+      "costoAproximado": 180,
+      "costo": 180,
+      "nutricion": {
+        "proteina": 0,
+        "fibra": 0,
+        "energia": 0,
+        "materiaSeca": 96,
+        "minerales": "Calcio, fosforo, sal y microminerales",
+        "notas": "Complemento para balance mineral."
+      },
+      "observaciones": "Complemento mineral para caprino.",
+      "estado": "Registrado"
+    },
+    {
+      "id": 10,
+      "animalId": null,
+      "animalIdentificador": "Grupo Lechero",
+      "grupo": "Grupo Lechero",
+      "tipoAlimento": "Silo",
+      "alimento": "Silo",
+      "cantidad": 180,
+      "unidad": "kg",
+      "fecha": "2026-05-25",
+      "hora": "17:45",
+      "responsable": "Luis Campos",
+      "costoAproximado": 2100,
+      "costo": 2100,
+      "nutricion": {
+        "proteina": 8,
+        "fibra": 28,
+        "energia": 2.4,
+        "materiaSeca": 35,
+        "minerales": "Bajo en minerales, complementar",
+        "notas": "Buena fuente energética con alta humedad."
+      },
+      "observaciones": "Ración para lote lechero.",
+      "estado": "Pendiente"
+    }
+  ],
+  "agroweb.healthEvents": [
+    {
+      "id": 1,
+      "animalId": 1,
+      "animalIdentificador": "MX011400000001",
+      "tipo": "Vacuna",
+      "fecha": "2026-05-10",
+      "producto": "Vacuna Triple",
+      "dosis": "5 ml",
+      "responsable": "Veterinario Juan Perez",
+      "proximaAplicacion": "2026-08-10",
+      "observaciones": "Aplicación sin complicaciones.",
+      "estado": "Completado"
+    },
+    {
+      "id": 2,
+      "animalId": 2,
+      "animalIdentificador": "MX010500000002",
+      "tipo": "Tratamiento",
+      "fecha": "2026-05-21",
+      "producto": "Antibiótico LA",
+      "dosis": "10 ml",
+      "responsable": "Dra. Morales",
+      "proximaAplicacion": "2026-05-24",
+      "observaciones": "Segunda dosis pendiente y monitoreo de apetito.",
+      "estado": "Pendiente"
+    },
+    {
+      "id": 3,
+      "animalId": 4,
+      "animalIdentificador": "MX031400000008",
+      "tipo": "Desparasitante",
+      "fecha": "2026-05-12",
+      "producto": "Ivermectina",
+      "dosis": "2 ml",
+      "responsable": "Encargado de corral",
+      "proximaAplicacion": "2026-05-20",
+      "observaciones": "Reprogramar aplicación por fecha vencida.",
+      "estado": "Vencido"
+    },
+    {
+      "id": 4,
+      "animalId": 1,
+      "animalIdentificador": "MX011400000001",
+      "tipo": "Revision",
+      "fecha": "2026-05-23",
+      "producto": "Revisión clínica",
+      "dosis": "N/A",
+      "responsable": "Veterinario Juan Perez",
+      "proximaAplicacion": "2026-06-23",
+      "observaciones": "Condición corporal estable.",
+      "estado": "Pendiente"
+    },
+    {
+      "id": 5,
+      "animalId": 3,
+      "animalIdentificador": "MX021100000014",
+      "tipo": "Enfermedad",
+      "fecha": "2026-05-02",
+      "producto": "Suero oral",
+      "dosis": "500 ml",
+      "responsable": "Dra. Morales",
+      "proximaAplicacion": "",
+      "observaciones": "Historial conservado posterior a venta.",
+      "estado": "Completado"
+    },
+    {
+      "id": 6,
+      "animalId": 6,
+      "animalIdentificador": "MX011400000006",
+      "tipo": "Vacuna",
+      "fecha": "2026-04-30",
+      "producto": "Vacuna Brucelosis",
+      "dosis": "3 ml",
+      "responsable": "Dr. Campos",
+      "proximaAplicacion": "2026-10-30",
+      "observaciones": "Aplicación preventiva en lote lechero.",
+      "estado": "Completado"
+    },
+    {
+      "id": 7,
+      "animalId": 7,
+      "animalIdentificador": "MX051400000003",
+      "tipo": "Revision",
+      "fecha": "2026-05-18",
+      "producto": "Revisión locomotora",
+      "dosis": "N/A",
+      "responsable": "Dra. Morales",
+      "proximaAplicacion": "2026-06-18",
+      "observaciones": "Ligera inflamación en extremidad posterior.",
+      "estado": "Pendiente"
+    },
+    {
+      "id": 8,
+      "animalId": 8,
+      "animalIdentificador": "MX041100000011",
+      "tipo": "Vacuna",
+      "fecha": "2026-05-16",
+      "producto": "Vacuna Circovirus",
+      "dosis": "2 ml",
+      "responsable": "Veterinario Juan Perez",
+      "proximaAplicacion": "2026-06-16",
+      "observaciones": "Aplicar refuerzo en 30 días.",
+      "estado": "Pendiente"
+    },
+    {
+      "id": 9,
+      "animalId": 5,
+      "animalIdentificador": "MX010100000005",
+      "tipo": "Otro",
+      "fecha": "2026-04-12",
+      "producto": "Necropsia externa",
+      "dosis": "N/A",
+      "responsable": "Dr. Campos",
+      "proximaAplicacion": "",
+      "observaciones": "Registro de cierre sanitario para baja.",
+      "estado": "Completado"
+    },
+    {
+      "id": 10,
+      "animalId": 2,
+      "animalIdentificador": "MX010500000002",
+      "tipo": "Desparasitante",
+      "fecha": "2026-03-20",
+      "producto": "Albendazol",
+      "dosis": "15 ml",
+      "responsable": "Encargado de corral",
+      "proximaAplicacion": "2026-06-20",
+      "observaciones": "Próxima aplicación programada.",
+      "estado": "Pendiente"
+    }
+  ],
+  "agroweb.income": [
+    {
+      "id": 1,
+      "tipo": "Venta de animal",
+      "animalId": 3,
+      "animalIdentificador": "MX021100000014",
+      "monto": 18000,
+      "fecha": "2026-05-15",
+      "descripcion": "Venta de ovino Dorper."
+    },
+    {
+      "id": 2,
+      "tipo": "Venta de leche",
+      "animalId": 1,
+      "animalIdentificador": "MX011400000001",
+      "monto": 6200,
+      "fecha": "2026-05-20",
+      "descripcion": "Ingreso por producción semanal."
+    },
+    {
+      "id": 3,
+      "tipo": "Subproducto",
+      "animalId": null,
+      "animalIdentificador": "Rancho general",
+      "monto": 2800,
+      "fecha": "2026-05-08",
+      "descripcion": "Venta de composta y excedentes."
+    },
+    {
+      "id": 4,
+      "tipo": "Venta de animal",
+      "animalId": 2,
+      "animalIdentificador": "MX010500000002",
+      "monto": 32000,
+      "fecha": "2026-04-28",
+      "descripcion": "Ingreso simulado por venta proyectada de bovino."
+    },
+    {
+      "id": 5,
+      "tipo": "Venta de leche",
+      "animalId": 6,
+      "animalIdentificador": "MX011400000006",
+      "monto": 9800,
+      "fecha": "2026-05-27",
+      "descripcion": "Venta de leche de lote lechero."
+    },
+    {
+      "id": 6,
+      "tipo": "Servicio de monta",
+      "animalId": 2,
+      "animalIdentificador": "MX010500000002",
+      "monto": 4500,
+      "fecha": "2026-05-12",
+      "descripcion": "Servicio reproductivo externo."
+    }
+  ],
+  "agroweb.settings.users": [
+    {
+      "id": 1,
+      "usuario_id": 1,
+      "nombre": "Administrador AgroWeb",
+      "correo": "admin@agroweb.mx",
+      "rol": "Administrador",
+      "activo": true,
+      "permisos": [
+        "animales",
+        "sanidad",
+        "gastos",
+        "reportes",
+        "alimentacion",
+        "configuracion"
+      ],
+      "protegido": true
+    },
+    {
+      "id": 2,
+      "usuario_id": null,
+      "nombre": "Encargado del Rancho",
+      "correo": "rancho@agroweb.mx",
+      "rol": "Ganadero",
+      "activo": true,
+      "permisos": [
+        "animales",
+        "sanidad",
+        "alimentacion"
+      ],
+      "protegido": false
+    },
+    {
+      "id": 3,
+      "usuario_id": null,
+      "nombre": "Contabilidad",
+      "correo": "finanzas@agroweb.mx",
+      "rol": "Finanzas",
+      "activo": true,
+      "permisos": [
+        "gastos",
+        "reportes"
+      ],
+      "protegido": false
+    }
+  ],
+  "agroweb.ranches": [
+    {
+      "id": 1779943327202,
+      "nombre": "Los primos",
+      "propietario": "Ernesto",
+      "telefono": "7151358246",
+      "direccion": "Fco i madero",
+      "coordenadas": {
+        "lat": 19.442842,
+        "lng": -100.355284
+      },
+      "lugares": [
+        {
+          "id": 1779943365329,
+          "nombre": "Corral",
+          "tipo": "Corral",
+          "capacidad": 50,
+          "descripcion": "jnjind"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "nombre": "Rancho AgroWeb",
+      "propietario": "Administrador AgroWeb",
+      "telefono": "3330000000",
+      "direccion": "Tepatitlan, Jalisco",
+      "coordenadas": {
+        "lat": 20.8169,
+        "lng": -102.7635
+      },
+      "lugares": [
+        {
+          "id": 1,
+          "nombre": "Corral 1",
+          "tipo": "Corral",
+          "capacidad": 25,
+          "descripcion": "Área principal para bovinos activos."
+        },
+        {
+          "id": 2,
+          "nombre": "Corral Lechero",
+          "tipo": "Corral",
+          "capacidad": 18,
+          "descripcion": "Zona para vacas lecheras."
+        },
+        {
+          "id": 3,
+          "nombre": "Caballerizas",
+          "tipo": "Caballeriza",
+          "capacidad": 8,
+          "descripcion": "Espacio para equinos de trabajo."
+        }
+      ]
+    }
+  ]
+}
