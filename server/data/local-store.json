@@ -803,6 +803,16 @@
         "reportes"
       ],
       "protegido": false
+    },
+    {
+      "id": 4,
+      "usuario_id": 2,
+      "nombre": "gera",
+      "correo": "gera@agroweb.local",
+      "rol": "Consulta",
+      "activo": true,
+      "permisos": [],
+      "protegido": false
     }
   ],
   "agroweb.ranches": [

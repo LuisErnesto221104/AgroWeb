@@ -72,11 +72,16 @@ function crearHashPin(pin, sal) {
 }
 
 function sanearUsuario(usuario) {
+  const configuracion = baseDatos.configuracion_usuarios.find((elemento) => elemento.usuario_id === usuario.id);
   return {
     id: usuario.id,
     nombre: usuario.nombre,
     fecha_creacion: usuario.fecha_creacion,
-    ultimo_acceso: usuario.ultimo_acceso
+    ultimo_acceso: usuario.ultimo_acceso,
+    rol: configuracion?.rol ?? 'Consulta',
+    activo: configuracion?.activo ?? true,
+    permisos: configuracion?.permisos ?? [],
+    protegido: configuracion?.protegido ?? false
   };
 }
 
@@ -339,6 +344,36 @@ function buscarPorId(coleccion, id) {
   return coleccion.find((elemento) => elemento.id === Number(id));
 }
 
+function crearUsuarioConfiguracionDesdeUsuario(usuario) {
+  return {
+    id: siguienteId(baseDatos.configuracion_usuarios),
+    usuario_id: usuario.id,
+    nombre: usuario.nombre === 'admin' ? 'Administrador AgroWeb' : usuario.nombre,
+    correo: usuario.nombre === 'admin' ? 'admin@agroweb.mx' : `${usuario.nombre}@agroweb.local`,
+    rol: usuario.nombre === 'admin' ? 'Administrador' : 'Consulta',
+    activo: true,
+    permisos: usuario.nombre === 'admin' ? permisosSistema : [],
+    protegido: usuario.nombre === 'admin'
+  };
+}
+
+function sincronizarUsuariosConfiguracion() {
+  let cambio = false;
+  for (const usuario of baseDatos.usuarios) {
+    const existe = baseDatos.configuracion_usuarios.some((elemento) => elemento.usuario_id === usuario.id);
+    if (!existe) {
+      baseDatos.configuracion_usuarios.push(crearUsuarioConfiguracionDesdeUsuario(usuario));
+      cambio = true;
+    }
+  }
+  if (cambio) {
+    almacenLocal['agroweb.settings.users'] = baseDatos.configuracion_usuarios;
+    guardarAlmacenLocal();
+  }
+}
+
+sincronizarUsuariosConfiguracion();
+
 function noEncontrado(respuesta, entidad) {
   respuesta.status(404).json({ message: `${entidad} no encontrado.` });
 }
@@ -589,6 +624,12 @@ aplicacionExpress.post('/api/auth/login', (solicitud, respuesta) => {
     return;
   }
 
+  const configuracion = baseDatos.configuracion_usuarios.find((elemento) => elemento.usuario_id === usuario.id);
+  if (configuracion && !configuracion.activo) {
+    respuesta.status(403).json({ message: 'Usuario bloqueado. Solicita acceso al administrador.' });
+    return;
+  }
+
   const ahora = new Date().toISOString();
   usuario.ultimo_acceso = ahora;
 
@@ -635,6 +676,10 @@ aplicacionExpress.post('/api/auth/register', (solicitud, respuesta) => {
   };
 
   baseDatos.usuarios.push(usuario);
+  const usuarioConfiguracion = crearUsuarioConfiguracionDesdeUsuario(usuario);
+  baseDatos.configuracion_usuarios.push(usuarioConfiguracion);
+  almacenLocal['agroweb.settings.users'] = baseDatos.configuracion_usuarios;
+  guardarAlmacenLocal();
 
   const sesion = {
     id: siguienteId(baseDatos.session_manager),

@@ -38,6 +38,8 @@ function PaginaConfiguracion() {
   const referenciaSolicitudDireccion = useRef(0);
 
   const usuarioSeleccionado = usuarios.find((usuario) => usuario.id === idUsuarioSeleccionado) ?? usuarios[0];
+  const usuarioActualConfiguracion = usuarios.find((usuario) => usuario.usuario_id === authUser?.id);
+  const puedeEditarUsuarios = authUser?.rol === 'Administrador' || usuarioActualConfiguracion?.rol === 'Administrador';
   const esAdministradorProtegido = Boolean(usuarioSeleccionado?.protegido);
   const esUsuarioActual = usuarioSeleccionado?.usuario_id === authUser?.id || usuarioSeleccionado?.id === authUser?.id;
 
@@ -98,6 +100,10 @@ function PaginaConfiguracion() {
 
   async function alternarPermiso(clavePermiso) {
     if (!usuarioSeleccionado) return;
+    if (!puedeEditarUsuarios) {
+      mostrarError('Solo un usuario Administrador puede editar permisos.');
+      return;
+    }
     const tienePermiso = usuarioSeleccionado.permisos.includes(clavePermiso);
 
     if (esAdministradorProtegido && tienePermiso) {
@@ -121,6 +127,10 @@ function PaginaConfiguracion() {
 
   async function actualizarRol(evento) {
     if (!usuarioSeleccionado) return;
+    if (!puedeEditarUsuarios) {
+      mostrarError('Solo un usuario Administrador puede editar roles.');
+      return;
+    }
 
     try {
       const usuarioActualizado = await solicitudApi(`/configuracion/usuarios/${usuarioSeleccionado.id}/rol`, {
@@ -136,6 +146,10 @@ function PaginaConfiguracion() {
 
   async function alternarEstadoUsuario() {
     if (!usuarioSeleccionado) return;
+    if (!puedeEditarUsuarios) {
+      mostrarError('Solo un usuario Administrador puede bloquear o activar usuarios.');
+      return;
+    }
 
     if (esAdministradorProtegido) {
       mostrarError('El administrador principal no puede bloquearse.');
@@ -379,6 +393,11 @@ function PaginaConfiguracion() {
             Estás editando al administrador principal. Por seguridad no puede quitarse permisos, cambiar a otro rol ni bloquearse.
           </div> :
         null}
+        {!puedeEditarUsuarios ?
+        <div className="rounded-2xl border border-[#1f7a8c]/20 bg-[#1f7a8c]/10 p-4 text-sm font-bold text-[#1f7a8c]">
+            Solo los usuarios con rol Administrador pueden modificar roles, permisos o estado de usuarios.
+          </div> :
+        null}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {estadisticas.map((estadistica) =>
@@ -419,14 +438,14 @@ function PaginaConfiguracion() {
                   <h2 className="break-words text-xl font-bold text-[#07612d]">{usuarioSeleccionado.nombre}</h2>
                   <p className="mt-1 break-words text-sm text-[#1d1d1b]/65">{usuarioSeleccionado.correo}</p>
                 </div>
-                <button className="min-h-11 rounded-2xl border border-[#07612d]/25 bg-white px-4 text-sm font-bold text-[#07612d] disabled:cursor-not-allowed disabled:border-[#98a287]/25 disabled:text-[#98a287]" disabled={esAdministradorProtegido} onClick={alternarEstadoUsuario} type="button">
+                <button className="min-h-11 rounded-2xl border border-[#07612d]/25 bg-white px-4 text-sm font-bold text-[#07612d] disabled:cursor-not-allowed disabled:border-[#98a287]/25 disabled:text-[#98a287]" disabled={!puedeEditarUsuarios || esAdministradorProtegido} onClick={alternarEstadoUsuario} type="button">
                   {usuarioSeleccionado.activo ? 'Bloquear acceso' : 'Activar usuario'}
                 </button>
               </div>
 
               <label className="mt-5 block">
                 <span className="text-sm font-bold text-[#1d1d1b]">Rol del usuario</span>
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-[#07612d] focus:bg-white" disabled={esAdministradorProtegido} onChange={actualizarRol} value={usuarioSeleccionado.rol}>
+                <select className="mt-2 h-12 w-full rounded-2xl border border-[#98a287]/25 bg-[#F4F4F4] px-4 text-sm font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-[#07612d] focus:bg-white" disabled={!puedeEditarUsuarios || esAdministradorProtegido} onChange={actualizarRol} value={usuarioSeleccionado.rol}>
                   {['Administrador', 'Ganadero', 'Veterinario', 'Finanzas', 'Consulta'].map((rol) =>
                 <option key={rol} value={rol}>
                       {rol}
@@ -443,7 +462,7 @@ function PaginaConfiguracion() {
                   return (
                     <label className="flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl bg-[#F4F4F4] px-4 text-sm font-bold text-[#1d1d1b]" key={permiso.key}>
                         <span className="break-words">{permiso.label}</span>
-                        <input checked={marcado} className="size-5 accent-[#07612d] disabled:cursor-not-allowed" disabled={esAdministradorProtegido && marcado} onChange={() => alternarPermiso(permiso.key)} type="checkbox" />
+                        <input checked={marcado} className="size-5 accent-[#07612d] disabled:cursor-not-allowed" disabled={!puedeEditarUsuarios || esAdministradorProtegido && marcado} onChange={() => alternarPermiso(permiso.key)} type="checkbox" />
                       </label>);
 
                 })}
