@@ -2,30 +2,24 @@ import { useEffect, useMemo, useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import TarjetaPanel from '../components/DashboardCard';
 import { catalogoAnimal } from '../data/animalCatalog';
-import { animales } from '../data/animals';
-import { gastos } from '../data/expenses';
-import { alimentacion } from '../data/feeding';
-import { eventosSanitarios } from '../data/healthEvents';
-import { leerAlmacenamiento } from '../utils/storage';
+import { useSelectorAplicacion } from '../store/hooks';
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 
 function Inicio() {
   const [cargando, establecerCargando] = useState(true);
   const [especieSeleccionada, establecerEspecieSeleccionada] = useState('Bovino');
+  const animales = useSelectorAplicacion((estado) => estado.agroweb.animales);
+  const gastos = useSelectorAplicacion((estado) => estado.agroweb.gastos);
+  const alimentacion = useSelectorAplicacion((estado) => estado.agroweb.alimentacion);
+  const eventosSanitarios = useSelectorAplicacion((estado) => estado.agroweb.eventosSanitarios);
 
   useEffect(() => {
     const temporizador = window.setTimeout(() => establecerCargando(false), 350);
     return () => window.clearTimeout(temporizador);
   }, []);
 
-  const datosPanel = useMemo(() => {
-    const animalesActuales = leerAlmacenamiento('agroweb.animals', animales);
-    const gastosActuales = leerAlmacenamiento('agroweb.expenses', gastos);
-    const alimentacionActual = leerAlmacenamiento('agroweb.feeding', alimentacion);
-    const eventosSanitariosActuales = leerAlmacenamiento('agroweb.healthEvents', eventosSanitarios);
-    return { currentAnimals: animalesActuales, currentExpenses: gastosActuales, currentFeeding: alimentacionActual, currentHealthEvents: eventosSanitariosActuales };
-  }, []);
+  const datosPanel = useMemo(() => ({ currentAnimals: animales, currentExpenses: gastos, currentFeeding: alimentacion, currentHealthEvents: eventosSanitarios }), [alimentacion, animales, eventosSanitarios, gastos]);
 
   const resumenesTipo = useMemo(
     () =>
@@ -55,9 +49,6 @@ function Inicio() {
               <p className="mt-4 max-w-2xl text-base leading-7 text-[#1d1d1b]/72 md:text-lg">
                 Sistema web para la gestión ganadera, sanitaria, alimenticia y financiera del rancho
               </p>
-              <p className="mt-5 max-w-xl rounded-2xl bg-[#07612d]/8 px-4 py-3 text-sm font-semibold leading-6 text-[#07612d]">
-                El menú lateral mantiene la navegación principal siempre disponible; este inicio se concentra en el estado del inventario por especie.
-              </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -68,7 +59,7 @@ function Inicio() {
               </div>
               <div className="rounded-2xl bg-[#F4F4F4] p-5">
                 <p className="text-sm font-semibold text-[#98a287]">Alimentación registrada</p>
-                <strong className="mt-2 block text-4xl font-bold text-[#1d1d1b]">{leerAlmacenamiento('agroweb.feeding', alimentacion).length}</strong>
+                <strong className="mt-2 block text-4xl font-bold text-[#1d1d1b]">{alimentacion.length}</strong>
                 <p className="mt-3 text-sm leading-6 text-[#1d1d1b]/70">Registros mock usados para calcular costos del rancho.</p>
               </div>
             </div>

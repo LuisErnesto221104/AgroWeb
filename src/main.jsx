@@ -4,10 +4,10 @@ import { Provider } from 'react-redux';
 import './index.css';
 import Aplicacion from './App';
 import { ProveedorAutenticacion } from './context/AuthContext';
-import { almacen } from './store/store';
 import { sincronizarAlmacenamientoDesdeApi } from './utils/storage';
 
 await sincronizarAlmacenamientoDesdeApi();
+const { almacen } = await import('./store/store');
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

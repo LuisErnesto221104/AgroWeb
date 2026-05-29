@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { LayoutGrid, List, Plus, Sprout } from 'lucide-react';
 import TarjetaAnimal from '../components/animals/AnimalCard';
@@ -8,8 +8,8 @@ import FormularioAnimal from '../components/animals/AnimalForm';
 import TablaAnimal from '../components/animals/AnimalTable';
 import ModalConfirmarBaja from '../components/animals/ConfirmDeleteModal';
 import { catalogoAnimal } from '../data/animalCatalog';
-import { animales as mockAnimals } from '../data/animals';
-import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
+import { cambiarEstadoAnimal, crearAnimal, actualizarAnimal } from '../store/agrowebSlice';
+import { useDespachoAplicacion, useSelectorAplicacion } from '../store/hooks';
 
 const filtrosIniciales = {
   query: '',
@@ -176,49 +176,29 @@ function EditarAnimal({ animals: animales, onUpdate: alActualizar }) {
 }
 
 function PaginaAnimales() {
-  const [animales, establecerAnimales] = useState([]);
+  const despachar = useDespachoAplicacion();
+  const animales = useSelectorAplicacion((estado) => estado.agroweb.animales);
   const [filtros, setFilters] = useState(filtrosIniciales);
   const [animalABaja, setAnimalToDelete] = useState(null);
-  const [cargando, establecerCargando] = useState(true);
+  const cargando = false;
 
-  useEffect(() => {
-    const temporizador = window.setTimeout(() => {
-      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
-      establecerCargando(false);
-    }, 350);
-
-    return () => window.clearTimeout(temporizador);
-  }, []);
-
-  function crearAnimal(animal) {
+  function crearAnimalDesdeFormulario(animal) {
     if (animales.some((elemento) => elemento.identificador === animal.identificador)) return false;
-    establecerAnimales((actual) => {
-      const animalesSiguientes = [animal, ...actual];
-      escribirAlmacenamiento('agroweb.animals', animalesSiguientes);
-      return animalesSiguientes;
-    });
+    despachar(crearAnimal(animal));
     return true;
   }
 
-  function actualizarAnimal(animalActualizado) {
-    establecerAnimales((actual) => {
-      const animalesSiguientes = actual.map((animal) => animal.id === animalActualizado.id ? { ...animal, ...animalActualizado } : animal);
-      escribirAlmacenamiento('agroweb.animals', animalesSiguientes);
-      return animalesSiguientes;
-    });
+  function actualizarAnimalDesdeFormulario(animalActualizado) {
+    despachar(actualizarAnimal(animalActualizado));
   }
 
-  function cambiarEstadoAnimal(estado) {
+  function cambiarEstadoAnimalDesdeModal(estado) {
     if (!animalABaja) return;
     if (animalABaja.estado !== 'Activo') {
       setAnimalToDelete(null);
       return;
     }
-    establecerAnimales((actual) => {
-      const animalesSiguientes = actual.map((animal) => animal.id === animalABaja.id ? { ...animal, estado } : animal);
-      escribirAlmacenamiento('agroweb.animals', animalesSiguientes);
-      return animalesSiguientes;
-    });
+    despachar(cambiarEstadoAnimal({ id: animalABaja.id, estado }));
     setAnimalToDelete(null);
   }
 
@@ -227,13 +207,13 @@ function PaginaAnimales() {
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
         <Routes>
           <Route index element={<ListaAnimales animals={animales} filters={filtros} isLoading={cargando} onFiltersChange={setFilters} />} />
-          <Route path="nuevo" element={<NuevoAnimal onCreate={crearAnimal} />} />
+          <Route path="nuevo" element={<NuevoAnimal onCreate={crearAnimalDesdeFormulario} />} />
           <Route path=":id" element={<DetalleAnimal animals={animales} onRequestDelete={setAnimalToDelete} />} />
-          <Route path=":id/editar" element={<EditarAnimal animals={animales} onUpdate={actualizarAnimal} />} />
+          <Route path=":id/editar" element={<EditarAnimal animals={animales} onUpdate={actualizarAnimalDesdeFormulario} />} />
         </Routes>
       </div>
 
-      <ModalConfirmarBaja animal={animalABaja} onClose={() => setAnimalToDelete(null)} onConfirm={cambiarEstadoAnimal} />
+      <ModalConfirmarBaja animal={animalABaja} onClose={() => setAnimalToDelete(null)} onConfirm={cambiarEstadoAnimalDesdeModal} />
     </>);
 
 }

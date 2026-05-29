@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { BadgeDollarSign, CalendarClock, ChartPie, LayoutGrid, List, Plus, ReceiptText, Trophy } from 'lucide-react';
 import TarjetaEstadistica from '../components/StatCard';
@@ -11,10 +11,8 @@ import ResumenGasto from '../components/expenses/ExpenseSummary';
 import TablaGasto from '../components/expenses/ExpenseTable';
 import GastosRecientes from '../components/expenses/RecentExpenses';
 import { obtenerTotalesCategoria, obtenerEntradaPrincipal, mxn } from '../components/expenses/expenseUtils';
-import { animales as mockAnimals } from '../data/animals';
-import { gastos as mockExpenses } from '../data/expenses';
-import { ingresos as mockIncome } from '../data/income';
-import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
+import { crearGasto as crearGastoEnRedux, registrarVentaAnimal } from '../store/agrowebSlice';
+import { useDespachoAplicacion, useSelectorAplicacion } from '../store/hooks';
 
 const filtrosIniciales = {
   query: '',
@@ -219,23 +217,12 @@ function DetalleGasto({ expenses: gastos }) {
 }
 
 function PaginaGastos() {
-  const [animales, establecerAnimales] = useState([]);
-  const [gastos, establecerGastos] = useState([]);
-  const [ingresos, establecerIngresos] = useState([]);
+  const despachar = useDespachoAplicacion();
+  const animales = useSelectorAplicacion((estado) => estado.agroweb.animales);
+  const gastos = useSelectorAplicacion((estado) => estado.agroweb.gastos);
   const [filtros, setFilters] = useState(filtrosIniciales);
-  const [cargando, establecerCargando] = useState(true);
+  const cargando = false;
   const [mensaje, establecerMensaje] = useState('');
-
-  useEffect(() => {
-    const temporizador = window.setTimeout(() => {
-      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
-      establecerGastos(leerAlmacenamiento('agroweb.expenses', mockExpenses));
-      establecerIngresos(leerAlmacenamiento('agroweb.income', mockIncome));
-      establecerCargando(false);
-    }, 350);
-
-    return () => window.clearTimeout(temporizador);
-  }, []);
 
   function crearGasto(gasto) {
     if (gasto.esVenta) {
@@ -248,22 +235,12 @@ function PaginaGastos() {
         fecha: gasto.fecha,
         descripcion: gasto.descripcion
       };
-      const ingresosSiguientes = [registroIngreso, ...ingresos];
-      const animalesSiguientes = animales.map((animal) => animal.id === gasto.animalId ? { ...animal, estado: 'Vendido', ubicacion: 'Historial de ventas' } : animal);
-      const gastosSiguientes = [gasto, ...gastos];
-      establecerIngresos(ingresosSiguientes);
-      establecerAnimales(animalesSiguientes);
-      establecerGastos(gastosSiguientes);
-      escribirAlmacenamiento('agroweb.income', ingresosSiguientes);
-      escribirAlmacenamiento('agroweb.animals', animalesSiguientes);
-      escribirAlmacenamiento('agroweb.expenses', gastosSiguientes);
+      despachar(registrarVentaAnimal({ gasto, ingreso: registroIngreso }));
       establecerMensaje(`Venta registrada. ${gasto.animalIdentificador} cambió a estado Vendido y el ingreso se reflejará en Reportes.`);
       return { to: `/gastos/${gasto.id}` };
     }
 
-    const gastosSiguientes = [gasto, ...gastos];
-    establecerGastos(gastosSiguientes);
-    escribirAlmacenamiento('agroweb.expenses', gastosSiguientes);
+    despachar(crearGastoEnRedux(gasto));
     return { to: `/gastos/${gasto.id}` };
   }
 

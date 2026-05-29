@@ -4,7 +4,8 @@ import MapaUbicacionRancho from '../components/RanchLocationMap';
 import TarjetaEstadistica from '../components/StatCard';
 import { useAuth } from '../hooks/useAuth';
 import { solicitudApi } from '../services/api';
-import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
+import { guardarRanchos as guardarRanchosEnRedux } from '../store/agrowebSlice';
+import { useDespachoAplicacion, useSelectorAplicacion } from '../store/hooks';
 
 const permisos = [
 { key: 'animales', label: 'Gestión Ganadera' },
@@ -19,6 +20,7 @@ const tiposLugar = ['Corral', 'Potrero', 'Caballeriza', 'Área porcina', 'Área 
 
 function PaginaConfiguracion() {
   const { user: authUser } = useAuth();
+  const despachar = useDespachoAplicacion();
   const [usuarios, establecerUsuarios] = useState([]);
   const [idUsuarioSeleccionado, establecerIdUsuarioSeleccionado] = useState(null);
   const [cargando, establecerCargando] = useState(true);
@@ -27,7 +29,7 @@ function PaginaConfiguracion() {
   const [localizando, establecerLocalizando] = useState(false);
   const [resolviendoDireccion, establecerResolviendoDireccion] = useState(false);
   const [precisionUbicacion, establecerPrecisionUbicacion] = useState(null);
-  const [ranchos, establecerRanchos] = useState(() => leerAlmacenamiento('agroweb.ranches', []));
+  const ranchos = useSelectorAplicacion((estado) => estado.agroweb.ranchos);
   const [formularioRancho, establecerFormularioRancho] = useState({ nombre: '', propietario: '', telefono: '', direccion: '', lat: '', lng: '' });
   const [formularioLugar, establecerFormularioLugar] = useState({ ranchoId: '', nombre: '', tipo: 'Corral', capacidad: '', descripcion: '' });
   const [detalleRanchoSeleccionado, establecerDetalleRanchoSeleccionado] = useState(null);
@@ -153,8 +155,7 @@ function PaginaConfiguracion() {
   }
 
   function guardarRanchos(ranchosSiguientes) {
-    establecerRanchos(ranchosSiguientes);
-    escribirAlmacenamiento('agroweb.ranches', ranchosSiguientes);
+    despachar(guardarRanchosEnRedux(ranchosSiguientes));
   }
 
   function actualizarFormularioRancho(evento) {

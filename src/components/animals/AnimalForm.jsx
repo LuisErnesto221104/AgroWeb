@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { FileText, ImagePlus, Save, Upload } from 'lucide-react';
 import VistaPreviaArchivo from '../FilePreview';
 import { catalogoAnimal, opcionesEspecie } from '../../data/animalCatalog';
-import { leerAlmacenamiento } from '../../utils/storage';
+import { useSelectorAplicacion } from '../../store/hooks';
 
 const identificationDocuments = ['INE', 'Pasaporte', 'Licencia de conducir', 'Cédula profesional', 'Cartilla militar', 'Documento interno'];
 
@@ -148,7 +148,7 @@ function FormularioAnimal({ initialAnimal: animalInicial, onSubmit: alEnviar, su
   const esAnimalNuevo = !animalInicial;
   const initialStatus = animalInicial?.estado ?? 'Activo';
   const [formulario, establecerFormulario] = useState({ ...normalizarAnimal(animalInicial), estado: esAnimalNuevo ? 'Activo' : initialStatus });
-  const [ranchos] = useState(() => leerAlmacenamiento('agroweb.ranches', []));
+  const ranchos = useSelectorAplicacion((estado) => estado.agroweb.ranchos);
   const [vistaPrevia, establecerVistaPrevia] = useState(animalInicial?.fotografia ?? '');
   const [pdfName, setPdfName] = useState(formulario.duenosAnteriores.documentoPdf?.name ?? '');
   const opcionesEstado = obtenerOpcionesEstado(initialStatus);

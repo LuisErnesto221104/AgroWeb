@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { CalendarClock, LayoutGrid, List, PackageCheck, Plus, Scale, Utensils, WalletCards } from 'lucide-react';
 import TarjetaEstadistica from '../components/StatCard';
@@ -10,9 +10,8 @@ import InsigniaEstadoAlimentacion from '../components/feeding/FeedingStatusBadge
 import ResumenAlimentacion from '../components/feeding/FeedingSummary';
 import { normalizarEstadoAlimentacion } from '../components/feeding/feedingUtils';
 import { mxn } from '../components/expenses/expenseUtils';
-import { animales as mockAnimals } from '../data/animals';
-import { alimentacion as mockFeeding } from '../data/feeding';
-import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
+import { actualizarEstadoAlimentacion, crearRegistroAlimentacion } from '../store/agrowebSlice';
+import { useDespachoAplicacion, useSelectorAplicacion } from '../store/hooks';
 
 const filtrosIniciales = {
   query: '',
@@ -224,35 +223,19 @@ function DetalleAlimentacion({ records: registros, onStatusChange: alCambiarEsta
 }
 
 function PaginaAlimentacion() {
-  const [animales, establecerAnimales] = useState([]);
-  const [registros, establecerRegistros] = useState([]);
+  const despachar = useDespachoAplicacion();
+  const animales = useSelectorAplicacion((estado) => estado.agroweb.animales);
+  const registrosBase = useSelectorAplicacion((estado) => estado.agroweb.alimentacion);
+  const registros = useMemo(() => registrosBase.map((registro) => normalizarEstadoAlimentacion(registro)), [registrosBase]);
   const [filtros, setFilters] = useState(filtrosIniciales);
-  const [cargando, establecerCargando] = useState(true);
-
-  useEffect(() => {
-    const temporizador = window.setTimeout(() => {
-      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
-      establecerRegistros(leerAlmacenamiento('agroweb.feeding', mockFeeding).map((registro) => normalizarEstadoAlimentacion(registro)));
-      establecerCargando(false);
-    }, 350);
-
-    return () => window.clearTimeout(temporizador);
-  }, []);
+  const cargando = false;
 
   function crearRegistro(registro) {
-    establecerRegistros((actual) => {
-      const registrosSiguientes = [normalizarEstadoAlimentacion(registro), ...actual];
-      escribirAlmacenamiento('agroweb.feeding', registrosSiguientes);
-      return registrosSiguientes;
-    });
+    despachar(crearRegistroAlimentacion(normalizarEstadoAlimentacion(registro)));
   }
 
   function actualizarEstadoRegistro(idRegistro, estado) {
-    establecerRegistros((actual) => {
-      const registrosSiguientes = actual.map((registro) => registro.id === idRegistro ? { ...registro, estado } : registro);
-      escribirAlmacenamiento('agroweb.feeding', registrosSiguientes);
-      return registrosSiguientes;
-    });
+    despachar(actualizarEstadoAlimentacion({ id: idRegistro, estado }));
   }
 
   return (

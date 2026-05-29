@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { CalendarDays, HeartPulse, LayoutGrid, List, Plus, Stethoscope, Syringe, TriangleAlert } from 'lucide-react';
 import TarjetaEstadistica from '../components/StatCard';
@@ -9,11 +9,10 @@ import FiltrosSanidad from '../components/health/HealthFilters';
 import InsigniaEstadoSanidad from '../components/health/HealthStatusBadge';
 import CalendarioSanitario from '../components/health/SanitaryCalendar';
 import EventosSanitariosProximos from '../components/health/UpcomingHealthEvents';
-import { animales as mockAnimals } from '../data/animals';
-import { eventosSanitarios as mockHealthEvents } from '../data/healthEvents';
-import { leerAlmacenamiento, escribirAlmacenamiento } from '../utils/storage';
+import { actualizarEstadoEventoSanitario, crearEventoSanitario } from '../store/agrowebSlice';
+import { useDespachoAplicacion, useSelectorAplicacion } from '../store/hooks';
 
-const hoy = '2026-05-23';
+const hoy = '2026-05-28';
 
 const filtrosIniciales = {
   animalId: 'Todos',
@@ -220,35 +219,19 @@ function PanelSanidad({ animals: animales, events: eventos, filters: filtros, on
 }
 
 function PaginaSanidad({ calendarOnly: soloCalendario = false }) {
-  const [animales, establecerAnimales] = useState([]);
-  const [eventos, establecerEventos] = useState([]);
+  const despachar = useDespachoAplicacion();
+  const animales = useSelectorAplicacion((estado) => estado.agroweb.animales);
+  const eventosBase = useSelectorAplicacion((estado) => estado.agroweb.eventosSanitarios);
+  const eventos = useMemo(() => eventosBase.map(sanearEstado), [eventosBase]);
   const [filtros, setFilters] = useState(filtrosIniciales);
-  const [cargando, establecerCargando] = useState(true);
-
-  useEffect(() => {
-    const temporizador = window.setTimeout(() => {
-      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
-      establecerEventos(leerAlmacenamiento('agroweb.healthEvents', mockHealthEvents).map(sanearEstado));
-      establecerCargando(false);
-    }, 350);
-
-    return () => window.clearTimeout(temporizador);
-  }, []);
+  const cargando = false;
 
   function crearEvento(evento) {
-    establecerEventos((actual) => {
-      const eventosSiguientes = [sanearEstado(evento), ...actual];
-      escribirAlmacenamiento('agroweb.healthEvents', eventosSiguientes);
-      return eventosSiguientes;
-    });
+    despachar(crearEventoSanitario(sanearEstado(evento)));
   }
 
   function actualizarEstadoEvento(idEvento, estado) {
-    establecerEventos((actual) => {
-      const eventosSiguientes = actual.map((evento) => evento.id === idEvento ? { ...evento, estado } : evento);
-      escribirAlmacenamiento('agroweb.healthEvents', eventosSiguientes);
-      return eventosSiguientes;
-    });
+    despachar(actualizarEstadoEventoSanitario({ id: idEvento, estado }));
   }
 
   return (

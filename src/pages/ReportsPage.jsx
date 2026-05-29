@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { BarChart3, Beef, CircleDollarSign, FileBarChart, PackageCheck, RefreshCw, TrendingDown, TrendingUp, WalletCards } from 'lucide-react';
 import TarjetaEstadistica from '../components/StatCard';
 import TablaInversionAnimal from '../components/reports/AnimalInvestmentTable';
@@ -9,12 +9,7 @@ import ResumenGananciasPerdidas from '../components/reports/ProfitLossSummary';
 import TarjetaReporte from '../components/reports/ReportCard';
 import FiltrosReporte from '../components/reports/ReportFilters';
 import { mxn } from '../components/expenses/expenseUtils';
-import { animales as mockAnimals } from '../data/animals';
-import { gastos as mockExpenses } from '../data/expenses';
-import { alimentacion as mockFeeding } from '../data/feeding';
-import { eventosSanitarios as mockHealthEvents } from '../data/healthEvents';
-import { ingresos as mockIncome } from '../data/income';
-import { leerAlmacenamiento } from '../utils/storage';
+import { useSelectorAplicacion } from '../store/hooks';
 
 const filtrosIniciales = {
   tipoReporte: 'general',
@@ -196,31 +191,18 @@ function crearReporteImprimible({ analytics: analitica, animals: animales, filte
 }
 
 function PaginaReportes() {
-  const [animales, establecerAnimales] = useState([]);
-  const [gastos, establecerGastos] = useState([]);
-  const [alimentacion, setFeeding] = useState([]);
-  const [eventosSanitarios, setHealthEvents] = useState([]);
-  const [ingresos, establecerIngresos] = useState([]);
+  const animales = useSelectorAplicacion((estado) => estado.agroweb.animales);
+  const gastos = useSelectorAplicacion((estado) => estado.agroweb.gastos);
+  const alimentacion = useSelectorAplicacion((estado) => estado.agroweb.alimentacion);
+  const eventosSanitarios = useSelectorAplicacion((estado) => estado.agroweb.eventosSanitarios);
+  const ingresos = useSelectorAplicacion((estado) => estado.agroweb.ingresos);
   const [filtros, setFilters] = useState(filtrosIniciales);
-  const [cargando, establecerCargando] = useState(true);
+  const cargando = false;
   const [mensaje, establecerMensaje] = useState('');
   const [generatedReport, setGeneratedReport] = useState(null);
   const erroresFiltro = useMemo(() => validarFiltrosReporte(filtros), [filtros]);
   const hasFilterErrors = Object.keys(erroresFiltro).length > 0;
   const animalesPorId = useMemo(() => new Map(animales.map((animal) => [animal.id, animal])), [animales]);
-
-  useEffect(() => {
-    const temporizador = window.setTimeout(() => {
-      establecerAnimales(leerAlmacenamiento('agroweb.animals', mockAnimals));
-      establecerGastos(leerAlmacenamiento('agroweb.expenses', mockExpenses));
-      setFeeding(leerAlmacenamiento('agroweb.feeding', mockFeeding));
-      setHealthEvents(leerAlmacenamiento('agroweb.healthEvents', mockHealthEvents));
-      establecerIngresos(leerAlmacenamiento('agroweb.income', mockIncome));
-      establecerCargando(false);
-    }, 350);
-
-    return () => window.clearTimeout(temporizador);
-  }, []);
 
   const datosFiltrados = useMemo(() => {
     const gastosFiltrados = gastos.filter((gasto) => !gasto.esVenta && enRangoFechas(gasto.fecha, filtros) && coincideAnimal(gasto, filtros) && coincideEspecieYRaza(gasto, filtros, animalesPorId));
